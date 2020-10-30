@@ -203,8 +203,10 @@ public class AlohaB1 implements Player {
    public void showdownEvent(int seat, Card c1, Card c2) {
       if (ismainbot) {
          try {
-            ha = hc.get(serverAddress + secureKey + "/showdownEvent/" + gi.getGameID() + "/" + gi.getPlayerName(seat)
-                  + "/" + c1.toString() + c2.toString(), "undefined");
+
+            String JSON = "{\"handID\":" + Long.toString(gi.getGameID()) + ",\"player\":\"" + gi.getPlayerName(seat)
+                  + "\",\"cards\":\"" + c1.toString() + c2.toString() + "\"}";
+            ha = hc.post(serverAddress + secureKey + "/showdownEvent", "undefined", "JSON=" + JSON);
 
          } catch (Exception e) {
          }
@@ -293,6 +295,67 @@ public class AlohaB1 implements Player {
     * An action has been observed.
     */
    public void actionEvent(int pos, Action act) {
+      if (ismainbot) {
+         double amount = act.getAmount();
+         String stringAct = "";
+         switch (act.getType()) {
+            case Action.INVALID:
+               stringAct = "INVALID";
+               break;
+            case Action.FOLD:
+               stringAct = "FOLD";
+               break;
+            case Action.CHECK:
+               stringAct = "CHECK";
+               break;
+            case Action.CALL:
+               amount = act.getToCall();
+               stringAct = "CALL";
+               break;
+            case Action.BET:
+               stringAct = "BET";
+               break;
+            case Action.RAISE:
+               stringAct = "RAISE";
+               break;
+            case Action.SMALL_BLIND:
+               stringAct = "SMALL_BLIND";
+               break;
+            case Action.BIG_BLIND:
+               stringAct = "BIG_BLIND";
+               break;
+            case Action.POST_BLIND:
+               stringAct = "POST_BLIND";
+               break;
+            case Action.ALLIN_PASS:
+               stringAct = "ALLIN_PASS";
+               break;
+            case Action.MUCK:
+               stringAct = "MUCK";
+               break;
+            case Action.POST_ANTE:
+               stringAct = "POST_ANTE";
+               break;
+            case Action.SIT_OUT:
+               stringAct = "SIT_OUT";
+               break;
+            case Action.POST_DEAD_BLIND:
+               stringAct = "POST_DEAD_BLIND";
+               break;
+            default:
+               break;
+         }
+         if (act.getType() != Action.INVALID) {
+            try {
+
+               String JSON = "{\"handID\":" + Long.toString(gi.getGameID()) + ",\"player\":\"" + gi.getPlayerName(pos)
+                     + "\",\"action\":\"" + stringAct + "\",\"amount\":" + Double.toString(amount) + "}";
+               ha = hc.post(serverAddress + secureKey + "/actionEvent", "undefined", "JSON=" + JSON);
+
+            } catch (Exception e) {
+            }
+         }
+      }
    }
 
    /**

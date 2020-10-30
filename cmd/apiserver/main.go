@@ -27,8 +27,8 @@ func getRoutes() {
 	r.GET(securekey+"/holeCards/:id/:cards", holeCards)
 	r.POST(securekey+"/dealHoleCardsEvent", dealHoleCardsEventPost)
 	r.GET(securekey+"/stageEvent/:id/:stage", stageEvent)
-
-	r.GET(securekey+"/showdownEvent/:id/:playername/:cards", showdownEvent)
+	r.POST(securekey+"/actionEvent", actionEventPost)
+	r.POST(securekey+"/showdownEvent", showdownEventPost)
 	r.POST(securekey+"/winEvent", winEventPost)
 	r.GET(securekey+"/gameOverEvent/:id", gameOverEvent)
 
@@ -92,11 +92,19 @@ func stageEvent(c *gin.Context) {
 
 }
 
-//главный бот из academy говорит, что кто-то показал карты
-func showdownEvent(c *gin.Context) {
+//главный бот из academy говорит, что кто-то действие призвел
+func actionEventPost(c *gin.Context) {
 	botname := c.Request.Header.Get("User-Agent")
 	c.Status(200)
-	println(botname + " : " + c.Param("id") + " | " + c.Param("playername") + " | " + c.Param("cards"))
+	println(botname + " : " + c.PostForm("JSON"))
+
+}
+
+//главный бот из academy говорит, что кто-то показал карты
+func showdownEventPost(c *gin.Context) {
+	botname := c.Request.Header.Get("User-Agent")
+	c.Status(200)
+	println(botname + " : " + c.PostForm("JSON"))
 
 }
 
