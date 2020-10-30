@@ -4,6 +4,8 @@ import java.awt.event.ItemListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import java.util.ArrayList;
+
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -14,7 +16,9 @@ import com.biotools.meerkat.Deck;
 import com.biotools.meerkat.GameInfo;
 import com.biotools.meerkat.Hand;
 import com.biotools.meerkat.HandEvaluator;
+import com.biotools.meerkat.Holdem;
 import com.biotools.meerkat.Player;
+import com.biotools.meerkat.PlayerInfo;
 import com.biotools.meerkat.util.Preferences;
 
 import aloha.HttpConn;
@@ -36,7 +40,15 @@ public class AlohaB1 implements Player {
    private GameInfo gi; // general game information
    private Preferences prefs; // the configuration options for this bot
 
+   private ArrayList seatsSort; // текущий список номеров игроков, участвующих в раздаче, начиная с ББ
+
+   // является ли этот бот главным ботом, посылающим всю основную инфу по текущей
+   // раздаче - устанавливается в gamestartEvent в ответе от сервера (кто первый
+   // спросил - тот и главный)
+   private boolean ismainbot = false;
+
    private String serverAddress;
+   private String secureKey;
    private HttpConn hc;
    private HttpAnswer ha;
 
@@ -54,6 +66,24 @@ public class AlohaB1 implements Player {
       this.c1 = c1;
       this.c2 = c2;
       this.ourSeat = seat;
+
+      try {
+         ha = hc.get(serverAddress + secureKey + "/holeCards/" + gi.getGameID() + "/" + c1.toString() + c2.toString(),
+               gi.getPlayerName(ourSeat));
+      } catch (Exception e) {
+      }
+
+   }
+
+   // как раньше люди программировали? Это блять ассемблер какой-то, а не язык
+   // высокого уровня
+   // генериков нет, списков для встроенных типов нет! для встроенных, Карл!
+   // и хуй бы с ним, но Object не кастится со встроенными типами.
+   // И это ладно! Но тип сука Integer не кастится с int - это просто кладбище
+   // какое-то
+   // как она выжила ваще эта Ява? Наврено поэтому всякие питоны поимели жизнь
+   private int objToint(Object obj) {
+      return ((Integer) obj).intValue();
    }
 
    /**
@@ -76,32 +106,6 @@ public class AlohaB1 implements Player {
    }
 
    /**
-    * If you implement the getSettingsPanel() method, your bot will display the
-    * panel in the Opponent Settings Dialog.
-    * 
-    * @return a GUI for configuring your bot (optional)
-    */
-   public JPanel getSettingsPanel() {
-      JPanel panel = new JPanel();
-
-      panel.add(new JLabel("Bot server address:"));
-
-      serverAddress = prefs.getPreference("SERVER_ADDRESS", "http://localhost:8080");
-      final JTextField addressTextField = new JTextField(serverAddress);
-
-      addressTextField.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent e) {
-            prefs.setPreference("SERVER_ADDRESS", addressTextField.getText());
-            serverAddress = addressTextField.getText();
-         }
-      });
-
-      panel.add(addressTextField);
-
-      return panel;
-   }
-
-   /**
     * Get the current settings for this bot.
     */
    public Preferences getPreferences() {
@@ -114,6 +118,7 @@ public class AlohaB1 implements Player {
    public void init(Preferences playerPrefs) {
       this.prefs = playerPrefs;
       serverAddress = prefs.getPreference("SERVER_ADDRESS", "http://localhost:8080");
+      secureKey = prefs.getPreference("SECURE_KEY", "/key-1212");
       hc = new HttpConn();
       ha = hc.new HttpAnswer();
    }
@@ -157,6 +162,35 @@ public class AlohaB1 implements Player {
     * A new betting round has started.
     */
    public void stageEvent(int stage) {
+      if (ismainbot) {
+         String stagestr = "";
+         switch (stage) {
+            case Holdem.PREFLOP:
+               stagestr = "preflop";
+               break;
+            case Holdem.FLOP:
+               stagestr = "flop";
+               break;
+            case Holdem.TURN:
+               stagestr = "turn";
+               break;
+            case Holdem.RIVER:
+               stagestr = "river";
+               break;
+            case Holdem.SHOWDOWN:
+               stagestr = "showdown";
+               break;
+
+            default:
+               stagestr = "unknown";
+               break;
+         }
+         try {
+            ha = hc.get(serverAddress + secureKey + "/stageEvent/" + gi.getGameID() + "/" + stagestr, "undefined");
+
+         } catch (Exception e) {
+         }
+      }
    }
 
    /**
@@ -167,21 +201,92 @@ public class AlohaB1 implements Player {
     * @param c2  the second hole card shown
     */
    public void showdownEvent(int seat, Card c1, Card c2) {
+      if (ismainbot) {
+         try {
+            ha = hc.get(serverAddress + secureKey + "/showdownEvent/" + gi.getGameID() + "/" + gi.getPlayerName(seat)
+                  + "/" + c1.toString() + c2.toString(), "undefined");
+
+         } catch (Exception e) {
+         }
+      }
+
    }
 
    /**
-    * A new game has been started.
+    * A new game has been started. Один бот, который первый постучится на сервер с
+    * запросом /gamestart получит команду посылать все события на столе
     * 
     * @param gi the game stat information
     */
    public void gameStartEvent(GameInfo gInfo) {
       this.gi = gInfo;
+
+      // сначала спросим у сервера, будем ли мы главным ботом (посылающим инфу о
+      // столе) в этой раздаче
+
+      try {
+         ha = hc.get(serverAddress + secureKey + "/gamestart/" + gi.getGameID(), "undefined");
+
+         if (ha.answer.equals("you are main"))
+            ismainbot = true;
+         else
+            ismainbot = false;
+
+      } catch (Exception e) {
+      }
+
+      // и теперь всей это лабудой занимается только главный бот за столом
+      if (ismainbot) {
+         // подготовим массив с местами и отсортируем, начиная с СБ, по позициям. СБ
+         // может быть мертвым, тогда начинается с ББ
+         seatsSort = new ArrayList();
+         ArrayList seats = new ArrayList();
+
+         int noposPlayer; // номер игрока с самой плохой позицией. Если СБ мертв, то это ББ
+         if (gi.inGame(gi.getSmallBlindSeat()))
+            noposPlayer = gi.getSmallBlindSeat();
+         else
+            noposPlayer = gi.getBigBlindSeat();
+         int bbi = 0;
+         for (int i = 0; i < gi.getNumSeats(); i++) {
+
+            if (!gi.inGame(i)) {
+               continue;
+            }
+
+            seats.add(new Integer(i));
+
+            if (noposPlayer == i)
+               bbi = seats.size() - 1;// если игрок на ББ, запомним индекс в массиве
+         }
+         // отсортируем список номеров игроков, начиная с ББ
+         seatsSort.addAll(seats.subList(bbi, seats.size()));
+         seatsSort.addAll(seats.subList(0, bbi));
+      }
    }
 
    /**
     * An event sent when all players are being dealt their hole cards
     */
    public void dealHoleCardsEvent() {
+      if (ismainbot) {
+         // подготовим JSON для отправки на сервер. Приходится руками, т.к. стараяЯва))
+         String JSON;
+         JSON = "{\"handID\":" + Long.toString(gi.getGameID()) + ",\"state\":\"holecarddeal\",\"BB\":"
+               + Double.toString(gi.getBigBlindSize()) + ",\"ante\":" + Double.toString(gi.getAnte())
+               + ",\"players\":[";
+
+         for (int i = 0; i < seatsSort.size(); i++) {
+            JSON = JSON + "{\"player\": {\"name\":\"" + gi.getPlayerName(objToint(seatsSort.get(i))) + "\", \"stack\": "
+                  + Double.toString(gi.getBankRoll(objToint(seatsSort.get(i)))) + "}},";
+         }
+         JSON = JSON + "]}";
+
+         try {
+            ha = hc.post(serverAddress + secureKey + "/dealHoleCardsEvent", "undefined", "JSON=" + JSON);
+         } catch (Exception e) {
+         }
+      }
    }
 
    /**
@@ -201,12 +306,27 @@ public class AlohaB1 implements Player {
     * The hand is now over.
     */
    public void gameOverEvent() {
+      if (ismainbot) {
+         try {
+            ha = hc.get(serverAddress + secureKey + "/gameOverEvent/" + gi.getGameID(), "undefined");
+
+         } catch (Exception e) {
+         }
+      }
    }
 
    /**
     * A player at pos has won amount with the hand handName
     */
    public void winEvent(int pos, double amount, String handName) {
+      if (ismainbot) {
+         try {
+            String JSON = "{\"handID\":" + Long.toString(gi.getGameID()) + ",\"player\":\"" + gi.getPlayerName(pos)
+                  + "\",\"amount\":" + Double.toString(amount) + ",\"handname\":\"" + handName + "\"}";
+            ha = hc.post(serverAddress + secureKey + "/winEvent", "undefined", "JSON=" + JSON);
+         } catch (Exception e) {
+         }
+      }
    }
 
    /**
@@ -219,11 +339,6 @@ public class AlohaB1 implements Player {
       double toCall = gi.getAmountToCall(ourSeat);
 
       debugb(gi.getPlayerName(ourSeat));
-
-      try {
-         ha = hc.get(serverAddress + "/key-1212/preflop", gi.getPlayerName(ourSeat));
-      } catch (Exception e) {
-      }
 
       // идем аллын с любым тузом
       if ((c1.getRank() == Card.ACE || c2.getRank() == Card.ACE)) {
@@ -340,6 +455,46 @@ public class AlohaB1 implements Player {
 
          return Action.checkOrFoldAction(toCall);
       }
+   }
+
+   /**
+    * If you implement the getSettingsPanel() method, your bot will display the
+    * panel in the Opponent Settings Dialog.
+    * 
+    * @return a GUI for configuring your bot (optional)
+    */
+   public JPanel getSettingsPanel() {
+      JPanel panel = new JPanel();
+
+      panel.add(new JLabel("Bot server address:"));
+
+      serverAddress = prefs.getPreference("SERVER_ADDRESS", "http://localhost:8080");
+      final JTextField addressTextField = new JTextField(serverAddress);
+
+      addressTextField.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            prefs.setPreference("SERVER_ADDRESS", addressTextField.getText());
+            serverAddress = addressTextField.getText();
+         }
+      });
+
+      panel.add(addressTextField);
+
+      panel.add(new JLabel("Bot server secure-key:"));
+
+      secureKey = prefs.getPreference("SECURE_KEY", "/key-1212");
+      final JTextField keyTextField = new JTextField(secureKey);
+
+      keyTextField.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            prefs.setPreference("SECURE_KEY", keyTextField.getText());
+            secureKey = keyTextField.getText();
+         }
+      });
+
+      panel.add(keyTextField);
+
+      return panel;
    }
 
    /**

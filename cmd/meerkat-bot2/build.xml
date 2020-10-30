@@ -16,10 +16,10 @@
    <!-- ********************************************************** -->
 	<target name="compile" depends="init" description="compile the bot with the library">	        
 		<!-- Compile the java code from ${src} into ${build} -->
-		<javac 
+		<javac fork="true"  executable="c:/Program Files/Java/jdk1.8.0_162/bin/javac" compiler="javac1.8"
 			source="1.4" 
 			srcdir="${source}" 
-			destdir="${build}" 
+			destdir="${build}" 			
 			classpath="meerkat-api.jar">
 			<src path="${source}"/>
         </javac>

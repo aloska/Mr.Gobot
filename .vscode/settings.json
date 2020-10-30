@@ -1,0 +1,9 @@
+{
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar",
+        "cmd/meerkat-bot/meerkat-api.jar",
+        "cmd/meerkat-bot/httpclient-4.5.2.jar",
+        "cmd/meerkat-bot/httpcore-4.4.4.jar",
+        "cmd/meerkat-bot/httpmime-4.5.2.jar"
+    ]
+}
