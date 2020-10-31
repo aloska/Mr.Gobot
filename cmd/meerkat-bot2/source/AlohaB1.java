@@ -93,6 +93,39 @@ public class AlohaB1 implements Player {
    public Action getAction() {
 
       double toCall = gi.getAmountToCall(ourSeat);
+      double minRaise = gi.getMinRaise();
+      double totalPot = gi.getTotalPotSize();
+      double mainPot = gi.getMainPotSize();
+      double stack = gi.getBankRoll(ourSeat);
+      int numRaise = gi.getNumRaises();
+      int numPlayers = gi.getNumActivePlayers();
+
+      try {
+
+         String JSON = "{\"handID\":" + Long.toString(gi.getGameID()) + ",\"BB\":"
+               + Double.toString(gi.getBigBlindSize()) + ",\"tocall\":" + Double.toString(toCall) + ",\"minraise\":"
+               + Double.toString(minRaise) + ",\"totalpot\":" + Double.toString(totalPot) + ",\"mainpot\":"
+               + Double.toString(mainPot) + ",\"stack\":" + Double.toString(stack) + ",\"numraise\":"
+               + Long.toString(numRaise) + ",\"numplayers\":" + Long.toString(numPlayers) + "}";
+         ha = hc.post(serverAddress + secureKey + "/getAction", gi.getPlayerName(ourSeat), "JSON=" + JSON);
+
+         if (ha.answer.equals("FOLD")) {
+            return Action.foldAction(toCall);
+         } else if (ha.answer.equals("CHECK")) {
+            return Action.checkAction();
+         } else if (ha.answer.equals("CALL")) {
+            return Action.callAction(toCall);
+         } else if (ha.answer.substring(0, 3).equals("BET")) { // BET:100.0
+            Double d = Double.valueOf(ha.answer.substring(4));
+            return Action.betAction(d.doubleValue());
+         } else if (ha.answer.substring(0, 5).equals("RAISE")) { // RAISE:250.0
+            Double d = Double.valueOf(ha.answer.substring(6));
+            return Action.raiseAction(gi, d.doubleValue());
+         } else {
+         }
+
+      } catch (Exception e) {
+      }
 
       if (getAlwaysCallMode()) {
          return Action.checkOrFoldAction(toCall);
@@ -164,21 +197,32 @@ public class AlohaB1 implements Player {
    public void stageEvent(int stage) {
       if (ismainbot) {
          String stagestr = "";
+         String board = "none";
          switch (stage) {
             case Holdem.PREFLOP:
                stagestr = "preflop";
                break;
             case Holdem.FLOP:
                stagestr = "flop";
+               board = gi.getBoard().getCard(1).toString() + gi.getBoard().getCard(2).toString()
+                     + gi.getBoard().getCard(3).toString();
                break;
             case Holdem.TURN:
                stagestr = "turn";
+               board = gi.getBoard().getCard(1).toString() + gi.getBoard().getCard(2).toString()
+                     + gi.getBoard().getCard(3).toString() + gi.getBoard().getCard(4).toString();
                break;
             case Holdem.RIVER:
                stagestr = "river";
+               board = gi.getBoard().getCard(1).toString() + gi.getBoard().getCard(2).toString()
+                     + gi.getBoard().getCard(3).toString() + gi.getBoard().getCard(4).toString()
+                     + gi.getBoard().getCard(5).toString();
                break;
             case Holdem.SHOWDOWN:
                stagestr = "showdown";
+               board = gi.getBoard().getCard(1).toString() + gi.getBoard().getCard(2).toString()
+                     + gi.getBoard().getCard(3).toString() + gi.getBoard().getCard(4).toString()
+                     + gi.getBoard().getCard(5).toString();
                break;
 
             default:
@@ -186,7 +230,8 @@ public class AlohaB1 implements Player {
                break;
          }
          try {
-            ha = hc.get(serverAddress + secureKey + "/stageEvent/" + gi.getGameID() + "/" + stagestr, "undefined");
+            ha = hc.get(serverAddress + secureKey + "/stageEvent/" + gi.getGameID() + "/" + stagestr + "/" + board,
+                  "undefined");
 
          } catch (Exception e) {
          }
@@ -279,8 +324,10 @@ public class AlohaB1 implements Player {
                + ",\"players\":[";
 
          for (int i = 0; i < seatsSort.size(); i++) {
-            JSON = JSON + "{\"player\": {\"name\":\"" + gi.getPlayerName(objToint(seatsSort.get(i))) + "\", \"stack\": "
-                  + Double.toString(gi.getBankRoll(objToint(seatsSort.get(i)))) + "}},";
+            JSON = JSON + "{\"name\":\"" + gi.getPlayerName(objToint(seatsSort.get(i))) + "\", \"stack\": "
+                  + Double.toString(gi.getBankRoll(objToint(seatsSort.get(i)))) + "}";
+            if (i != seatsSort.size() - 1)
+               JSON = JSON + ",";
          }
          JSON = JSON + "]}";
 
@@ -349,7 +396,9 @@ public class AlohaB1 implements Player {
             try {
 
                String JSON = "{\"handID\":" + Long.toString(gi.getGameID()) + ",\"player\":\"" + gi.getPlayerName(pos)
-                     + "\",\"action\":\"" + stringAct + "\",\"amount\":" + Double.toString(amount) + "}";
+                     + "\",\"action\":\"" + stringAct + "\",\"amount\":" + Double.toString(amount) + ",\"totalpot\":"
+                     + Double.toString(gi.getTotalPotSize()) + ",\"mainpot\":" + Double.toString(gi.getMainPotSize())
+                     + "}";
                ha = hc.post(serverAddress + secureKey + "/actionEvent", "undefined", "JSON=" + JSON);
 
             } catch (Exception e) {
