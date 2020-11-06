@@ -160,7 +160,7 @@ func getActionPost(c *gin.Context) {
 	if pg.ToCall == 0 {
 		c.String(200, "CHECK")
 	} else if pg.ToCall == pg.BB {
-		c.String(200, "CALL")
+		c.String(200, "RAISE:99")
 	}
 
 }
