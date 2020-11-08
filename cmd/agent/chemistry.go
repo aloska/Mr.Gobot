@@ -195,31 +195,6 @@ func (c *Chemical) DoNaKATPasa(to *Chemical) bool {
 	return true
 }
 
-//DoAChMediate - может вызвать только клетка ацх-эргическая, выброс ацетилхолина в синапс
-/*
-c *Chemical - клетка от куда выброс (собственно тело ацхэргического нейрона)
-to *Chemical - синапс, куда плювать
-byte maxVesicul - максимально возможное количество, которое клетка хочет выплюнуть. Может не равняться реально выплюнотому
-
-return byte - возвращает количество реально выброшенного вещества
-*/
-func (c *Chemical) DoAChMediate(to *Chemical, maxVesicul byte) byte {
-	if to.WASTE >= 0xfff0 || to.ACh > 0xf0 || c.ACh == 0 {
-		return 0
-	}
-	//определяем реально возможное, ближайшее к maxVesicul количество выбрасываемого вещества
-	a := 0xff - to.ACh
-	if maxVesicul > c.ACh {
-		maxVesicul = c.ACh
-	}
-	if maxVesicul > a {
-		maxVesicul = a
-	}
-	c.ACh = c.ACh - maxVesicul
-	to.ACh = to.ACh + maxVesicul
-	return maxVesicul
-}
-
 //MakeMemrane - может вызвать только клетка, сколько то там раз за цикл. Можно случайно. Типа функция починки мембраны
 func (c *Chemical) MakeMemrane() bool {
 	if c.OMEGA < 1 || c.O2 < 3 || c.WASTE >= 0xfff0 {
