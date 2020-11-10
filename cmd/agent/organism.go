@@ -13,22 +13,17 @@ type Synapses struct {
 	syn       []Chemical //тот же файл в удобном виде, как слайс Chemical с веществами
 }
 
-/*GenomNeuron - геном из файла
-
- */
-type GenomNeuron struct {
-	filename  string      //имя файла, где записаны гены
-	bytearray mmap.MMap   //замапленный файл генов
-	genes     []GenNeuron //тот же файл в удобном виде, как слайс Gen с отдельными генами для каждого вида
-}
-
 /*Cells - клетки, ммап на файл клеток, и описывающий их геном
  */
 type Cells struct {
-	filename  string      //имя файла, где записаны клетки
-	bytearray mmap.MMap   //замапленный файл клеток
-	neurons   []Neuron    //тот же файл в удобном виде, как слайс Neuron с отдельными генами для каждого вида
-	genom     GenomNeuron //геном этого файла клеток
+	filenameGens  string      //имя файла, где записаны гены
+	bytearrayGens mmap.MMap   //замапленный файл генов
+	genes         []GenNeuron //тот же файл в удобном виде, как слайс Gen с отдельными генами для каждого вида
+
+	filenameCells  string    //имя файла, где записаны клетки
+	bytearrayCells mmap.MMap //замапленный файл клеток
+	neurons        []Neuron  //тот же файл в удобном виде, как слайс Neuron с отдельными генами для каждого вида
+
 }
 
 /*Core - ядро организма. Может быть много ядер
@@ -49,9 +44,68 @@ type Brain struct {
 	cores []Core //мозг состоит из ядер
 }
 
+/*DataInput - описание входа
+Поскольку в Го нет женериков, прийдется хранить поля всех видов данных
+*/
+type DataInput struct {
+	typeData uint16 //тип входа 1-DataByte...
+
+	filenameGen  string    //имя файла, где записан ген входа
+	bytearrayGen mmap.MMap //замапленный файл гена
+	genData      *GenData  //тот же файл ввиде гена (у ячеек данных он один)
+
+	filenameData  string    //имя файла, где записаны ячейки входа
+	bytearrayData mmap.MMap //замапленный файл ячеек
+
+	//слайс рефлектирован на файл данных
+	//на самом деле будет использован только один слайс в этой структуре, в заыисимости от typeData
+	dataByte   []DataByte
+	dataUInt32 []DataUInt32
+	dataBit    []DataBit
+}
+
+/*Receptors - рецепторы, ммап на файл рецепторов, и описывающий их геном
+ */
+type Receptors struct {
+	filenameGens  string        //имя файла, где записаны гены
+	bytearrayGens mmap.MMap     //замапленный файл генов
+	genes         []GenReceptor //тот же файл в удобном виде, как слайс Gen с отдельными генами для каждого вида рецепторов
+
+	filenameRecs  string     //имя файла, где записаны рецепторы
+	bytearrayRecs mmap.MMap  //замапленный файл клеток
+	neurons       []Receptor //тот же файл в удобном виде, как слайс Receptor с отдельными генами для каждого вида
+}
+
+/*Input - вход состоит из входных файлов, рецепторов и (если нужно, нейронов)
+
+ */
+type Input struct {
+	path      string      //папка, где расположены все файлы этого входа
+	dataInput DataInput   //вход
+	receptors []Receptors //все рецепторы этого входа
+	synapses  Synapses    //обслуживает файл с синапсами этого входа (если они есть!!)
+	cells     []Cells     //слайс обслуживает файлы с нейронами и геномами этих нейронов, если они заданы
+}
+
+/*Senses - все входы (ощущения)
+ */
+type Senses struct {
+	path   string  //папка, где расположены все входы
+	inputs []Input //все входы
+
+	synapsesInputs Synapses //синаптическое поле всех входов
+	cellsInputs    []Cells  //слайс обслуживает файлы с нейронами и геномами этих нейронов, если они заданы, для общего синаптичесского поля всех входов
+}
+
 /*Organism - самая полная структура, состоящая из мозга, входных и выходных устройств
 
  */
 type Organism struct {
-	brain Brain //мозг из ядер
+	brain  Brain  //мозг из ядер
+	senses Senses //ощущения (входы, рецепторы...)
+}
+
+//Live ...
+func (o *Organism) Live() {
+
 }
