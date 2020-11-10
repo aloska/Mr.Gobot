@@ -30,7 +30,7 @@ type Receptor struct {
 	Ndata  uint32 //номер ячейки с данными, на которую нацелен рецептор
 	NdataW byte   //номер бита/байта/слова... из этой ячейки
 
-	typemedi byte //тип выплевываемого медиатора (обычно ацетилхолин)
+	typemedi NeuronTypeEnum //byte тип выплевываемого медиатора (обычно ацетилхолин)
 
 	force    uint16 //сила реакции
 	divforce uint16 /*обратная сила реакции
@@ -79,7 +79,7 @@ func (r *Receptor) DoReceptorUInt32(d *DataUInt32, s *Synapses) byte {
 	for i := 0; i < 32; i++ {
 		if r.A&(1<<i) != 0 { //проверяем, что данный аксон включен
 			switch r.typemedi {
-			case 0x21: //ацетилхолин
+			case NEURONACETILHOLIN: //ацетилхолин
 				//вычисляем ячейку, куда плевать и вызываем метод аксона для соответсвующего выещества
 				return r.axons[i].DoAChMediate(&s.syn[r.axons[i].N], res)
 			}
