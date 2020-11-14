@@ -51,7 +51,7 @@ type Dendrite struct {
 
 		Старшие пол-байта говорят о количестве рецепторов на дендриите. Напр, 0x30 - глютаматный ионный в 3 раза больше рецепторов, чем 0x10
 	*/
-	typed DendriteTypeEnum
+	Typed DendriteTypeEnum
 
 	Ca byte   //количество кальция в этом шипике
 	N  uint32 //номер синапса в файле синапсов. Координаты его вычисляются по номеру:  y = N / maxX   x = N % maxX
@@ -66,7 +66,7 @@ type Axon struct {
 	/*
 		vesiculs - заполняется из сомы клетки и обратным захватом
 	*/
-	vesiculs byte   //состояние визикул с нейромедиатором
+	Vesiculs byte   //состояние визикул с нейромедиатором
 	Ca       byte   //количество кальция в этом шипике аксона -
 	N        uint32 //номер синапса в файле синапсов. Координаты его вычисляются по номеру:  y = N / maxX   x = N % maxX
 }
@@ -80,13 +80,13 @@ byte maxVesicul - максимально возможное количество
 return byte - возвращает количество реально выброшенного вещества
 */
 func (ax *Axon) DoAChMediate(to *Chemical, maxVesicul byte) byte {
-	if to.WASTE >= 0xfff0 || to.ACh > 0xf0 || ax.vesiculs == 0 {
+	if to.WASTE >= 0xfff0 || to.ACh > 0xf0 || ax.Vesiculs == 0 {
 		return 0
 	}
 	//определяем реально возможное, ближайшее к maxVesicul количество выбрасываемого вещества
 	a := 0xff - to.ACh
-	if maxVesicul > ax.vesiculs {
-		maxVesicul = ax.vesiculs
+	if maxVesicul > ax.Vesiculs {
+		maxVesicul = ax.Vesiculs
 	}
 	if maxVesicul > a {
 		maxVesicul = a
@@ -98,7 +98,7 @@ func (ax *Axon) DoAChMediate(to *Chemical, maxVesicul byte) byte {
 		ax.Ca = ax.Ca + maxVesicul
 	}
 	//плюем!
-	ax.vesiculs = ax.vesiculs - maxVesicul
+	ax.Vesiculs = ax.Vesiculs - maxVesicul
 	to.ACh = to.ACh + maxVesicul
 	return maxVesicul
 }
@@ -108,11 +108,11 @@ func (ax *Axon) DoAChMediate(to *Chemical, maxVesicul byte) byte {
 //(ну а мы не имитируем вход холина на аксоне, а сразу синтезируем)
 //еще сома клетки может захватывать холин и раздавать по аксонам своим - см. (c *Chemical) AChSynt()
 func (ax *Axon) AChSynt(from *Chemical) bool {
-	if from.CHOL < 1 || ax.vesiculs > 0xf2 || ax.Ca < 1 {
+	if from.CHOL < 1 || ax.Vesiculs > 0xf2 || ax.Ca < 1 {
 		return false
 	}
 	from.CHOL = from.CHOL - 1
-	ax.vesiculs = ax.vesiculs + 1
+	ax.Vesiculs = ax.Vesiculs + 1
 	ax.Ca = ax.Ca - 1
 	return true
 }
@@ -181,9 +181,9 @@ type Neuron struct {
 	/*
 		НЕЛЬЗЯ МЕНЯТЬ ПОРЯДОК СЛЕДОВАНИЯ ПОЛЕЙ!!! И ДОБАВЛЯТЬ, КАК-ТО ИЗМЕНЯТЬ ЭТО!!! ИСПОЛЬЗУЕТСЯ unsafe!!! для маппинга структуры на часть файла
 	*/
-	typen NeuronTypeEnum //byte [0]Тип ячейки, для стволовой клетки - 0x10
-	serv1 byte           //зарезервировано (byte выравнивание)
-	core  CoreEnum       /*номер синаптического поля (ядра или входа или выхода), в синапсах которого находятся аксоны
+	Typen NeuronTypeEnum //byte [0]Тип ячейки, для стволовой клетки - 0x10
+	Serv1 byte           //зарезервировано (byte выравнивание)
+	Coren CoreEnum       /*номер синаптического поля (ядра или входа или выхода), в синапсах которого находятся аксоны
 	0xffff - аксоны в этом же поле синапсов, текущем, где описан нейрон
 	x - аксоны в ядре х, это сигнал ядру, что оно должно АКСОНЫ нейрона обрабатывать в другом файле синапсов
 	если x совпадет с номером этого ядра - будет тоже самое, что 0xffff
@@ -196,12 +196,12 @@ type Neuron struct {
 	Итого у нас 0xffff зарезервирован для текущего ядра (или текущего входа),
 		а 0xfffe зарезервирован для общего поля всех входов
 	*/
-	chemic    Chemical     //[]Структура для химии
+	Chemic    Chemical     //[]Структура для химии
 	N         uint32       //номер нейрона в файле синапсов. Координаты его вычисляются по номеру:  y = N / maxX   x = N % maxX
 	D         uint16       //[]Состояния дендритов. каждый бит отвечает за дендрит. Если он 1 - дендрит есть и его надо обрабатывать
-	dentrites [16]Dendrite //[]Координаты дендритов в общем файле синапсов, их типы и кальций в них
+	Dentrites [16]Dendrite //[]Координаты дендритов в общем файле синапсов, их типы и кальций в них
 	A         uint16       //[]Состояния аксонов. каждый бит отвечает за 1 аксон. Если он 1 - аксон есть и его надо обрабатывать
-	axons     [16]Axon     //[]Координаты аксонов в общем файле синапсов, количество везикул и кальций
+	Axons     [16]Axon     //[]Координаты аксонов в общем файле синапсов, количество везикул и кальций
 	//[]
 }
 
@@ -213,7 +213,7 @@ type Neuron struct {
 Нейрон ничего не знает прямо о своих связях - все есть химия
 */
 func (n *Neuron) Live() {
-	switch n.typen {
+	switch n.Typen {
 	case NEURONSTEM: //стволовая клетка
 		break
 	case NEURONACETILHOLIN: //ацх-эргическая

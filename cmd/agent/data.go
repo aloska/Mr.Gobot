@@ -42,55 +42,55 @@ data[6]:	d2Sx   byte //7:d2Sx  вторая производная по прос
 data[7]:	dSxdSt byte //(изменение сигнала по пространству отнесенное к изменению сигнала по времени, скорость изменения)
 */
 type DataByte struct {
-	data [8]byte
+	Data [8]byte
 }
 
 /*DataInt16 - ячейка с поинтовым16
  */
 type DataInt16 struct {
-	data [8]int16
+	Data [8]int16
 }
 
 /*DataInt32 - ячейка с поинтовым32
  */
 type DataInt32 struct {
-	data [8]int32
+	Data [8]int32
 }
 
 /*DataInt64 - ячейка с поинтовым64
  */
 type DataInt64 struct {
-	data [8]int64
+	Data [8]int64
 }
 
 /*DataUInt16 - ячейка с поинтовым16
  */
 type DataUInt16 struct {
-	data [8]uint16
+	Data [8]uint16
 }
 
 /*DataUInt32 - ячейка с поинтовым32
  */
 type DataUInt32 struct {
-	data [8]uint32
+	Data [8]uint32
 }
 
 /*DataUInt64 - ячейка с поинтовым64
  */
 type DataUInt64 struct {
-	data [8]uint64
+	Data [8]uint64
 }
 
 /*DataFloat32 - ячейка с плавающим
  */
 type DataFloat32 struct {
-	data [8]float32
+	Data [8]float32
 }
 
 /*DataFloat64 - ячейка с плавающим
  */
 type DataFloat64 struct {
-	data [8]float64
+	Data [8]float64
 }
 
 /*DataBit - ячейка с данными из битов (если существенны именно биты)
@@ -98,20 +98,20 @@ type DataFloat64 struct {
 
 */
 type DataBit struct {
-	data byte //данные
-	mask byte //маска битов
+	Data byte //данные
+	Mask byte //маска битов
 }
 
 /*DataRune - на самом деле, rune - это int32. Просто при обработке слов не нужны все эти производные - они не имеют смысла
 Поэтому, текстовые данные обрабатываем этой простой структурой из 4 байт
 */
 type DataRune struct {
-	data rune //
+	Data rune //
 
 }
 
 /*Datauint32 - просто число uint32
  */
 type Datauint32 struct {
-	data uint32
+	Data uint32
 }

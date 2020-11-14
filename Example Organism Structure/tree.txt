@@ -79,46 +79,70 @@
     |           Neuron-0.neurons
     |           Synapse-9.chemical
     |           
-    \---Senses
+    +---Senses
+    |   |   GenNeuron-0.genes
+    |   |   GenNeuron-1.genes
+    |   |   GenNeuron-2.genes
+    |   |   Neuron-0.neurons
+    |   |   Neuron-1.neurons
+    |   |   Neuron-2.neurons
+    |   |   Synapse-2.chemical
+    |   |   
+    |   +---Input-0
+    |   |       Data.data
+    |   |       GenData.genes
+    |   |       GenNeuron-0.genes
+    |   |       GenReceptor-0.genes
+    |   |       GenReceptor-1.genes
+    |   |       Neuron-0.neurons
+    |   |       Receptor-0.receptors
+    |   |       Receptor-1.receptors
+    |   |       Synapse-0.chemical
+    |   |       
+    |   +---Input-1
+    |   |       Data.data
+    |   |       GenData.genes
+    |   |       GenReceptor-0.genes
+    |   |       Receptor-0.receptors
+    |   |       
+    |   +---Input-2
+    |   |       Data.data
+    |   |       GenData.genes
+    |   |       GenNeuron-0.genes
+    |   |       GenReceptor-0.genes
+    |   |       Neuron-0.neurons
+    |   |       Receptor-0.receptors
+    |   |       Synapse-1.chemical
+    |   |       
+    |   \---Input-3
+    |           Data.data
+    |           GenData.genes
+    |           GenReceptor-0.genes
+    |           GenReceptor-1.genes
+    |           Receptor-0.receptors
+    |           Receptor-1.receptors
+    |           
+    \---Vegetatic
         |   GenNeuron-0.genes
         |   GenNeuron-1.genes
-        |   GenNeuron-2.genes
         |   Neuron-0.neurons
         |   Neuron-1.neurons
-        |   Neuron-2.neurons
-        |   Synapse-2.chemical
+        |   Synapse-12.chemical
         |   
-        +---Input-0
+        +---Effector-0
         |       Data.data
         |       GenData.genes
         |       GenNeuron-0.genes
-        |       GenReceptor-0.genes
-        |       GenReceptor-1.genes
+        |       GenPreffector-0.genes
+        |       GenPreffector-1.genes
         |       Neuron-0.neurons
-        |       Receptor-0.receptors
-        |       Receptor-1.receptors
-        |       Synapse-0.chemical
+        |       Preffector-0.preffectors
+        |       Preffector-1.preffectors
+        |       Synapse-11.chemical
         |       
-        +---Input-1
-        |       Data.data
-        |       GenData.genes
-        |       GenReceptor-0.genes
-        |       Receptor-0.receptors
-        |       
-        +---Input-2
-        |       Data.data
-        |       GenData.genes
-        |       GenNeuron-0.genes
-        |       GenReceptor-0.genes
-        |       Neuron-0.neurons
-        |       Receptor-0.receptors
-        |       Synapse-1.chemical
-        |       
-        \---Input-3
+        \---Effector-1
                 Data.data
                 GenData.genes
-                GenReceptor-0.genes
-                GenReceptor-1.genes
-                Receptor-0.receptors
-                Receptor-1.receptors
+                GenPreffector-0.genes
+                Preffector-0.preffectors
                 

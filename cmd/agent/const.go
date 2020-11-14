@@ -63,3 +63,27 @@ const (
 	//DENDRSERMETA - SER-метаб
 	DENDRSERMETA DendriteTypeEnum = 0x1d
 )
+
+/*DataTypeEnum - константы типов ячеек с данными входных и выходных файлов
+ */
+type DataTypeEnum uint16
+
+const (
+	/*DATAUINT32BIG - вот такой тип:
+	type DataUInt32 struct {
+		data [8]uint32
+	}
+	*/
+	DATAUINT32BIG DataTypeEnum = 6
+)
+
+/*ReceptorTypeEnum - константы типов рецепторов
+ */
+type ReceptorTypeEnum uint16
+
+const (
+	//RECEPTORDATAUINT32BIGPOS - позитивный рецептор, нацеленный на беззнаковое целое 4-байтовое
+	RECEPTORDATAUINT32BIGPOS ReceptorTypeEnum = 12
+	//RECEPTORDATAUINT32BIGNEG - отрицательный рецептор, нацеленный на беззнаковое целое 4-байтовое
+	RECEPTORDATAUINT32BIGNEG ReceptorTypeEnum = 13
+)

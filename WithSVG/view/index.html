@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<body>
+<table>
+    <tr style="vertical-align:top"><td>
+            <table>
+                <tr><td>
+                        <span  style="font-weight:bold">Ген рецептора:</span><br><br>
+                        <form action="/receptor-gen" target="output" method="post">
+                            <label>Ndata, NdataW, NdataWB:</label><br>
+                            <input type="text" id="Ndata" name="Ndata" value="0,0,0"><br>
+                            <label>Maxi, Maxj, Maxk:</label><br>
+                            <input type="text" id="Max" name="Max" value="9,0,0"><br>
+                            <label>Iteri, Iterj, Iterk:</label><br>
+                            <input type="text" id="Iter" name="Iter" value="1,1,1"><br><br>
+
+                            <label>Ax1stX, Ax1stY:</label><br>
+                            <input type="text" id="Ax1st" name="Ax1st" value="100,100"><br>
+                            <label>AxShiftX, AxShiftY:</label><br>
+                            <input type="text" id="AxShift" name="AxShift" value="1,0"><br>
+                            <label>AxNextShiftX, AxNextShiftY:</label><br>
+                            <input type="text" id="AxNextShift" name="AxNextShift" value="1,0"><br>
+
+                            <br><input type="submit" value="Submit">
+                        </form>
+                        <hr/>
+                    <td/></tr>
+                <tr><td>
+                        <span  style="font-weight:bold">Ген нейрона:</span><br><br>
+                        <form action="/neuron-gen" target="output" method="post">
+                            <label>Layers, Laywidth:</label><br>
+                            <input type="text" id="Lay" name="Lay" value="2,10"><br>
+
+                            <label>Soma1stX, Soma1stY:</label><br>
+                            <input type="text" id="Soma1st" name="Soma1st" value="50,50"><br>
+                            <label>SomaNextShiftX, SomaNextShiftY:</label><br>
+                            <input type="text" id="SomaNextShift" name="SomaNextShift" value="1,0"><br>
+                            <label>SomaLayerShiftX, SomaLayerShiftY:</label><br>
+                            <input type="text" id="SomaLayerShift" name="SomaLayerShift" value="0,1"><br>
+
+                            <label>Dend1stX, Dend1stY:</label><br>
+                            <input type="text" id="Dend1st" name="Dend1st" value="10,10"><br>
+                            <label>DendShiftX, DendShiftY:</label><br>
+                            <input type="text" id="DendShift" name="DendShift" value="1,0"><br>
+                            <label>DendNextShiftX, DendNextShiftY:</label><br>
+                            <input type="text" id="DendNextShift" name="DendNextShift" value="16,0"><br>
+                            <label>DendLayerShiftX, DendLayerShiftY:</label><br>
+                            <input type="text" id="DendLayerShift" name="DendLayerShift" value="0,5"><br>
+
+                            <label>Ax1stX, Ax1stY:</label><br>
+                            <input type="text" id="Ax1st" name="Ax1st" value="10,200"><br>
+                            <label>AxShiftX, AxShiftY:</label><br>
+                            <input type="text" id="AxShift" name="AxShift" value="1,0"><br>
+                            <label>AxNextShiftX, AxNextShiftY:</label><br>
+                            <input type="text" id="AxNextShift" name="AxNextShift" value="16,0"><br>
+                            <label>AxLayerShiftX, AxLayerShiftY:</label><br>
+                            <input type="text" id="AxLayerShift" name="AxLayerShift" value="0,5"><br>
+
+                            <br><input type="submit" value="Submit">
+                        </form>
+                        <hr/>
+                    <td/></tr>
+                <tr><td>
+                        <span  style="font-weight:bold">Ген пресептора:</span><br><br>
+                        <form action="/preffector-gen" target="output" method="post">
+                            <br><input type="submit" value="Submit">
+                        </form>
+                        <hr/>
+                    <td/></tr>
+            </table>
+        <td/><td>
+            <table>
+                <tr><th>
+                        <iframe name="output" height="10000" width="1000"></iframe>
+                    </th> </tr>
+            </table>
+        </td></tr>
+</table>
+</body>
+</html>

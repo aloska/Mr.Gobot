@@ -186,8 +186,21 @@ type Effector struct {
 /*Actions - все выходы (действия организма, кроме внутренних)
  */
 type Actions struct {
-	path      string     //папка, где расположены все входы
+	path      string     //папка, где расположены все выходы
 	effectors []Effector //все выходы
+
+	organism *Organism //ссылка на весь родительский организм
+}
+
+/*Vegetatic - вегетативная нервная система
+
+ */
+type Vegetatic struct {
+	path      string     //папка, где расположены файлы вегетативной
+	effectors []Effector //эффекторы вегетативной системы (сердце, дыхание, питание, очищение)
+
+	synapses Synapses //обслуживает файл с синапсами этого выхода (если они есть!!)
+	cells    []Cells  //слайс обслуживает файлы с нейронами и геномами этих нейронов, если они заданы
 
 	organism *Organism //ссылка на весь родительский организм
 }
@@ -196,9 +209,10 @@ type Actions struct {
 
  */
 type Organism struct {
-	brain   Brain   //мозг из ядер
-	senses  Senses  //ощущения (входы, рецепторы...)
-	actions Actions //действия
+	brain     Brain     //мозг из ядер
+	senses    Senses    //ощущения (входы, рецепторы...)
+	actions   Actions   //действия
+	vegetatic Vegetatic //вегетативная система
 }
 
 //Live ...
@@ -289,48 +303,72 @@ func (o *Organism) Live() {
     |           Neuron-0.neurons
     |           Synapse-9.chemical
     |
-    \---Senses
+    +---Senses
+    |   |   GenNeuron-0.genes
+    |   |   GenNeuron-1.genes
+    |   |   GenNeuron-2.genes
+    |   |   Neuron-0.neurons
+    |   |   Neuron-1.neurons
+    |   |   Neuron-2.neurons
+    |   |   Synapse-2.chemical
+    |   |
+    |   +---Input-0
+    |   |       Data.data
+    |   |       GenData.genes
+    |   |       GenNeuron-0.genes
+    |   |       GenReceptor-0.genes
+    |   |       GenReceptor-1.genes
+    |   |       Neuron-0.neurons
+    |   |       Receptor-0.receptors
+    |   |       Receptor-1.receptors
+    |   |       Synapse-0.chemical
+    |   |
+    |   +---Input-1
+    |   |       Data.data
+    |   |       GenData.genes
+    |   |       GenReceptor-0.genes
+    |   |       Receptor-0.receptors
+    |   |
+    |   +---Input-2
+    |   |       Data.data
+    |   |       GenData.genes
+    |   |       GenNeuron-0.genes
+    |   |       GenReceptor-0.genes
+    |   |       Neuron-0.neurons
+    |   |       Receptor-0.receptors
+    |   |       Synapse-1.chemical
+    |   |
+    |   \---Input-3
+    |           Data.data
+    |           GenData.genes
+    |           GenReceptor-0.genes
+    |           GenReceptor-1.genes
+    |           Receptor-0.receptors
+    |           Receptor-1.receptors
+    |
+    \---Vegetatic
         |   GenNeuron-0.genes
         |   GenNeuron-1.genes
-        |   GenNeuron-2.genes
         |   Neuron-0.neurons
         |   Neuron-1.neurons
-        |   Neuron-2.neurons
-        |   Synapse-2.chemical
+        |   Synapse-12.chemical
         |
-        +---Input-0
+        +---Effector-0
         |       Data.data
         |       GenData.genes
         |       GenNeuron-0.genes
-        |       GenReceptor-0.genes
-        |       GenReceptor-1.genes
+        |       GenPreffector-0.genes
+        |       GenPreffector-1.genes
         |       Neuron-0.neurons
-        |       Receptor-0.receptors
-        |       Receptor-1.receptors
-        |       Synapse-0.chemical
+        |       Preffector-0.preffectors
+        |       Preffector-1.preffectors
+        |       Synapse-11.chemical
         |
-        +---Input-1
-        |       Data.data
-        |       GenData.genes
-        |       GenReceptor-0.genes
-        |       Receptor-0.receptors
-        |
-        +---Input-2
-        |       Data.data
-        |       GenData.genes
-        |       GenNeuron-0.genes
-        |       GenReceptor-0.genes
-        |       Neuron-0.neurons
-        |       Receptor-0.receptors
-        |       Synapse-1.chemical
-        |
-        \---Input-3
+        \---Effector-1
                 Data.data
                 GenData.genes
-                GenReceptor-0.genes
-                GenReceptor-1.genes
-                Receptor-0.receptors
-                Receptor-1.receptors
+                GenPreffector-0.genes
+                Preffector-0.preffectors
 
 
 */
