@@ -1,80 +1,231 @@
 <!DOCTYPE html>
 <html>
+<head>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
+    <style type="text/css">
+        .iframe-style{
+
+            display: block;
+            border: none;
+            padding: 0px;
+            background: #FFFFFF;
+            margin: 10px 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.22);
+            -moz-box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.22);
+            -webkit-box-shadow:  0px 0px 15px rgba(0, 0, 0, 0.22);
+        }
+        .iframe-style iframe{
+
+            border: none;
+        }
+        .form-style-8{
+            font-family: 'Open Sans Condensed', arial, sans;
+            width: 200px;
+            padding: 10px;
+            background: #FFFFFF;
+            margin: 10px 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.22);
+            -moz-box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.22);
+            -webkit-box-shadow:  0px 0px 15px rgba(0, 0, 0, 0.22);
+
+        }
+        .form-style-8 h2{
+            background: #4D4D4D;
+            text-transform: uppercase;
+            font-family: 'Open Sans Condensed', sans-serif;
+            color: #999999;
+            font-size: 18px;
+            font-weight: 100;
+            padding: 10px;
+            margin: -10px -10px 10px -10px;
+        }
+        .form-style-8 input[type="text"],
+        .form-style-8 input[type="date"],
+        .form-style-8 input[type="datetime"],
+        .form-style-8 input[type="email"],
+        .form-style-8 input[type="number"],
+        .form-style-8 input[type="search"],
+        .form-style-8 input[type="time"],
+        .form-style-8 input[type="url"],
+        .form-style-8 input[type="password"],
+        .form-style-8 textarea,
+        .form-style-8 select
+        {
+            box-sizing: border-box;
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            outline: none;
+            display: block;
+            width: 100%;
+            padding: 0px;
+            border: none;
+            border-bottom: 1px solid #ddd;
+            background: transparent;
+            margin-bottom: 10px;
+            font: 16px Arial, Helvetica, sans-serif;
+            height: 45px;
+        }
+        .form-style-8 textarea{
+            resize:none;
+            overflow: hidden;
+        }
+        .form-style-8 input[type="button"],
+        .form-style-8 input[type="submit"]{
+            -moz-box-shadow: inset 0px 1px 0px 0px #45D6D6;
+            -webkit-box-shadow: inset 0px 1px 0px 0px #45D6D6;
+            box-shadow: inset 0px 1px 0px 0px #45D6D6;
+            background-color: #2CBBBB;
+            border: 1px solid #27A0A0;
+            display: inline-block;
+            cursor: pointer;
+            color: #FFFFFF;
+            font-family: 'Open Sans Condensed', sans-serif;
+            font-size: 14px;
+            padding: 8px 18px;
+            text-decoration: none;
+            text-transform: uppercase;
+        }
+        .form-style-8 input[type="button"]:hover,
+        .form-style-8 input[type="submit"]:hover {
+            background:linear-gradient(to bottom, #34CACA 5%, #30C9C9 100%);
+            background-color:#34CACA;
+        }
+
+    </style>
+    <script type="text/javascript">
+        //auto expand textarea
+        function adjust_textarea(h) {
+            h.style.height = "20px";
+            h.style.height = (h.scrollHeight)+"px";
+        }
+    </script>
+</head>
 <body>
 <table>
-    <tr style="vertical-align:top"><td>
+    <tr>
+        <td>
+            <div class="form-style-8">
+                <h2>Установки</h2>
+                <form action="/set-settings" target="output" method="post">
+                    <label>Массштаб:</label>
+                    <input type="text" id="Scale" name="Scale" value="5">
+                    <label>Ширина поля синапсов:</label>
+                    <input type="text" id="MaxX" name="MaxX" value="1000">
+                    <input type="submit" value="Установить">
+                </form>
+            </div>
+        </td>
+        <td>
+            <div class="form-style-8">
+                <h2>Удалить сущность</h2>
+                <form action="/del-entities" target="output" method="post">
+                    <label>Ген рецептора №:</label>
+                    <input type="text" id="DelRecept" name="DelRecept" value="">
+                    <label>Ген Нейрона №:</label>
+                    <input type="text" id="DelNeuron" name="DelNeuron" value="">
+                    <label>Ген преффектора №:</label>
+                    <input type="text" id="DelPreffector" name="DelPreffector" value="">
+                    <input type="submit" value="Удалить">
+                </form>
+            </div>
+        </td>
+    </tr>
+    <tr style="vertical-align:top">
+        <td>
             <table>
                 <tr><td>
-                        <span  style="font-weight:bold">Ген рецептора:</span><br><br>
+                        <div class="form-style-8">
+                        <h2>Ген рецепторов</h2>
                         <form action="/receptor-gen" target="output" method="post">
-                            <label>Ndata, NdataW, NdataWB:</label><br>
-                            <input type="text" id="Ndata" name="Ndata" value="0,0,0"><br>
-                            <label>Maxi, Maxj, Maxk:</label><br>
-                            <input type="text" id="Max" name="Max" value="9,0,0"><br>
-                            <label>Iteri, Iterj, Iterk:</label><br>
-                            <input type="text" id="Iter" name="Iter" value="1,1,1"><br><br>
+                            <label>Ndata, NdataW, NdataWB:</label>
+                            <input type="text" id="Ndata" name="Ndata" value="0,0,0">
+                            <label>Maxi, Maxj, Maxk:</label>
+                            <input type="text" id="Max" name="Max" value="9,0,0">
+                            <label>Iteri, Iterj, Iterk:</label>
+                            <input type="text" id="Iter" name="Iter" value="1,1,1">
 
-                            <label>Ax1stX, Ax1stY:</label><br>
-                            <input type="text" id="Ax1st" name="Ax1st" value="100,100"><br>
-                            <label>AxShiftX, AxShiftY:</label><br>
-                            <input type="text" id="AxShift" name="AxShift" value="1,0"><br>
-                            <label>AxNextShiftX, AxNextShiftY:</label><br>
-                            <input type="text" id="AxNextShift" name="AxNextShift" value="1,0"><br>
+                            <label>Ax1stX, Ax1stY:</label>
+                            <input type="text" id="Ax1st" name="Ax1st" value="100,100">
+                            <label>AxShiftX, AxShiftY:</label>
+                            <input type="text" id="AxShift" name="AxShift" value="1,0">
+                            <label>AxNextShiftX, AxNextShiftY:</label>
+                            <input type="text" id="AxNextShift" name="AxNextShift" value="1,0">
 
-                            <br><input type="submit" value="Submit">
+                            <input type="submit" value="Добавить">
                         </form>
-                        <hr/>
+                        </div>
                     <td/></tr>
                 <tr><td>
-                        <span  style="font-weight:bold">Ген нейрона:</span><br><br>
+                        <div class="form-style-8">
+                        <h2>Ген нейронов</h2>
                         <form action="/neuron-gen" target="output" method="post">
                             <label>Layers, Laywidth:</label><br>
-                            <input type="text" id="Lay" name="Lay" value="2,10"><br>
+                            <input type="text" id="Lay" name="Lay" value="2,10">
 
-                            <label>Soma1stX, Soma1stY:</label><br>
-                            <input type="text" id="Soma1st" name="Soma1st" value="50,50"><br>
-                            <label>SomaNextShiftX, SomaNextShiftY:</label><br>
-                            <input type="text" id="SomaNextShift" name="SomaNextShift" value="1,0"><br>
-                            <label>SomaLayerShiftX, SomaLayerShiftY:</label><br>
-                            <input type="text" id="SomaLayerShift" name="SomaLayerShift" value="0,1"><br>
+                            <label>Soma1stX, Soma1stY:</label>
+                            <input type="text" id="Soma1st" name="Soma1st" value="50,50">
+                            <label>SomaNextShiftX, SomaNextShiftY:</label>
+                            <input type="text" id="SomaNextShift" name="SomaNextShift" value="1,0">
+                            <label>SomaLayerShiftX, SomaLayerShiftY:</label>
+                            <input type="text" id="SomaLayerShift" name="SomaLayerShift" value="0,1">
 
-                            <label>Dend1stX, Dend1stY:</label><br>
-                            <input type="text" id="Dend1st" name="Dend1st" value="10,10"><br>
-                            <label>DendShiftX, DendShiftY:</label><br>
-                            <input type="text" id="DendShift" name="DendShift" value="1,0"><br>
-                            <label>DendNextShiftX, DendNextShiftY:</label><br>
-                            <input type="text" id="DendNextShift" name="DendNextShift" value="16,0"><br>
-                            <label>DendLayerShiftX, DendLayerShiftY:</label><br>
-                            <input type="text" id="DendLayerShift" name="DendLayerShift" value="0,5"><br>
+                            <label>Dend1stX, Dend1stY:</label>
+                            <input type="text" id="Dend1st" name="Dend1st" value="10,10">
+                            <label>DendShiftX, DendShiftY:</label>
+                            <input type="text" id="DendShift" name="DendShift" value="1,0">
+                            <label>DendNextShiftX, DendNextShiftY:</label>
+                            <input type="text" id="DendNextShift" name="DendNextShift" value="16,0">
+                            <label>DendLayerShiftX, DendLayerShiftY:</label>
+                            <input type="text" id="DendLayerShift" name="DendLayerShift" value="0,5">
 
-                            <label>Ax1stX, Ax1stY:</label><br>
-                            <input type="text" id="Ax1st" name="Ax1st" value="10,200"><br>
-                            <label>AxShiftX, AxShiftY:</label><br>
-                            <input type="text" id="AxShift" name="AxShift" value="1,0"><br>
-                            <label>AxNextShiftX, AxNextShiftY:</label><br>
-                            <input type="text" id="AxNextShift" name="AxNextShift" value="16,0"><br>
-                            <label>AxLayerShiftX, AxLayerShiftY:</label><br>
-                            <input type="text" id="AxLayerShift" name="AxLayerShift" value="0,5"><br>
+                            <label>Ax1stX, Ax1stY:</label>
+                            <input type="text" id="Ax1st" name="Ax1st" value="10,200">
+                            <label>AxShiftX, AxShiftY:</label>
+                            <input type="text" id="AxShift" name="AxShift" value="1,0">
+                            <label>AxNextShiftX, AxNextShiftY:</label>
+                            <input type="text" id="AxNextShift" name="AxNextShift" value="16,0">
+                            <label>AxLayerShiftX, AxLayerShiftY:</label>
+                            <input type="text" id="AxLayerShift" name="AxLayerShift" value="0,5">
 
-                            <br><input type="submit" value="Submit">
+                            <input type="submit" value="Добавить">
                         </form>
-                        <hr/>
+                        </div>
                     <td/></tr>
                 <tr><td>
-                        <span  style="font-weight:bold">Ген пресептора:</span><br><br>
+                        <div class="form-style-8">
+                        <h2>Ген пресепторов</h2>
                         <form action="/preffector-gen" target="output" method="post">
-                            <br><input type="submit" value="Submit">
+                            <label>Ndata, NdataW, NdataWB:</label>
+                            <input type="text" id="Ndata" name="Ndata" value="0,0,0">
+                            <label>Maxi, Maxj, Maxk:</label>
+                            <input type="text" id="Max" name="Max" value="9,0,0">
+                            <label>Iteri, Iterj, Iterk:</label>
+                            <input type="text" id="Iter" name="Iter" value="1,1,1">
+
+                            <label>Dend1stX, Dend1stY:</label>
+                            <input type="text" id="Dend1st" name="Dend1st" value="100,100">
+                            <label>DendShiftX, DendShiftY:</label>
+                            <input type="text" id="DendShift" name="DendShift" value="1,0">
+                            <label>DendNextShiftX, DendNextShiftY:</label>
+                            <input type="text" id="DendNextShift" name="DendNextShift" value="1,0">
+
+                            <input type="submit" value="Добавить">
                         </form>
-                        <hr/>
+                        </div>
                     <td/></tr>
             </table>
-        <td/><td>
+        <td/>
+        <td>
             <table>
                 <tr><th>
-                        <iframe name="output" height="10000" width="1000"></iframe>
+                        <div class="iframe-style">
+                        <iframe name="output" height="1000" width="1050"></iframe>
+                        </div>
                     </th> </tr>
             </table>
-        </td></tr>
+        </td>
+    </tr>
+
 </table>
 </body>
 </html>
