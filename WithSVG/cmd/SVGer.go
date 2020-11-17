@@ -13,11 +13,11 @@ func  setsettings(c* gin.Context)  {
 	if sc, err:=strconv.Atoi(c.PostForm("Scale"));err==nil{
 		scale = sc
 	}	else{
-	  svgError(c)
+	  svgError(c,"setsettings: bad integer")
 	  return
 	}
-	ViewX=getfromstringslice(maxxyslice, c, 0)
-	ViewY=getfromstringslice(maxxyslice, c, 0)
+	ViewX=int(getfromstringslice(maxxyslice, c, 0))
+	ViewY=int(getfromstringslice(maxxyslice, c, 0))
 	drawall(c)
 }
 
@@ -51,17 +51,19 @@ func helloPage (c* gin.Context){
 	s.End()
 }
 
-func getfromstringslice(s []string, c *gin.Context, i int) int{
+func getfromstringslice(s []string, c *gin.Context, i int) uint64{
 	if i>=len(s){
-		svgError(c)
+		svgError(c,"getfromstringslice: index too big")
 		return 0
 	}
-	ret, err:= strconv.Atoi(s[i])
-	if err!=nil{
-		svgError(c)
+
+	if ii, err := strconv.ParseUint(s[i], 0, 64); err == nil {
+		return ii
+	}else {
+		svgError(c, "getfromstringslice: bad integer")
 		return 0
 	}
-	return ret
+
 }
 
 func receptorgen (c* gin.Context){
@@ -273,6 +275,9 @@ func drawall(c*gin.Context){
 	s := svg.New(c.Writer)
 	s.StartviewUnit(100,100, "%", 0,0,ViewX*scale,ViewY*scale)
 
+	if gridshow{
+		s.Grid(gridX*scale,gridY*scale,gridW*scale,gridH*scale,gridN*scale,"stroke-width:0.1;stroke:grey;stroke-dasharray:1")
+	}
 	var sdrawX, sdrawY int
 	//рецепторы
 	for _, rrr:=range greceptors{
@@ -406,8 +411,8 @@ func drawall(c*gin.Context){
 		for c:=0; c<cur; c++ {
 			xs:=x
 			ys:=y
-			for i:=0;i<32;i++{
-				drawDendrAxStyle(s,int(x),int(y),1,"stroke:blue;stroke-width:0.2")
+			for i:=0;i<64;i++{
+				drawDendrAxStyle(s,int(x),int(y),1,"fill:none;stroke:blue;stroke-width:0.2")
 				if c==PdrawConnector{
 					drawConnectPreffector(s, sdrawX,sdrawY, int(x),int(y),"stroke-width:0.2;stroke:red")
 
@@ -425,13 +430,14 @@ func drawall(c*gin.Context){
 }
 
 
-func svgError(c* gin.Context){
+func svgError(c* gin.Context, err string){
 	globalErr=true
 	s := svg.New(c.Writer)
 	s.StartviewUnit (100,100,"%",0,0,ViewX*scale, ViewY*scale)
-	s.Circle(250, 250, 250, "fill:orange;stroke:red;stroke-width:4")
-	s.Gstyle("fill:red;font-size:20pt;text-anchor:middle;font-family:monospace")
-	s.Text(250,250, "Плохо форму заполнил!")
+	s.Circle(ViewX/2, ViewY/2, ViewY/3, "fill:orange;stroke:red;stroke-width:4")
+	s.Gstyle("fill:red;font-size:"+strconv.Itoa(ViewX/16*scale)+"pt;text-anchor:middle;font-family:monospace")
+	s.Text(ViewX/2*scale,ViewY/2*scale, "Плохо форму заполнил!")
+	s.Text(ViewX/2*scale,ViewY/2*scale+scale*10, err)
 	s.Gend()
 	s.End()
 }

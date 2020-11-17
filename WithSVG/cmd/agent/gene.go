@@ -232,7 +232,7 @@ type GenReceptor struct {
 
  */
 type GenPreffector struct {
-	Typep uint16   //тип преффектора
+	Typep PreffectorTypeEnum   //тип преффектора
 	Coren CoreEnum //синаптическое поле, где лежат дендриты преффектора (может быть свое поле)
 
 	Ndata   uint32 //стартовое значение цикла по i - чаще всего используется для номера ячейки данных, т.к. самих ячеек больше всего обычно

@@ -87,3 +87,14 @@ const (
 	//RECEPTORDATAUINT32BIGNEG - отрицательный рецептор, нацеленный на беззнаковое целое 4-байтовое
 	RECEPTORDATAUINT32BIGNEG ReceptorTypeEnum = 13
 )
+
+/*PreffectorTypeEnum - константы типов преффекторов
+*/
+type PreffectorTypeEnum uint16
+
+const (
+	//PREFFECTORUINT32POS - позитивный преффектор, нацеленный на беззнаковое целое 4-байтовое
+	PREFFECTORUINT32POS PreffectorTypeEnum=12
+	//PREFFECTORUINT32NEG - отрицательный преффектор, нацеленный на беззнаковое целое 4-байтовое
+	PREFFECTORUINT32NEG PreffectorTypeEnum=13
+)

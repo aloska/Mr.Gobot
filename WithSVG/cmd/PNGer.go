@@ -39,6 +39,6 @@ func hellopng (c* gin.Context){
 		c.Status(http.StatusOK)
 		io.Copy(c.Writer, rdr)
 	}	else{
-		svgError(c)
+		svgError(c,err.Error())
 	}
 }
