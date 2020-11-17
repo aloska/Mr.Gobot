@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="http://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css"  />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script type="module" src="https://unpkg.com/ionicons@5.2.3/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule="" src="https://unpkg.com/ionicons@5.2.3/dist/ionicons/ionicons.js"></script>
+    <script src="plain-draggable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.5.0/dist/svg-pan-zoom.min.js"></script>
+    <title>Генетика</title>
+
+    <style>
+        body {
+            /*font-size: 62.5%;*/
+            background: #f6f6f6;
+            font-family: 'Open Sans Condensed', arial, sans;
+            /*line-height: 2;*/
+            /*padding: 5em;*/
+        }
+
+        .accordion {
+            font-size: 1rem;
+            width: 500px;
+            margin: 0 auto;
+            border-radius: 5px;
+        }
+
+        .accordion-header,
+        .accordion-body {
+            background: #d7d7d7;
+        }
+
+        .accordion-header {
+            padding: 1em 1em;
+            background: #5b659a;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 0.8em;
+            letter-spacing: .1em;
+            transition: all .3s;
+            text-transform: uppercase;
+        }
+
+        .accordion__item {
+            border-bottom: 1px solid #515776;
+        }
+
+        .accordion__item .accordion__item {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .accordion-header:hover {
+            background: #8e99d2;
+            position: relative;
+            z-index: 5;
+        }
+
+        .accordion-body {
+            background: #fcfcfc;
+            color: #353535;
+            display: none;
+        }
+
+        .accordion-body__contents {
+            padding: 1em 1em;
+            font-size: .85em;
+        }
+
+        .accordion__item.active:last-child .accordion-header {
+            border-radius: unset;
+        }
+
+        .accordion:first-child > .accordion__item > .accordion-header {
+            border-bottom: 1px solid transparent;
+        }
+
+        .accordion__item > .accordion-header:after {
+            content: "\f3d0";
+            font-family: IonIcons;
+            font-size: 1.2em;
+            float: right;
+            position: relative;
+            top: -2px;
+            transition: .3s all;
+            transform: rotate(0deg);
+        }
+
+        .accordion__item.active > .accordion-header:after {
+            transform: rotate(-180deg);
+        }
+
+        .accordion__item.active .accordion-header {
+            background: #49a5a5;
+        }
+
+        .accordion__item .accordion__item .accordion-header {
+            background: #f1f1f1;
+            color: #353535;
+        }
+
+        @media screen and (max-width: 1000px) {
+            body {
+                padding: 1em;
+            }
+
+            .accordion {
+                width: 500px;
+            }
+        }
+
+        .iframe-style{
+            alignment: top;
+            display: block;
+            border: none;
+            padding: 0px;
+            background: #FFFFFF;
+            margin: 10px 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.22);
+            -moz-box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.22);
+            -webkit-box-shadow:  0px 0px 15px rgba(0, 0, 0, 0.22);
+        }
+        .iframe-style iframe{
+
+            width: 100%;
+            border: none;
+
+        }
+        .form-style-8{
+            position: absolute;
+            font-family: 'Open Sans Condensed', arial, sans;
+            width: 500px;
+            padding: 0px;
+            background: #FFFFFF;
+            margin: 10px 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.22);
+            -moz-box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.22);
+            -webkit-box-shadow:  0px 0px 15px rgba(0, 0, 0, 0.22);
+
+        }
+        .form-style-8 h2{
+            background: #515776;
+            text-transform: uppercase;
+            font-family: 'Open Sans Condensed', sans-serif;
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 100;
+            padding: 10px;
+            margin: -10px -10px 10px -10px;
+        }
+        .form-style-8 input[type="text"],
+        .form-style-8 input[type="date"],
+        .form-style-8 input[type="datetime"],
+        .form-style-8 input[type="email"],
+        .form-style-8 input[type="number"],
+        .form-style-8 input[type="search"],
+        .form-style-8 input[type="time"],
+        .form-style-8 input[type="url"],
+        .form-style-8 input[type="password"],
+        .form-style-8 textarea,
+        .form-style-8 select
+        {
+            box-sizing: border-box;
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            outline: none;
+            display: block;
+            width: 100%;
+            padding: 0px;
+            border: none;
+            border-bottom: 1px solid #ddd;
+            background: transparent;
+            margin-bottom: 10px;
+            font: 16px Arial, Helvetica, sans-serif;
+            height: 45px;
+        }
+        .form-style-8 textarea{
+            resize:none;
+            overflow: hidden;
+        }
+        .form-style-8 input[type="button"],
+        .form-style-8 input[type="submit"]{
+            -moz-box-shadow: inset 0px 1px 0px 0px #45D6D6;
+            -webkit-box-shadow: inset 0px 1px 0px 0px #45D6D6;
+            box-shadow: inset 0px 1px 0px 0px #45D6D6;
+            background-color: #2CBBBB;
+            border: 1px solid #27A0A0;
+            display: inline-block;
+            cursor: pointer;
+            color: #FFFFFF;
+            font-family: 'Open Sans Condensed', sans-serif;
+            font-size: 14px;
+            padding: 8px 18px;
+            text-decoration: none;
+            text-transform: uppercase;
+        }
+        .form-style-8 input[type="button"]:hover,
+        .form-style-8 input[type="submit"]:hover {
+            background:linear-gradient(to bottom, #34CACA 5%, #30C9C9 100%);
+            background-color:#34CACA;
+        }
+
+        div#accord{
+            left: 800px;
+            top: 0px;
+        }
+    </style>
+</head>
+<body>
+<div class="iframe-style">
+    <iframe id="iframeid" name="output" height="1000"></iframe>
+</div>
+
+<div class="accordion js-accordion form-style-8" id="accord">
+    <h2 class="draggable">Генетика организма</h2>
+    <div class="accordion__item js-accordion-item">
+        <div class="accordion-header js-accordion-header">Генерация генов</div>
+        <div class="accordion-body js-accordion-body">
+            <!--div class="accordion-body__contents">
+            </div-->
+            <div class="accordion js-accordion">
+                <div class="accordion__item js-accordion-item">
+                    <div class="accordion-header js-accordion-header">Ген рецепторов</div>
+                    <div class="accordion-body js-accordion-body">
+                        <div class="accordion-body__contents">
+                            <form action="/receptor-gen" target="output" method="post">
+                                <label>Ndata, NdataW, NdataWB:</label>
+                                <input type="text" id="Ndata" name="Ndata" value="0,0,0">
+                                <label>Maxi, Maxj, Maxk:</label>
+                                <input type="text" id="Max" name="Max" value="9,0,0">
+                                <label>Iteri, Iterj, Iterk:</label>
+                                <input type="text" id="Iter" name="Iter" value="1,1,1">
+
+                                <label>Ax1stX, Ax1stY:</label>
+                                <input type="text" id="Ax1st" name="Ax1st" value="100,100">
+                                <label>AxShiftX, AxShiftY:</label>
+                                <input type="text" id="AxShift" name="AxShift" value="1,0">
+                                <label>AxNextShiftX, AxNextShiftY:</label>
+                                <input type="text" id="AxNextShift" name="AxNextShift" value="1,0">
+
+                                <input type="submit" value="Добавить">
+                            </form>
+                        </div><!-- end of sub accordion item body contents -->
+                    </div><!-- end of sub accordion item body -->
+                </div><!-- end of sub accordion item -->
+                <div class="accordion__item js-accordion-item">
+                    <div class="accordion-header js-accordion-header">Ген нейронов</div>
+                    <div class="accordion-body js-accordion-body">
+                        <div class="accordion-body__contents">
+                            <form action="/neuron-gen" target="output" method="post" onsubmit="formsubmit();">
+                                <label>Layers, Laywidth:</label><br>
+                                <input type="text" id="Lay" name="Lay" value="2,10">
+
+                                <label>Soma1stX, Soma1stY:</label>
+                                <input type="text" id="Soma1st" name="Soma1st" value="50,50">
+                                <label>SomaNextShiftX, SomaNextShiftY:</label>
+                                <input type="text" id="SomaNextShift" name="SomaNextShift" value="1,0">
+                                <label>SomaLayerShiftX, SomaLayerShiftY:</label>
+                                <input type="text" id="SomaLayerShift" name="SomaLayerShift" value="0,1">
+
+                                <label>Dend1stX, Dend1stY:</label>
+                                <input type="text" id="Dend1st" name="Dend1st" value="10,10">
+                                <label>DendShiftX, DendShiftY:</label>
+                                <input type="text" id="DendShift" name="DendShift" value="1,0">
+                                <label>DendNextShiftX, DendNextShiftY:</label>
+                                <input type="text" id="DendNextShift" name="DendNextShift" value="16,0">
+                                <label>DendLayerShiftX, DendLayerShiftY:</label>
+                                <input type="text" id="DendLayerShift" name="DendLayerShift" value="0,5">
+
+                                <label>Ax1stX, Ax1stY:</label>
+                                <input type="text" id="Ax1st" name="Ax1st" value="10,200">
+                                <label>AxShiftX, AxShiftY:</label>
+                                <input type="text" id="AxShift" name="AxShift" value="1,0">
+                                <label>AxNextShiftX, AxNextShiftY:</label>
+                                <input type="text" id="AxNextShift" name="AxNextShift" value="16,0">
+                                <label>AxLayerShiftX, AxLayerShiftY:</label>
+                                <input type="text" id="AxLayerShift" name="AxLayerShift" value="0,5">
+
+                                <input type="submit" value="Добавить">
+                            </form>
+                        </div><!-- end of sub accordion item body contents -->
+                    </div><!-- end of sub accordion item body -->
+                </div><!-- end of sub accordion item -->
+                <div class="accordion__item js-accordion-item">
+                    <div class="accordion-header js-accordion-header">Ген преффекторов</div>
+                    <div class="accordion-body js-accordion-body">
+                        <div class="accordion-body__contents">
+                            <form action="/preffector-gen" target="output" method="post">
+                                <label>Ndata, NdataW, NdataWB:</label>
+                                <input type="text" id="Ndata" name="Ndata" value="0,0,0">
+                                <label>Maxi, Maxj, Maxk:</label>
+                                <input type="text" id="Max" name="Max" value="9,0,0">
+                                <label>Iteri, Iterj, Iterk:</label>
+                                <input type="text" id="Iter" name="Iter" value="1,1,1">
+
+                                <label>Dend1stX, Dend1stY:</label>
+                                <input type="text" id="Dend1st" name="Dend1st" value="100,100">
+                                <label>DendShiftX, DendShiftY:</label>
+                                <input type="text" id="DendShift" name="DendShift" value="1,0">
+                                <label>DendNextShiftX, DendNextShiftY:</label>
+                                <input type="text" id="DendNextShift" name="DendNextShift" value="1,0">
+
+                                <input type="submit" value="Добавить">
+                            </form>
+                        </div><!-- end of sub accordion item body contents -->
+                    </div><!-- end of sub accordion item body -->
+                </div><!-- end of sub accordion item -->
+            </div><!-- end of sub accordion -->
+    </div><!-- end of accordion body -->
+</div><!-- end of accordion item -->
+<div class="accordion__item js-accordion-item">
+    <div class="accordion-header js-accordion-header" id="delentitiesdiv">Удаление генов</div>
+    <div class="accordion-body js-accordion-body">
+        <div class="accordion-body__contents">
+            <form action="/del-entities" target="output" method="post">
+                <label>Ген рецептора №:</label>
+                <input type="text" id="DelRecept" name="DelRecept" value="">
+                <label>Ген Нейрона №:</label>
+                <input type="text" id="DelNeuron" name="DelNeuron" value="">
+                <label>Ген преффектора №:</label>
+                <input type="text" id="DelPreffector" name="DelPreffector" value="">
+                <input type="submit" value="Удалить">
+            </form>
+        </div>
+    </div><!-- end of accordion body -->
+</div><!-- end of accordion item -->
+<div class="accordion__item js-accordion-item">
+    <div class="accordion-header js-accordion-header">Опции</div>
+    <div class="accordion-body js-accordion-body">
+        <div class="accordion-body__contents">
+            Установи ченить, а?
+        </div>
+        <div class="accordion js-accordion">
+            <div class="accordion__item js-accordion-item">
+                <div class="accordion-header js-accordion-header">Установки</div>
+                <div class="accordion-body js-accordion-body">
+                    <div class="accordion-body__contents">
+                        <form action="/set-settings" target="output" method="post">
+                            <label>Массштаб:</label>
+                            <input type="text" id="Scale" name="Scale" value="5">
+                            <label>Ширина и высота поля синапсов:</label>
+                            <input type="text" id="MaxXY" name="MaxXY" value="1000,1000">
+                            <input type="submit" value="Установить">
+                        </form>
+                    </div><!-- end of sub accordion item body contents -->
+                </div><!-- end of sub accordion item body -->
+            </div><!-- end of sub accordion item -->
+            <div class="accordion__item js-accordion-item">
+                <div class="accordion-header js-accordion-header">Sub Panel 2</div>
+                <div class="accordion-body js-accordion-body">
+                    <div class="accordion-body__contents">
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos sequi placeat distinctio dolor, amet magnam voluptatibus eos ex vero, sunt veritatis esse. Nostrum voluptatum et repudiandae vel sed, explicabo in?
+                    </div><!-- end of sub accordion item body contents -->
+                </div><!-- end of sub accordion item body -->
+            </div><!-- end of sub accordion item -->
+        </div><!-- end of sub accordion -->
+    </div><!-- end of accordion body -->
+</div><!-- end of accordion item -->
+<div class="accordion__item js-accordion-item">
+    <div class="accordion-header js-accordion-header">Генерация файлов</div>
+    <div class="accordion-body js-accordion-body">
+        <div class="accordion-body__contents">
+            <form action="/set-params" target="output" method="post">
+
+                <label>R: Typer, Coren, Typemedi, Force, Divforce, Threshold, A</label>
+                <input type="text" id="Receptor" name="Receptor" value="12,0,33,1,1,1,0xffffffff">
+                <label>N: Typen, Coren, D, A</label>
+                <input type="text" id="Neuron" name="Neuron" value="0x21,0,0xffffffff,0xffffffff">
+                <label>P: Typee, Coren, D</label>
+                <input type="text" id="Preffector" name="Preffector" value="1,0,0xffffffff">
+                <label>C: GLUC,O2,WASTE,OMEGA,K,Na,CO,NO,ACh,CHOL,AA,GLU,GABA,GLN,NE,DOP,SER,TYR,TRP,ASP</label>
+                <input type="text" id="Chemical" name="Chemical" value="0x100,0x100,0,0x100,50,50,10,10,50,50,0,0,0,0,0,0,0,0,0,0">
+                <input type="submit" value="Создать файлы генов">
+            </form>
+        </div>
+        <div class="accordion js-accordion">
+            <div class="accordion__item js-accordion-item">
+                <div class="accordion-header js-accordion-header">Sub Panel 1</div>
+                <div class="accordion-body js-accordion-body">
+                    <div class="accordion-body__contents">
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos sequi placeat distinctio dolor, amet magnam voluptatibus eos ex vero, sunt veritatis esse. Nostrum voluptatum et repudiandae vel sed, explicabo in?
+                    </div><!-- end of sub accordion item body contents -->
+                </div><!-- end of sub accordion item body -->
+            </div><!-- end of sub accordion item -->
+            <div class="accordion__item js-accordion-item">
+                <div class="accordion-header js-accordion-header">Sub Panel 2</div>
+                <div class="accordion-body js-accordion-body">
+                    <div class="accordion-body__contents">
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos sequi placeat distinctio dolor, amet magnam voluptatibus eos ex vero, sunt veritatis esse. Nostrum voluptatum et repudiandae vel sed, explicabo in?
+                    </div><!-- end of sub accordion item body contents -->
+                </div><!-- end of sub accordion item body -->
+            </div><!-- end of sub accordion item -->
+        </div><!-- end of sub accordion -->
+    </div><!-- end of accordion body -->
+</div><!-- end of accordion item -->
+<div class="accordion__item js-accordion-item">
+    <div class="accordion-header js-accordion-header">Отрисовка</div>
+    <div class="accordion-body js-accordion-body">
+        <div class="accordion-body__contents">
+            <form action="/set-draw-connectors" target="output" method="post">
+                <label>Соединения рецепторов i (i=номер):</label>
+                <input type="text" id="RDrawConn" name="RDrawConn" value="0">
+                <label>Соединения нейронов i,j (i=слой, j=номер в слое):</label>
+                <input type="text" id="NDrawConn" name="NDrawConn" value="0,0">
+                <label>Соединения рецепторов i (i=номер):</label>
+                <input type="text" id="PDrawConn" name="PDrawConn" value="0">
+                <input type="submit" value="Установить">
+            </form>
+        </div>
+        <div class="accordion js-accordion">
+            <div class="accordion__item js-accordion-item">
+                <div class="accordion-header js-accordion-header">Sub Panel 1</div>
+                <div class="accordion-body js-accordion-body">
+                    <div class="accordion-body__contents">
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos sequi placeat distinctio dolor, amet magnam voluptatibus eos ex vero, sunt veritatis esse. Nostrum voluptatum et repudiandae vel sed, explicabo in?
+                    </div><!-- end of sub accordion item body contents -->
+                </div><!-- end of sub accordion item body -->
+            </div><!-- end of sub accordion item -->
+            <div class="accordion__item js-accordion-item">
+                <div class="accordion-header js-accordion-header">Sub Panel 2</div>
+                <div class="accordion-body js-accordion-body">
+                    <div class="accordion-body__contents">
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos sequi placeat distinctio dolor, amet magnam voluptatibus eos ex vero, sunt veritatis esse. Nostrum voluptatum et repudiandae vel sed, explicabo in?
+                    </div><!-- end of sub accordion item body contents -->
+                </div><!-- end of sub accordion item body -->
+            </div><!-- end of sub accordion item -->
+        </div><!-- end of sub accordion -->
+    </div><!-- end of accordion body -->
+</div><!-- end of accordion item -->
+<div class="accordion__item js-accordion-item">
+    <div class="accordion-header js-accordion-header">Panel 6</div>
+    <div class="accordion-body js-accordion-body">
+        <div class="accordion-body__contents">
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos sequi placeat distinctio dolor, amet magnam voluptatibus eos ex vero, sunt veritatis esse. Nostrum voluptatum et repudiandae vel sed, explicabo in?
+        </div>
+        <div class="accordion js-accordion">
+            <div class="accordion__item js-accordion-item">
+                <div class="accordion-header js-accordion-header">Sub Panel 1</div>
+                <div class="accordion-body js-accordion-body">
+                    <div class="accordion-body__contents">
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos sequi placeat distinctio dolor, amet magnam voluptatibus eos ex vero, sunt veritatis esse. Nostrum voluptatum et repudiandae vel sed, explicabo in?
+                    </div><!-- end of sub accordion item body contents -->
+                </div><!-- end of sub accordion item body -->
+            </div><!-- end of sub accordion item -->
+            <div class="accordion__item js-accordion-item">
+                <div class="accordion-header js-accordion-header">Sub Panel 2</div>
+                <div class="accordion-body js-accordion-body">
+                    <div class="accordion-body__contents">
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos sequi placeat distinctio dolor, amet magnam voluptatibus eos ex vero, sunt veritatis esse. Nostrum voluptatum et repudiandae vel sed, explicabo in?
+                    </div><!-- end of sub accordion item body contents -->
+                </div><!-- end of sub accordion item body -->
+            </div><!-- end of sub accordion item -->
+        </div><!-- end of sub accordion -->
+    </div><!-- end of accordion body -->
+</div><!-- end of accordion item -->
+</div><!-- end of accordion -->
+
+<script type="text/javascript">
+    var accordion = (function(){
+
+        var $accordion = $('.js-accordion');
+        var $accordion_header = $accordion.find('.js-accordion-header');
+        var $accordion_item = $('.js-accordion-item');
+
+        // default settings
+        var settings = {
+            // animation speed
+            speed: 400,
+
+            // close all other accordion items if true
+            oneOpen: true
+        };
+
+        return {
+            // pass configurable object literal
+            init: function($settings) {
+                $accordion_header.on('click', function() {
+                    accordion.toggle($(this));
+                });
+
+                $.extend(settings, $settings);
+
+                // ensure only one accordion is active if oneOpen is true
+                if(settings.oneOpen && $('.js-accordion-item.active').length > 1) {
+                    $('.js-accordion-item.active:not(:first)').removeClass('active');
+                }
+
+                // reveal the active accordion bodies
+                $('.js-accordion-item.active').find('> .js-accordion-body').show();
+            },
+            toggle: function($this) {
+
+                if(settings.oneOpen && $this[0] != $this.closest('.js-accordion').find('> .js-accordion-item.active > .js-accordion-header')[0]) {
+                    $this.closest('.js-accordion')
+                        .find('> .js-accordion-item')
+                        .removeClass('active')
+                        .find('.js-accordion-body')
+                        .slideUp()
+                }
+
+                // show/hide the clicked accordion item
+                $this.closest('.js-accordion-item').toggleClass('active');
+                $this.next().stop().slideToggle(settings.speed);
+
+            }
+        }
+    })();
+
+    $(document).ready(function(){
+        accordion.init({ speed: 300, oneOpen: true });
+    });
+
+    window.addEventListener('load', function() {
+        'use strict';
+        new PlainDraggable(document.getElementById('accord'),
+            {handle: document.querySelector('#accord .draggable')});
+    });
+
+
+    function formsubmit(){
+        if (typeof window.zoompan !== 'undefined') {
+            // the variable is defined
+            svgPanZoom(window.zoompan).destroy()
+
+        }
+    }
+
+    $('#iframeid').on("load", function(){
+
+        svg=document.getElementById('iframeid').contentWindow.document.getElementsByTagName("svg").item(0);
+
+        window.zoompan = svgPanZoom(svg, {
+            zoomEnabled: true,
+            controlIconsEnabled: true,
+            fit: true,
+            center: false,
+        });
+
+        $.get( "ajax/countgenes", function( data ) {
+            $( "#delentitiesdiv" ).html("Удаление генов " + data );
+
+        });
+    });
+</script>
+</body>
+</html>

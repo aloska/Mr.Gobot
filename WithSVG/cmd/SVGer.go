@@ -9,18 +9,15 @@ import (
 )
 
 func  setsettings(c* gin.Context)  {
+	maxxyslice:=strings.Split(c.PostForm("MaxXY"),",")
 	if sc, err:=strconv.Atoi(c.PostForm("Scale"));err==nil{
 		scale = sc
 	}	else{
 	  svgError(c)
 	  return
 	}
-	if m, err:=strconv.Atoi(c.PostForm("MaxX"));err==nil{
-		MaxX = m
-	}	else{
-		svgError(c)
-		return
-	}
+	ViewX=getfromstringslice(maxxyslice, c, 0)
+	ViewY=getfromstringslice(maxxyslice, c, 0)
 	drawall(c)
 }
 
@@ -46,7 +43,7 @@ func  delentities(c* gin.Context)  {
 
 func helloPage (c* gin.Context){
 	s := svg.New(c.Writer)
-	s.Start(1000, 10000)
+	s.StartviewUnit (100,100,"%",0, 0,ViewX*scale,ViewY*scale)
 	s.Circle(250, 250, 250, "fill:none;stroke:red;stroke-width:4")
 	s.Gstyle("fill:black;font-size:16pt;text-anchor:middle;font-family:monospace")
 	s.Text(250,250, "Ну, здравствуй!")
@@ -114,7 +111,7 @@ func receptorgen (c* gin.Context){
 	greceptors[len(greceptors)-1].Iterj=byte(Iterj)
 	greceptors[len(greceptors)-1].Iterk=byte(Iterk)
 
-	greceptors[len(greceptors)-1].MaxX=uint32(MaxX)
+	greceptors[len(greceptors)-1].MaxX=uint32(ViewX)
 	greceptors[len(greceptors)-1].Ax1stX=uint32(Ax1stX)
 	greceptors[len(greceptors)-1].Ax1stY=uint32(Ax1stY)
 	greceptors[len(greceptors)-1].AxShiftX=uint16(AxShiftX)
@@ -178,7 +175,7 @@ func neurongen (c* gin.Context) {
 
 	gneurons=append(gneurons, agent.GenNeuron{})
 	
-	gneurons[len(gneurons)-1].MaxX=uint32(MaxX)
+	gneurons[len(gneurons)-1].MaxX=uint32(ViewX)
 
 	gneurons[len(gneurons)-1].Layers=uint16(Layers)
 	gneurons[len(gneurons)-1].Laywidth=uint32(Laywidth)
@@ -260,7 +257,7 @@ func preffectorgen (c* gin.Context) {
 	gpreffectors[len(gpreffectors)-1].Iterj=byte(Iterj)
 	gpreffectors[len(gpreffectors)-1].Iterk=byte(Iterk)
 
-	gpreffectors[len(gpreffectors)-1].MaxX=uint32(MaxX)
+	gpreffectors[len(gpreffectors)-1].MaxX=uint32(ViewX)
 	gpreffectors[len(gpreffectors)-1].Dend1stX=uint32(Dend1stX)
 	gpreffectors[len(gpreffectors)-1].Dend1stY=uint32(Dend1stY)
 	gpreffectors[len(gpreffectors)-1].DendShiftX=uint16(DendShiftX)
@@ -274,15 +271,19 @@ func preffectorgen (c* gin.Context) {
 
 func drawall(c*gin.Context){
 	s := svg.New(c.Writer)
-	s.Start(1000, 10000)
+	s.StartviewUnit(100,100, "%", 0,0,ViewX*scale,ViewY*scale)
 
+	var sdrawX, sdrawY int
 	//рецепторы
 	for _, rrr:=range greceptors{
 		cur:=0
 		for i:=rrr.Ndata; i<= rrr.Maxi; i=i+rrr.Iteri{
 			for j:=rrr.NdataW; j<= rrr.Maxj; j=j+rrr.Iterj{
 				for k:=rrr.NdataWB; k<=rrr.Maxk; k=k+rrr.Iterk {
-
+					if cur==RdrawConnector{
+						sdrawX=int(i)
+						sdrawY=int(j)
+					}
 					drawReceptIJK(s,int(i),int(j),int(k))
 					cur++
 				}
@@ -296,9 +297,9 @@ func drawall(c*gin.Context){
 			xs:=x
 			ys:=y
 			for i:=0;i<32;i++{
-				drawDendrAxStyle(s,int(x),int(y),1,"stroke:green;stroke-width:0.1")
-				if c==0{
-					drawConnectReceptor(s, int(rrr.Ndata),int(rrr.NdataW), int(x),int(y),"stroke-width:0.3;stroke:grey")
+				drawDendrAxStyle(s,int(x),int(y),1,"fill:none;stroke:green;stroke-width:0.2")
+				if c==RdrawConnector{
+					drawConnectReceptor(s, sdrawX,sdrawY, int(x),int(y),"stroke-width:0.2;stroke:yellow")
 
 				}
 				x=x+uint32(rrr.AxShiftX)
@@ -319,7 +320,11 @@ func drawall(c*gin.Context){
 			xs:=x
 			ys:=y
 			for i:=0;i<int(nnn.Laywidth);i++{
-				drawSomaStyle(s,int(x),int(y),2,"stroke:red;stroke-width:0.1")
+				if lay==NdrawConnector[0] && i==NdrawConnector[1]{
+					sdrawX=int(x)
+					sdrawY=int(y)
+				}
+				drawSomaStyle(s,int(x),int(y),1,"fill:none;stroke:red;stroke-width:0.2")
 				x=x+uint32(nnn.SomaNextShiftX)
 				y=y+uint32(nnn.SomaNextShiftY)
 			}
@@ -337,9 +342,10 @@ func drawall(c*gin.Context){
 				xs:=x
 				ys:=y
 				for d:=0;d<16;d++ {
-					drawDendrAxStyle(s, int(x), int(y), 1, "stroke:orange;stroke-width:0.1")
-					if lay == 0 && i == 0 {
-						drawConnectSoma(s,int(nnn.Soma1stX), int(nnn.Soma1stY), int(x), int(y), "stroke-width:0.3;stroke:grey")
+					drawDendrAxStyle(s, int(x), int(y), 1, "fill:none;stroke:blue;stroke-width:0.2")
+					if lay == NdrawConnector[0] && i == NdrawConnector[1] {
+						drawConnectSoma(s,sdrawX, sdrawY, int(x), int(y),
+							"stroke-width:0.2;stroke:blue;stroke-dasharray:2")
 					}
 					x = x + uint32(nnn.DendShiftX)
 					y = y + uint32(nnn.DendShiftY)
@@ -361,9 +367,10 @@ func drawall(c*gin.Context){
 				xs:=x
 				ys:=y
 				for d:=0;d<16;d++ {
-					drawDendrAxStyle(s, int(x), int(y), 1, "fill:grey;stroke:orange;stroke-width:0.1")
-					if lay == 0 && i == 0 {
-						drawConnectSoma(s,int(nnn.Soma1stX), int(nnn.Soma1stY), int(x), int(y), "stroke-width:0.3;stroke:grey")
+					drawDendrAxStyle(s, int(x), int(y), 1, "fill:none;stroke:green;stroke-width:0.2")
+					if lay == NdrawConnector[0] && i == NdrawConnector[1] {
+						drawConnectSoma(s,sdrawX, sdrawY, int(x), int(y),
+							"stroke-width:0.2;stroke:green;stroke-dasharray:2")
 
 					}
 					x = x + uint32(nnn.AxShiftX)
@@ -383,7 +390,10 @@ func drawall(c*gin.Context){
 		for i:=ppp.Ndata; i<= ppp.Maxi; i=i+ppp.Iteri{
 			for j:=ppp.NdataW; j<= ppp.Maxj; j=j+ppp.Iterj{
 				for k:=ppp.NdataWB; k<=ppp.Maxk; k=k+ppp.Iterk {
-
+					if cur==PdrawConnector{
+						sdrawX=int(i)
+						sdrawY=int(j)
+					}
 					drawPreffectIJK(s,int(i),int(j),int(k))
 					cur++
 				}
@@ -397,9 +407,9 @@ func drawall(c*gin.Context){
 			xs:=x
 			ys:=y
 			for i:=0;i<32;i++{
-				drawDendrAxStyle(s,int(x),int(y),1,"stroke:blue;stroke-width:0.1")
-				if c==0{
-					drawConnectPreffector(s, int(ppp.Ndata),int(ppp.NdataW), int(x),int(y),"stroke-width:0.3;stroke:grey")
+				drawDendrAxStyle(s,int(x),int(y),1,"stroke:blue;stroke-width:0.2")
+				if c==PdrawConnector{
+					drawConnectPreffector(s, sdrawX,sdrawY, int(x),int(y),"stroke-width:0.2;stroke:red")
 
 				}
 				x=x+uint32(ppp.DendShiftX)
@@ -411,11 +421,6 @@ func drawall(c*gin.Context){
 		}
 	}
 
-	s.Gstyle("fill:grey;font-size:10pt;text-anchor:end;font-family:monospace;fill-opacity:50%")
-	s.Text(900,400, "Генов рецепторов: "+strconv.Itoa(len(greceptors)))
-	s.Text(900,410, "Генов нейронов: "+strconv.Itoa(len(gneurons)))
-	s.Text(900,420, "Генов преффекторов: "+strconv.Itoa(len(gpreffectors)))
-	s.Gend()
 	s.End()
 }
 
@@ -423,7 +428,7 @@ func drawall(c*gin.Context){
 func svgError(c* gin.Context){
 	globalErr=true
 	s := svg.New(c.Writer)
-	s.Start(1000, 1000)
+	s.StartviewUnit (100,100,"%",0,0,ViewX*scale, ViewY*scale)
 	s.Circle(250, 250, 250, "fill:orange;stroke:red;stroke-width:4")
 	s.Gstyle("fill:red;font-size:20pt;text-anchor:middle;font-family:monospace")
 	s.Text(250,250, "Плохо форму заполнил!")
@@ -432,10 +437,10 @@ func svgError(c* gin.Context){
 }
 
 func drawReceptIJK(s *svg.SVG, i int, j int, k int){
-	s.Circle(i*scale*2,j*scale*2,k*scale/2+scale, "fill:yellow;stroke:blue;stroke-width:1")
+	s.Circle(i*scale,j*scale,k*scale/2+scale, "fill:yellow;stroke:blue;stroke-width:1")
 }
 func drawPreffectIJK(s *svg.SVG, i int, j int, k int){
-	s.Circle(1000-i*scale*2,j*scale*2,k*scale/2+scale, "fill:red;stroke:blue;stroke-width:1")
+	s.Circle(ViewX*scale-i*scale,j*scale,k*scale/2+scale, "fill:red;stroke:blue;stroke-width:1")
 }
 func drawDendrAxStyle(s *svg.SVG, x int, y int, R int, style string){
 	s.Circle(x*scale,y*scale,R, style)
@@ -445,11 +450,11 @@ func drawSomaStyle(s *svg.SVG, x int, y int, size int, style string){
 }
 
 func drawConnectReceptor(s *svg.SVG, xReceptor int, yReceptor int, xAxon int, yAxon int, style string){
-	s.Line(xReceptor*scale*2,yReceptor*scale*2, xAxon*scale,yAxon*scale,style)
+	s.Line(xReceptor*scale,yReceptor*scale, xAxon*scale,yAxon*scale,style)
 }
 
 func drawConnectPreffector(s *svg.SVG, xPreffector int, yPreffector int, xDendrite int, yDendrite int, style string){
-	s.Line(1000-xPreffector*scale*2,yPreffector*scale*2, xDendrite*scale,yDendrite*scale,style)
+	s.Line(ViewX*scale-xPreffector*scale,yPreffector*scale, xDendrite*scale,yDendrite*scale,style)
 }
 
 func drawConnectSoma(s *svg.SVG, x1 int, y1 int, x2 int, y2 int, style string){
