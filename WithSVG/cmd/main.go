@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -67,6 +68,57 @@ func getRoutes() {
 
 	r.POST("/set-draw-connectors",setdrawconnectors)
 	r.POST("/set-draw-grid",setdrawgrid)
+
+	r.POST("/read-genes", readgenes)
+}
+
+func readgenes(c *gin.Context){
+	filename:=strings.TrimSpace(c.PostForm("GenePath"))
+
+	if _, err := os.Stat(filename); err == nil {
+		if file, err := os.Open(filename); err == nil {
+			defer file.Close()
+
+			switch strings.TrimSpace(c.PostForm("TypeGene")) {
+			case "R":
+				err=nil
+				for i:=0; err==nil;i++   {
+					rec:=agent.GenReceptor{}
+					err= agent.StructsFileReadEOF(file,&rec,binary.LittleEndian)
+					if err==nil{
+						greceptors = append(greceptors, rec)
+					}
+				}
+				break
+			case "N":
+				err=nil
+				for i:=0; err==nil;i++   {
+					rec:=agent.GenNeuron{}
+					err= agent.StructsFileReadEOF(file,&rec,binary.LittleEndian)
+					if err==nil{
+						gneurons = append(gneurons, rec)
+					}
+				}
+				break
+			case "P":
+				err=nil
+				for i:=0; err==nil;i++   {
+					rec:=agent.GenPreffector{}
+					err= agent.StructsFileReadEOF(file,&rec,binary.LittleEndian)
+					if err==nil{
+						gpreffectors = append(gpreffectors, rec)
+					}
+				}
+				break
+			}
+			drawall(c)
+		}else{
+			svgError(c,"Не могу открыть файл")
+			return
+		}
+	} else if os.IsNotExist(err) {
+		svgError(c,"нет такого файла")
+	}
 }
 
 func getajax(c* gin.Context){

@@ -7,10 +7,9 @@ import (
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/ini.v1"
 	"io/ioutil"
-	"regexp"
-
 	"net/url"
 	"os"
+	"regexp"
 	"runtime"
 	"time"
 )

@@ -368,7 +368,7 @@
                 <label>N: Typen, Coren, MaxXOtherCore, D, A</label>
                 <input type="text" id="Neuron" name="Neuron" value="0x21,0,0,0xffff,0xffff">
                 <label>P: Typee, Coren, D</label>
-                <input type="text" id="Preffector" name="Preffector" value="1,0,0xffffffff">
+                <input type="text" id="Preffector" name="Preffector" value="1,0,0xffffffffffffffff">
                 <label>C: GLUC,O2,WASTE,OMEGA,K,Na,CO,NO,ACh,CHOL,AA,GLU,GABA,GLN,NE,DOP,SER,TYR,TRP,ASP</label>
                 <input type="text" id="Chemical" name="Chemical" value="0x100,0x100,0,0x100,50,50,10,10,50,50,0,0,0,0,0,0,0,0,0,0">
                 <input type="submit" value="Создать файлы генов">
@@ -376,18 +376,28 @@
         </div>
         <div class="accordion js-accordion">
             <div class="accordion__item js-accordion-item">
-                <div class="accordion-header js-accordion-header">Sub Panel 1</div>
+                <div class="accordion-header js-accordion-header">Файл гена данных</div>
                 <div class="accordion-body js-accordion-body">
                     <div class="accordion-body__contents">
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos sequi placeat distinctio dolor, amet magnam voluptatibus eos ex vero, sunt veritatis esse. Nostrum voluptatum et repudiandae vel sed, explicabo in?
+                        <form action="/gendatain-generate" target="output" method="post" onsubmit="formsubmit();">
+
+                            <label>Datatype, Dataneed, Runifchange, Fps, Httpchan, Len</label>
+                            <input type="text" name="Dataf" value="6,0,0,100,1,1">
+                            <input type="submit" value="Создать файл генов">
+                        </form>
                     </div><!-- end of sub accordion item body contents -->
                 </div><!-- end of sub accordion item body -->
             </div><!-- end of sub accordion item -->
             <div class="accordion__item js-accordion-item">
-                <div class="accordion-header js-accordion-header">Sub Panel 2</div>
+                <div class="accordion-header js-accordion-header">Файл гена выходных данных</div>
                 <div class="accordion-body js-accordion-body">
                     <div class="accordion-body__contents">
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos sequi placeat distinctio dolor, amet magnam voluptatibus eos ex vero, sunt veritatis esse. Nostrum voluptatum et repudiandae vel sed, explicabo in?
+                        <form action="/gendataout-generate" target="output" method="post" onsubmit="formsubmit();">
+
+                            <label>Datatype, Fps, Httpchan, Len</label>
+                            <input type="text" name="Dataf" value="6,100,1,1">
+                            <input type="submit" value="Создать файл генов">
+                        </form>
                     </div><!-- end of sub accordion item body contents -->
                 </div><!-- end of sub accordion item body -->
             </div><!-- end of sub accordion item -->
@@ -433,18 +443,23 @@
     </div><!-- end of accordion body -->
 </div><!-- end of accordion item -->
 <div class="accordion__item js-accordion-item">
-    <div class="accordion-header js-accordion-header">Panel 6</div>
+    <div class="accordion-header js-accordion-header">Считать гены с файлов</div>
     <div class="accordion-body js-accordion-body">
         <div class="accordion-body__contents">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos sequi placeat distinctio dolor, amet magnam voluptatibus eos ex vero, sunt veritatis esse. Nostrum voluptatum et repudiandae vel sed, explicabo in?
+            <span style="color: red">ВНИМАНИЕ! Все текущие сгенерированные данные будут утеряны. Запишите их в файл!</span>
         </div>
         <div class="accordion js-accordion">
             <div class="accordion__item js-accordion-item">
-                <div class="accordion-header js-accordion-header">Sub Panel 1</div>
+                <div class="accordion-header js-accordion-header">Ген Данных</div>
                 <div class="accordion-body js-accordion-body">
                     <div class="accordion-body__contents">
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos sequi placeat distinctio dolor, amet magnam voluptatibus eos ex vero, sunt veritatis esse. Nostrum voluptatum et repudiandae vel sed, explicabo in?
-                    </div><!-- end of sub accordion item body contents -->
+                        <form action="/read-genes" target="output" method="post" onsubmit="formsubmit();">
+                            <label>Чей ген? R-рецепторов, N-нейронов, P-пресепторов:</label>
+                            <input type="text" name="TypeGene" value="R">
+                            <label>Путь к файлу генов:</label>
+                            <input type="text" name="GenePath" value="C:/Aloska/tmp/GenReceptor-0.genes">
+                            <input type="submit" value="Загрузить">
+                        </form>                    </div><!-- end of sub accordion item body contents -->
                 </div><!-- end of sub accordion item body -->
             </div><!-- end of sub accordion item -->
             <div class="accordion__item js-accordion-item">

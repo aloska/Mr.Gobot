@@ -104,6 +104,7 @@ type DataInput struct {
 	//должен быть список всех ТИПОВ входов, используемых в агенте
 	dataByte   []DataByte
 	dataUInt32 []DataUInt32
+	datauint32 []Datauint32
 	dataBit    []DataBit
 }
 
@@ -117,8 +118,19 @@ func (d *DataInput) Init(o* Organism) bool{
 		o.agent.log.Error("DataInput не может создать mmap: "+err.Error())
 		return false
 	}
-	//проверим TODO littleEndian)))
-	o.agent.warning(strconv.Itoa(int(d.genData.Datatype)))
+	//создаем mmap на файл данных, если файла нет, функйия сама создаст его
+	if err:=d.mmapData(); err!=nil{
+		o.agent.errorr("DataInput не может создать mmap: "+err.Error())
+		o.agent.log.Error("DataInput не может создать mmap: "+err.Error())
+		return false
+	}
+
+	//todo это тест, надо убрать!
+	d.dataUInt32[0].Data[5]=0x77
+	d.bytearrayData.Flush()
+	d.bytearrayData.Unmap()
+
+
 	return true
 }
 

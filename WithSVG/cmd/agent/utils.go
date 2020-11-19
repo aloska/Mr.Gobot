@@ -61,3 +61,22 @@ func StructsFileRead(filename string, fw structsFileReaderWriter, order binary.B
 	}
 	return fmt.Errorf("unknown error %v", filename)
 }
+
+//StructsFileReadEOF - читает любые данные до io.EOF - можно в цикле читать, пока ошибка не будет EOF,
+//File должен быть открыт
+func StructsFileReadEOF(file *os.File, fw structsFileReaderWriter, order binary.ByteOrder) error {
+	err:= binary.Read(file, order, fw)
+	if err == nil {
+			return nil
+		}
+	return err
+}
+
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
+}

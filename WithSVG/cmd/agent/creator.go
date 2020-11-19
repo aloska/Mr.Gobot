@@ -1,5 +1,7 @@
 package agent
 
+import "encoding/binary"
+
 func createGenes() {
 
 }
@@ -31,7 +33,7 @@ func easyOrganism() {
 	genData.Httpchan = 0
 	genData.Len = 1
 	genData.Serv1, genData.Serv2 = 0, 0
-	StructsFileWrite(path+"Senses/Input-0/GenData.genes", &genData)
+	StructsFileWrite(path+"Senses/Input-0/GenData.genes", &genData, binary.LittleEndian)
 
 	genReceptor.Typer = RECEPTORDATAUINT32BIGPOS
 	genReceptor.Typemedi = NEURONACETILHOLIN
