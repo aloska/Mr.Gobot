@@ -75,6 +75,9 @@ const (
 	}
 	*/
 	DATAUINT32BIG DataTypeEnum = 6
+
+	//DATAUINT32 - uint32
+	DATAUINT32 DataTypeEnum=7
 )
 
 /*ReceptorTypeEnum - константы типов рецепторов

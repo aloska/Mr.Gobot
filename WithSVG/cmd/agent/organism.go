@@ -2,6 +2,9 @@ package agent
 
 import (
 	mmap "github.com/edsrzf/mmap-go"
+	"io/ioutil"
+	"sort"
+	"strconv"
 )
 
 /*Synapses - структура с файлом синапсов, хранящая все  Chemistry, самая интенсивно используемая
@@ -48,11 +51,17 @@ type Brain struct {
 	organism *Organism //ссылка на весь родительский организм
 }
 
+//Init - инициализация мозга системы
+func (b *Brain) Init(o *Organism) bool{
+
+	return true
+}
+
 /*DataInput - описание входа
 Поскольку в Го нет женериков, прийдется хранить поля всех видов данных
 */
 type DataInput struct {
-	typeData uint16 //тип входа 1-DataByte...
+	typeData DataTypeEnum //тип входа 1-DataByte...
 
 	filenameGen  string    //имя файла, где записан ген входа
 	bytearrayGen mmap.MMap //замапленный файл гена
@@ -98,6 +107,21 @@ type DataInput struct {
 	dataBit    []DataBit
 }
 
+//Init -
+func (d *DataInput) Init(o* Organism) bool{
+//сюда входим с известными путями к файлам
+
+	//создаем mmap на ген данных
+	if err:=d.mmapGenData(); err!=nil{
+		o.agent.errorr("DataInput не может создать mmap: "+err.Error())
+		o.agent.log.Error("DataInput не может создать mmap: "+err.Error())
+		return false
+	}
+	//проверим TODO littleEndian)))
+	o.agent.warning(strconv.Itoa(int(d.genData.Datatype)))
+	return true
+}
+
 /*Receptors - рецепторы, ммап на файл рецепторов, и описывающий их геном
  */
 type Receptors struct {
@@ -122,10 +146,25 @@ type Input struct {
 	cells     []Cells     //слайс обслуживает файлы с нейронами и геномами этих нейронов, если они заданы
 }
 
+func (in* Input) Init(o *Organism) bool{
+//сюда входим с известными путем и номером входа
+	//скажем DataInput где его файлы
+	in.dataInput.filenameGen=in.path+"/GenData.genes"
+	in.dataInput.filenameData=in.path+"/Data.data"
+	//инициализация
+	if !in.dataInput.Init(o){
+		o.agent.log.Error("InputData не может инициализироваться")
+		o.agent.errorr("InputData не может инициализироваться")
+		return false
+	}
+	//TODO рецепторы
+	//TODO синапсы, если надо
+	return true
+}
+
 /*Senses - все входы (ощущения)
  */
 type Senses struct {
-	path   string  //папка, где расположены все входы
 	inputs []Input //все входы
 
 	synapsesInputs Synapses //синаптическое поле всех входов
@@ -136,10 +175,52 @@ type Senses struct {
 	organism *Organism //ссылка на весь родительский организм
 }
 
+//Init - инициализация Действий системы
+func (s *Senses) Init(o *Organism) bool{
+	//Найдем все входы
+	inputs:=[]string{}
+	filesgeneralSynapse:=[]string{}
+	files, _ := ioutil.ReadDir(o.path+"/Senses")
+	for _, file := range files {
+		if file.IsDir(){
+			inputs = append(inputs,file.Name())
+		} else{
+			//здесь файлы в корне папки /Senses
+			//TODO - Запустить синаптическое поле, общее для всех входов
+			filesgeneralSynapse=append(filesgeneralSynapse,file.Name())
+		}
+	}
+
+	//остортируем входы
+	if !sort.StringsAreSorted(inputs){
+		sort.Strings(inputs)
+	}
+	//добавляем входы
+	for i,inp:=range inputs{
+		s.inputs=append(s.inputs,
+			Input{
+				number:uint16(i),
+				path:o.path+"/Senses/"+inp})
+
+	}
+	//инициализируем входы
+	for i:=0;i<len(s.inputs);i++{
+		if !s.inputs[i].Init(o){
+			o.agent.errorr("Input-"+strconv.Itoa(i)+" не может инициализироваться")
+			o.agent.log.Error("Input-"+strconv.Itoa(i)+" не может инициализироваться")
+			return false
+		}
+	}
+	o.agent.info("/Senses готовы к работе")
+	o.agent.log.Info("/Senses готовы к работе")
+	return true
+}
+
+
 /*DataOutput - описание выхода
  */
 type DataOutput struct {
-	typeData uint16 //тип выхода
+	typeData DataTypeEnum //тип выхода
 
 	filenameGen  string      //имя файла, где записан ген выхода
 	bytearrayGen mmap.MMap   //замапленный файл гена
@@ -151,6 +232,7 @@ type DataOutput struct {
 	//должен быть список всех ТИПОВ выходов, используемых в агенте
 	datauint32 []Datauint32
 	dataRune   []DataRune
+	dataUInt32 []DataUInt32
 }
 
 /*Preffectors - преффекторы, ммап на файл преффекторов, и описывающий их геном
@@ -186,17 +268,21 @@ type Effector struct {
 /*Actions - все выходы (действия организма, кроме внутренних)
  */
 type Actions struct {
-	path      string     //папка, где расположены все выходы
 	effectors []Effector //все выходы
 
 	organism *Organism //ссылка на весь родительский организм
+}
+
+//Init - инициализация Действий системы
+func (ac *Actions) Init(o *Organism) bool{
+
+	return true
 }
 
 /*Vegetatic - вегетативная нервная система
 
  */
 type Vegetatic struct {
-	path      string     //папка, где расположены файлы вегетативной
 	effectors []Effector //эффекторы вегетативной системы (сердце, дыхание, питание, очищение)
 
 	synapses Synapses //обслуживает файл с синапсами этого выхода (если они есть!!)
@@ -205,18 +291,51 @@ type Vegetatic struct {
 	organism *Organism //ссылка на весь родительский организм
 }
 
+//Init - инициализация вегетативной системы
+func (v *Vegetatic) Init(o *Organism) bool{
+
+	return true
+}
 /*Organism - самая полная структура, состоящая из мозга, входных и выходных устройств
 
  */
 type Organism struct {
+	path      string     //папка, где расположен весь организм
 	brain     Brain     //мозг из ядер
 	senses    Senses    //ощущения (входы, рецепторы...)
 	actions   Actions   //действия
 	vegetatic Vegetatic //вегетативная система
+	agent *Agent
 }
 
-//Live ...
+//Init - проверка и маппинг всех файлов
+func (o *Organism) Init(a *Agent) bool{
+	o.path=a.path
+	o.agent=a
+
+	if !o.senses.Init(o) {
+		return false
+	}
+	if !o.brain.Init(o) {
+		return false
+	}
+	if !o.actions.Init(o) {
+		return false
+	}
+	if !o.vegetatic.Init(o){
+		return false
+	}
+
+	return true
+}
+
+//Live Организм начинает жить (комманда сверху)
 func (o *Organism) Live() {
+
+}
+
+//Sleep - орагнизм идет спать (команда сверху)
+func (o *Organism) Sleep(){
 
 }
 

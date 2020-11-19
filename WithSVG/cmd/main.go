@@ -2,7 +2,7 @@ package main
 
 import (
 	"WithSVG/cmd/agent"
-	"github.com/ajstarks/svgo"
+	"encoding/binary"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -55,7 +55,9 @@ func getRoutes() {
 	r.POST("/receptor-gen", receptorgen)
 	r.POST("/neuron-gen", neurongen)
 	r.POST("/preffector-gen", preffectorgen)
-	r.POST("genfiles-generate",genfilesgenerate)
+	r.POST("/genfiles-generate",genfilesgenerate)
+	r.POST("/gendatain-generate",gendataingenerate)
+	r.POST("/gendataout-generate",gendataoutgenerate)
 
 	r.POST("/set-settings", setsettings)
 	r.POST("/del-entities", delentities)
@@ -84,6 +86,11 @@ func setdrawconnectors(c* gin.Context){
 	NdrawConnector[0]= int(getfromstringslice(nslice,c,0))
 	NdrawConnector[1]= int(getfromstringslice(nslice,c,1))
 	PdrawConnector=int(getfromstringslice(pslice,c,0))
+	if globalErr{
+		globalErr=false
+		return
+	}
+
 	drawall(c)
 }
 
@@ -94,8 +101,58 @@ func setdrawgrid(c *gin.Context){
 	gridW=int(getfromstringslice(gslice,c,2))
 	gridH=int(getfromstringslice(gslice,c,3))
 	gridN=int(getfromstringslice(gslice,c,4))
+	if globalErr{
+		globalErr=false
+		return
+	}
+
 	gridshow=!gridshow
 	drawall(c)
+}
+
+func gendataingenerate(c *gin.Context)  {
+	dslice:=strings.Split(c.PostForm("Dataf"),",")
+	data:=agent.GenData{
+		agent.DataTypeEnum(getfromstringslice(dslice, c, 0)),
+		byte(getfromstringslice(dslice, c, 1)),
+		byte(getfromstringslice(dslice, c, 2)),
+		uint16(getfromstringslice(dslice, c, 3)),
+		uint16(getfromstringslice(dslice, c, 4)),
+		uint32(getfromstringslice(dslice, c, 5)),
+		0,
+		0,
+	}
+	if globalErr{
+		globalErr=false
+		return
+	}
+
+	if err:=agent.StructsFileWrite("./tmp/GenData.genes",data,binary.LittleEndian); err!=nil{
+		svgError(c,err.Error())
+		return
+	}
+	svgInfo(c, "Файл гена в папке ./tmp")
+}
+
+func gendataoutgenerate(c *gin.Context)  {
+	dslice:=strings.Split(c.PostForm("Dataf"),",")
+	data:=agent.GenDataOut{
+		agent.DataTypeEnum(getfromstringslice(dslice, c, 0)),
+		uint16(getfromstringslice(dslice, c, 1)),
+		uint16(getfromstringslice(dslice, c, 2)),
+		uint32(getfromstringslice(dslice, c, 3)),
+		0,
+		0,
+	}
+	if globalErr{
+		globalErr=false
+		return
+	}
+	if err:=agent.StructsFileWrite("./tmp/GenDataOut.genes",data,binary.LittleEndian); err!=nil{
+		svgError(c,err.Error())
+		return
+	}
+	svgInfo(c, "Файл гена в папке ./tmp")
 }
 
 func genfilesgenerate(c* gin.Context)  {
@@ -126,7 +183,12 @@ func genfilesgenerate(c* gin.Context)  {
 			greceptors[i].MaxX = uint32(ViewX)
 			greceptors[i].Recep = receptor
 		}
-		if err:=agent.StructsFileWrite("./tmp/receptors.genes",greceptors); err!=nil{
+		if globalErr{
+			globalErr=false
+			return
+		}
+
+		if err:=agent.StructsFileWrite("./tmp/receptors.genes",greceptors,binary.LittleEndian); err!=nil{
 			svgError(c,err.Error())
 			return
 		}
@@ -174,7 +236,12 @@ func genfilesgenerate(c* gin.Context)  {
 			gneurons[i].MaxXOtherCore = uint32(getfromstringslice(nslice, c, 2))
 			gneurons[i].Neur = neuron
 		}
-		if err:=agent.StructsFileWrite("./tmp/neurons.genes",gneurons); err!=nil{
+		if globalErr{
+			globalErr=false
+			return
+		}
+
+		if err:=agent.StructsFileWrite("./tmp/neurons.genes",gneurons,binary.LittleEndian); err!=nil{
 			svgError(c,err.Error())
 			return
 		}
@@ -196,20 +263,18 @@ func genfilesgenerate(c* gin.Context)  {
 			gpreffectors[i].Coren = agent.CoreEnum(getfromstringslice(pslice, c, 1))
 			gpreffectors[i].Prefec = preffector
 		}
+		if globalErr{
+			globalErr=false
+			return
+		}
 
-		if err := agent.StructsFileWrite("./tmp/preffectors.genes", gpreffectors); err != nil {
+		if err := agent.StructsFileWrite("./tmp/preffectors.genes", gpreffectors,binary.LittleEndian); err != nil {
 			svgError(c,err.Error())
 			return
 		}
 	}
 
-	s := svg.New(c.Writer)
-	s.StartviewUnit (100,100,"%",0,0,ViewX, ViewY)
-	s.Circle(ViewX/2, ViewY/2, ViewY/3, "fill:yellow;stroke:green;stroke-width:4")
-	s.Gstyle("fill:green;font-size:"+strconv.Itoa(ViewX/16*scale)+"pt;text-anchor:middle;font-family:monospace")
-	s.Text(ViewX/2,ViewY/2, "Файлы готовы! См. папку /tmp")
-	s.Gend()
-	s.End()
+	svgInfo(c, "Файлы в папке ./tmp")
 
 }
 

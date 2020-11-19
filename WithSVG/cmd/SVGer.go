@@ -429,15 +429,24 @@ func drawall(c*gin.Context){
 	s.End()
 }
 
+func svgInfo(c* gin.Context, info string){
+	s := svg.New(c.Writer)
+	s.StartviewUnit (100,100,"%",0,0,ViewX, ViewY)
+	s.Circle(ViewX/8*scale, ViewY/8*scale, ViewY/8*scale, "fill:yellow;stroke:green;stroke-width:4")
+	s.Gstyle("fill:green;font-size:"+strconv.Itoa(ViewX/32*scale)+"pt;text-anchor:middle;font-family:monospace")
+	s.Text(ViewX/8*scale,ViewY/8*scale, info)
+	s.Gend()
+	s.End()
+}
 
 func svgError(c* gin.Context, err string){
 	globalErr=true
 	s := svg.New(c.Writer)
 	s.StartviewUnit (100,100,"%",0,0,ViewX*scale, ViewY*scale)
-	s.Circle(ViewX/2, ViewY/2, ViewY/3, "fill:orange;stroke:red;stroke-width:4")
-	s.Gstyle("fill:red;font-size:"+strconv.Itoa(ViewX/16*scale)+"pt;text-anchor:middle;font-family:monospace")
-	s.Text(ViewX/2*scale,ViewY/2*scale, "Плохо форму заполнил!")
-	s.Text(ViewX/2*scale,ViewY/2*scale+scale*10, err)
+	s.Circle(ViewX/8*scale, ViewY/8*scale, ViewY/8*scale, "fill:orange;stroke:red;stroke-width:4")
+	s.Gstyle("fill:red;font-size:"+strconv.Itoa(ViewX/32*scale)+"pt;text-anchor:middle;font-family:monospace")
+	s.Text(ViewX/8*scale,ViewY/8*scale, "Плохо форму заполнил!")
+	s.Text(ViewX/8*scale,ViewY/8*scale+scale*10, err)
 	s.Gend()
 	s.End()
 }
