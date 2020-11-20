@@ -16,18 +16,18 @@ var (
 	gneurons []agent.GenNeuron
 	gpreffectors []agent.GenPreffector
 	globalErr =false
-	scale=5
-	ViewX=1000
-	ViewY=1000
+	scale=2
+	ViewX=64
+	ViewY=64
 	RdrawConnector = 0
 	NdrawConnector = [2]int{0,0}
 	PdrawConnector=0
-	gridshow=false
+	gridshow=true
 	gridX=0
 	gridY=0
-	gridW=10
-	gridH=10
-	gridN=2
+	gridW=64
+	gridH=64
+	gridN=8
 
 )
 func main() {
@@ -165,15 +165,12 @@ func setdrawgrid(c *gin.Context){
 func gendataingenerate(c *gin.Context)  {
 	dslice:=strings.Split(c.PostForm("Dataf"),",")
 	data:=agent.GenData{
-		agent.DataTypeEnum(getfromstringslice(dslice, c, 0)),
-		byte(getfromstringslice(dslice, c, 1)),
-		byte(getfromstringslice(dslice, c, 2)),
-		uint16(getfromstringslice(dslice, c, 3)),
-		uint16(getfromstringslice(dslice, c, 4)),
-		uint32(getfromstringslice(dslice, c, 5)),
-		0,
-		0,
-	}
+		Datatype: agent.DataTypeEnum(getfromstringslice(dslice, c, 0)),
+		Dataneed: byte(getfromstringslice(dslice, c, 1)),
+		Runifchange: byte(getfromstringslice(dslice, c, 2)),
+		Fps: uint16(getfromstringslice(dslice, c, 3)),
+		Httpchan: uint16(getfromstringslice(dslice, c, 4)),
+		Len: uint32(getfromstringslice(dslice, c, 5))}
 	if globalErr{
 		globalErr=false
 		return
@@ -189,13 +186,10 @@ func gendataingenerate(c *gin.Context)  {
 func gendataoutgenerate(c *gin.Context)  {
 	dslice:=strings.Split(c.PostForm("Dataf"),",")
 	data:=agent.GenDataOut{
-		agent.DataTypeEnum(getfromstringslice(dslice, c, 0)),
-		uint16(getfromstringslice(dslice, c, 1)),
-		uint16(getfromstringslice(dslice, c, 2)),
-		uint32(getfromstringslice(dslice, c, 3)),
-		0,
-		0,
-	}
+		Datatype: agent.DataTypeEnum(getfromstringslice(dslice, c, 0)),
+		Fps: uint16(getfromstringslice(dslice, c, 1)),
+		Httpchan: uint16(getfromstringslice(dslice, c, 2)),
+		Len: uint32(getfromstringslice(dslice, c, 3))}
 	if globalErr{
 		globalErr=false
 		return
@@ -215,19 +209,14 @@ func genfilesgenerate(c* gin.Context)  {
 
 	if len(greceptors)>0 {
 		receptor := agent.Receptor{
-			agent.ReceptorTypeEnum(getfromstringslice(rslice, c, 0)),
-			agent.CoreEnum(getfromstringslice(rslice, c, 1)),
-			0,
-			0,
-			0,
-			0,
-			agent.NeuronTypeEnum(getfromstringslice(rslice, c, 2)),
-			uint16(getfromstringslice(rslice, c, 3)),
-			uint16(getfromstringslice(rslice, c, 4)),
-			uint64(getfromstringslice(rslice, c, 5)),
-			uint32(getfromstringslice(rslice, c, 6)),
-			[32]agent.Axon{},
-		}
+			Typer: agent.ReceptorTypeEnum(getfromstringslice(rslice, c, 0)),
+			Coren: agent.CoreEnum(getfromstringslice(rslice, c, 1)),
+			Typemedi: agent.NeuronTypeEnum(getfromstringslice(rslice, c, 2)),
+			Force: uint16(getfromstringslice(rslice, c, 3)),
+			Divforce: uint16(getfromstringslice(rslice, c, 4)),
+			Threshold: uint64(getfromstringslice(rslice, c, 5)),
+			A: uint32(getfromstringslice(rslice, c, 6)),
+			Axons: [32]agent.Axon{}}
 		for i:=0; i< len(greceptors);i++ {
 			greceptors[i].Typer = agent.ReceptorTypeEnum(getfromstringslice(rslice, c, 0))
 			greceptors[i].Coren = agent.CoreEnum(getfromstringslice(rslice, c, 1))
@@ -271,16 +260,15 @@ func genfilesgenerate(c* gin.Context)  {
 		}
 
 		neuron := agent.Neuron{
-			agent.NeuronTypeEnum(getfromstringslice(nslice, c, 0)),
-			0,
-			agent.CoreEnum(getfromstringslice(nslice, c, 1)),
-			chemic,
-			0,
-			uint16(getfromstringslice(nslice, c, 3)),
-			[16]agent.Dendrite{},
-			uint16(getfromstringslice(nslice, c, 4)),
-			[16]agent.Axon{},
-		}
+			Typen: agent.NeuronTypeEnum(getfromstringslice(nslice, c, 0)),
+
+			Coren: agent.CoreEnum(getfromstringslice(nslice, c, 1)),
+			Chemic: chemic,
+
+			D: uint16(getfromstringslice(nslice, c, 3)),
+			Dendrites: [16]agent.Dendrite{},
+			A: uint16(getfromstringslice(nslice, c, 4)),
+			Axons: [16]agent.Axon{}	}
 		for i:=0; i< len(gneurons);i++  {
 			gneurons[i].Typen = agent.NeuronTypeEnum(getfromstringslice(nslice, c, 0))
 			gneurons[i].Coren = agent.CoreEnum(getfromstringslice(nslice, c, 1))
@@ -301,15 +289,10 @@ func genfilesgenerate(c* gin.Context)  {
 
 	if len(gpreffectors)>0 {
 		preffector := agent.Preffector{
-			agent.PreffectorTypeEnum(getfromstringslice(pslice, c, 0)),
-			agent.CoreEnum(getfromstringslice(pslice, c, 1)),
-			0,
-			0,
-			0,
-			0,
-			uint64(getfromstringslice(pslice, c, 2)),
-			[64]agent.Dendrite{},
-		}
+			Typep: agent.PreffectorTypeEnum(getfromstringslice(pslice, c, 0)),
+			Coren: agent.CoreEnum(getfromstringslice(pslice, c, 1)),
+			D:uint32(getfromstringslice(pslice, c, 2)),
+			Dendrites: [32]agent.Dendrite{}	}
 		for i:=0;i<len(gpreffectors);i++ {
 			gpreffectors[i].Typep = agent.PreffectorTypeEnum(getfromstringslice(pslice, c, 0))
 			gpreffectors[i].Coren = agent.CoreEnum(getfromstringslice(pslice, c, 1))

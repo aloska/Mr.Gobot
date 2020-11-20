@@ -338,9 +338,9 @@
                     <div class="accordion-body__contents">
                         <form action="/set-settings" target="output" method="post" onsubmit="formsubmit();">
                             <label>Массштаб:</label>
-                            <input type="text" id="Scale" name="Scale" value="5">
+                            <input type="text" id="Scale" name="Scale" value="2">
                             <label>Ширина и высота поля синапсов:</label>
-                            <input type="text" id="MaxXY" name="MaxXY" value="1000,1000">
+                            <input type="text" id="MaxXY" name="MaxXY" value="64,64">
                             <input type="submit" value="Установить">
                         </form>
                     </div><!-- end of sub accordion item body contents -->
@@ -367,8 +367,8 @@
                 <input type="text" id="Receptor" name="Receptor" value="12,0,33,1,1,1,0xffffffff">
                 <label>N: Typen, Coren, MaxXOtherCore, D, A</label>
                 <input type="text" id="Neuron" name="Neuron" value="0x21,0,0,0xffff,0xffff">
-                <label>P: Typee, Coren, D</label>
-                <input type="text" id="Preffector" name="Preffector" value="1,0,0xffffffffffffffff">
+                <label>P: Typep, Coren, D</label>
+                <input type="text" id="Preffector" name="Preffector" value="1,0,0xffffffff">
                 <label>C: GLUC,O2,WASTE,OMEGA,K,Na,CO,NO,ACh,CHOL,AA,GLU,GABA,GLN,NE,DOP,SER,TYR,TRP,ASP</label>
                 <input type="text" id="Chemical" name="Chemical" value="0x100,0x100,0,0x100,50,50,10,10,50,50,0,0,0,0,0,0,0,0,0,0">
                 <input type="submit" value="Создать файлы генов">
@@ -425,7 +425,7 @@
                     <div class="accordion-body__contents">
                         <form action="/set-draw-grid" target="output" method="post" onsubmit="formsubmit();">
                             <label>x0, y0, width, height, thin cell:</label>
-                            <input type="text" id="DrawGrid" name="DrawGrid" value="0,0,80,80,8">
+                            <input type="text" id="DrawGrid" name="DrawGrid" value="0,0,64,64,8">
                             <input type="submit" value="Спрятать/Показать">
                         </form>
                     </div><!-- end of sub accordion item body contents -->

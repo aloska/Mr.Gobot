@@ -411,7 +411,7 @@ func drawall(c*gin.Context){
 		for c:=0; c<cur; c++ {
 			xs:=x
 			ys:=y
-			for i:=0;i<64;i++{
+			for i:=0;i<32;i++{
 				drawDendrAxStyle(s,int(x),int(y),1,"fill:none;stroke:blue;stroke-width:0.2")
 				if c==PdrawConnector{
 					drawConnectPreffector(s, sdrawX,sdrawY, int(x),int(y),"stroke-width:0.2;stroke:red")
