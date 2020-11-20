@@ -138,8 +138,8 @@ func (a* Agent) checkpaths() bool{
 				if match, _ := regexp.MatchString("GenData.genes", file.Name()); match{
 					gendatagenes=true
 				}
-				//GenReceptor-0.genes должен быть обязательно
-				if match, _ := regexp.MatchString("GenReceptor-0.genes", file.Name()); match{
+				//Какой-нибудь GenReceptor-xxx.genes должен быть обязательно
+				if match, _ := regexp.MatchString("GenReceptor-[0-9]+.genes", file.Name()); match{
 					genreceptorgenes=true
 				}
 			}
@@ -207,8 +207,8 @@ func (a* Agent) checkpaths() bool{
 				if match, _ := regexp.MatchString("GenDataOut.genes", file.Name()); match{
 					gen1=true
 				}
-				//GenPreffector-0.genes должен быть обязательно
-				if match, _ := regexp.MatchString("GenPreffector-0.genes", file.Name()); match{
+				//GenPreffector-xxx.genes должен быть обязательно
+				if match, _ := regexp.MatchString("GenPreffector-[0-9]+.genes", file.Name()); match{
 					gen2=true
 				}
 			}
@@ -271,8 +271,8 @@ func (a* Agent) checkpaths() bool{
 					return false
 				}
 
-				//GenNeuron-0.genes должен быть обязательно
-				if match, _ := regexp.MatchString("GenNeuron-0.genes", file.Name()); match{
+				//GenNeuron-xxx.genes должен быть обязательно
+				if match, _ := regexp.MatchString("GenNeuron-[0-9]+.genes", file.Name()); match{
 					gen1=true
 				}
 
@@ -346,8 +346,8 @@ func (a* Agent) checkpaths() bool{
 				if match, _ := regexp.MatchString("GenDataOut.genes", file.Name()); match{
 					gen1=true
 				}
-				//GenPreffector-0.genes должен быть обязательно
-				if match, _ := regexp.MatchString("GenPreffector-0.genes", file.Name()); match{
+				//GenPreffector-xxx.genes должен быть обязательно
+				if match, _ := regexp.MatchString("GenPreffector-[0-9]+.genes", file.Name()); match{
 					gen2=true
 				}
 			}

@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"fmt"
 	mmap "github.com/edsrzf/mmap-go"
 	"os"
 	"reflect"
@@ -89,5 +90,36 @@ func (d *DataInput) mmapData() error{
 
 
 
+	return nil
+}
+
+func (re *Receptors) mmapGenData() error{
+	//открываем файл
+	f, err := openFile(os.O_RDWR, re.filenameGens)
+	if err!=nil{
+		return err
+	}
+	//создаем mmap
+	re.bytearrayGens, err = mmap.Map(f, mmap.RDWR, 0)
+	if err!=nil{
+		return err
+	}
+	//делаем unsafe на структуру
+	/*
+	var header reflect.SliceHeader //TODO - возможно его надо в саму структуру положить? Если мусорщик удалит, потеряем контроль над стурктурой
+	header.Data =(uintptr)(unsafe.Pointer(&re.bytearrayGens[0]))
+	header.Len = len(re.bytearrayGens)/int(reflect.TypeOf(re.genes).Elem().Size())
+	header.Cap = header.Len
+	re.genes=*(*[]GenReceptor)(unsafe.Pointer(&header))
+	 */
+	tst:=GenReceptor{}
+	tstr:=Receptor{}
+	tsta:=Axon{}
+	fmt.Println("len(re.bytearrayGens) ", len(re.bytearrayGens))
+	fmt.Println("reflect.TypeOf(re.genes).Elem().Size() ", reflect.TypeOf(re.genes).Elem().Size())
+	fmt.Println("reflect.TypeOf(tst).Size() ", reflect.TypeOf(tst).Size())
+	fmt.Println("unsafe.Sizeof(tst) ", unsafe.Sizeof(tst))
+	fmt.Println("unsafe.Sizeof(tstr) ", unsafe.Sizeof(tstr))
+	fmt.Println("unsafe.Sizeof(tsta) ", unsafe.Sizeof(tsta))
 	return nil
 }

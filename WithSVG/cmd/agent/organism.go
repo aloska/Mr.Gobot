@@ -3,6 +3,7 @@ package agent
 import (
 	mmap "github.com/edsrzf/mmap-go"
 	"io/ioutil"
+	"regexp"
 	"sort"
 	"strconv"
 )
@@ -118,18 +119,14 @@ func (d *DataInput) Init(o* Organism) bool{
 		o.agent.log.Error("DataInput не может создать mmap: "+err.Error())
 		return false
 	}
-	//создаем mmap на файл данных, если файла нет, функйия сама создаст его
+	//создаем mmap на файл данных, если файла нет, функция сама создаст его
 	if err:=d.mmapData(); err!=nil{
 		o.agent.errorr("DataInput не может создать mmap: "+err.Error())
 		o.agent.log.Error("DataInput не может создать mmap: "+err.Error())
 		return false
 	}
 
-	//todo это тест, надо убрать!
-	d.dataUInt32[0].Data[5]=0x77
-	d.bytearrayData.Flush()
-	d.bytearrayData.Unmap()
-
+	d.typeData=d.genData.Datatype
 
 	return true
 }
@@ -144,6 +141,25 @@ type Receptors struct {
 	filenameRecs  string     //имя файла, где записаны рецепторы
 	bytearrayRecs mmap.MMap  //замапленный файл клеток
 	recs          []Receptor //тот же файл в удобном виде, как слайс Receptor с отдельными генами для каждого вида
+}
+
+func (re *Receptors) Init(o *Organism) bool{
+//сюда входим с известными путями к файлам
+	//создаем mmap на ген данных
+	if err:=re.mmapGenData(); err!=nil{
+		o.agent.errorr("DataInput не может создать mmap: "+err.Error())
+		o.agent.log.Error("DataInput не может создать mmap: "+err.Error())
+		return false
+	}
+	//проверка TODO убрать
+	/*
+	re.genes[0].Serv4=0x55555555
+	re.bytearrayGens.Flush()
+	re.bytearrayGens.Unmap()
+
+	 */
+
+	return true
 }
 
 /*Input - вход состоит из входных файлов, рецепторов и (если нужно, нейронов)
@@ -169,7 +185,38 @@ func (in* Input) Init(o *Organism) bool{
 		o.agent.errorr("InputData не может инициализироваться")
 		return false
 	}
-	//TODO рецепторы
+
+	//ищем рецепторы
+	receptorfiles:=[]string{}
+	files, _ := ioutil.ReadDir(in.path)
+	for _, file := range files {
+		if match, _ := regexp.MatchString("(GenReceptor-[0-9]+.genes)",
+			file.Name()); match{
+			receptorfiles = append(receptorfiles,file.Name())
+		}
+	}
+	//остортируем рецепторы
+	if !sort.StringsAreSorted(receptorfiles){
+		sort.Strings(receptorfiles)
+	}
+	//добавляем рецепторы
+	re := regexp.MustCompile("[0-9]+")
+	for _, recs:= range receptorfiles{
+
+		in.receptors=append(in.receptors,
+							Receptors{
+								filenameGens: in.path+"/"+recs,
+								filenameRecs: in.path+"/Receptor-"+re.FindString(recs)+".receptors"	})
+	}
+	//инициализируем рецепторы
+	for i:=0;i<len(in.receptors);i++{
+		if !in.receptors[i].Init(o){
+			o.agent.errorr(in.receptors[i].filenameGens+" не может инициализироваться")
+			o.agent.log.Error(in.receptors[i].filenameGens+" не может инициализироваться")
+			return false
+		}
+	}
+
 	//TODO синапсы, если надо
 	return true
 }
@@ -187,7 +234,7 @@ type Senses struct {
 	organism *Organism //ссылка на весь родительский организм
 }
 
-//Init - инициализация Действий системы
+//Init - инициализация Чувств системы
 func (s *Senses) Init(o *Organism) bool{
 	//Найдем все входы
 	inputs:=[]string{}
@@ -208,18 +255,20 @@ func (s *Senses) Init(o *Organism) bool{
 		sort.Strings(inputs)
 	}
 	//добавляем входы
-	for i,inp:=range inputs{
+	re := regexp.MustCompile("[0-9]+")
+	for _,inp:=range inputs{
+		num, _:=strconv.Atoi(re.FindString(inp))
 		s.inputs=append(s.inputs,
 			Input{
-				number:uint16(i),
+				number: uint16(num),
 				path:o.path+"/Senses/"+inp})
 
 	}
 	//инициализируем входы
 	for i:=0;i<len(s.inputs);i++{
 		if !s.inputs[i].Init(o){
-			o.agent.errorr("Input-"+strconv.Itoa(i)+" не может инициализироваться")
-			o.agent.log.Error("Input-"+strconv.Itoa(i)+" не может инициализироваться")
+			o.agent.errorr(strconv.Itoa(int(s.inputs[i].number))+" не может инициализироваться")
+			o.agent.log.Error(strconv.Itoa(int(s.inputs[i].number))+" не может инициализироваться")
 			return false
 		}
 	}
