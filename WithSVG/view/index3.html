@@ -228,12 +228,12 @@
                                 <label>Ndata, NdataW, NdataWB:</label>
                                 <input type="text" id="Ndata" name="Ndata" value="0,0,0">
                                 <label>Maxi, Maxj, Maxk:</label>
-                                <input type="text" id="Max" name="Max" value="9,0,0">
+                                <input type="text" id="Max" name="Max" value="0,1,0">
                                 <label>Iteri, Iterj, Iterk:</label>
                                 <input type="text" id="Iter" name="Iter" value="1,1,1">
 
                                 <label>Ax1stX, Ax1stY:</label>
-                                <input type="text" id="Ax1st" name="Ax1st" value="10,10">
+                                <input type="text" id="Ax1st" name="Ax1st" value="0,10">
                                 <label>AxShiftX, AxShiftY:</label>
                                 <input type="text" id="AxShift" name="AxShift" value="1,0">
                                 <label>AxNextShiftX, AxNextShiftY:</label>
@@ -250,26 +250,26 @@
                         <div class="accordion-body__contents">
                             <form action="/neuron-gen" target="output" method="post" onsubmit="formsubmit();">
                                 <label>Layers, Laywidth:</label><br>
-                                <input type="text" id="Lay" name="Lay" value="2,10">
+                                <input type="text" id="Lay" name="Lay" value="1,2">
 
                                 <label>Soma1stX, Soma1stY:</label>
-                                <input type="text" id="Soma1st" name="Soma1st" value="50,50">
+                                <input type="text" id="Soma1st" name="Soma1st" value="20,20">
                                 <label>SomaNextShiftX, SomaNextShiftY:</label>
                                 <input type="text" id="SomaNextShift" name="SomaNextShift" value="1,0">
                                 <label>SomaLayerShiftX, SomaLayerShiftY:</label>
                                 <input type="text" id="SomaLayerShift" name="SomaLayerShift" value="0,1">
 
                                 <label>Dend1stX, Dend1stY:</label>
-                                <input type="text" id="Dend1st" name="Dend1st" value="10,10">
+                                <input type="text" id="Dend1st" name="Dend1st" value="16,10">
                                 <label>DendShiftX, DendShiftY:</label>
                                 <input type="text" id="DendShift" name="DendShift" value="1,0">
                                 <label>DendNextShiftX, DendNextShiftY:</label>
-                                <input type="text" id="DendNextShift" name="DendNextShift" value="16,0">
+                                <input type="text" id="DendNextShift" name="DendNextShift" value="0,1">
                                 <label>DendLayerShiftX, DendLayerShiftY:</label>
-                                <input type="text" id="DendLayerShift" name="DendLayerShift" value="0,5">
+                                <input type="text" id="DendLayerShift" name="DendLayerShift" value="0,1">
 
                                 <label>Ax1stX, Ax1stY:</label>
-                                <input type="text" id="Ax1st" name="Ax1st" value="10,200">
+                                <input type="text" id="Ax1st" name="Ax1st" value="0,31">
                                 <label>AxShiftX, AxShiftY:</label>
                                 <input type="text" id="AxShift" name="AxShift" value="1,0">
                                 <label>AxNextShiftX, AxNextShiftY:</label>
@@ -290,16 +290,16 @@
                                 <label>Ndata, NdataW, NdataWB:</label>
                                 <input type="text" id="Ndata" name="Ndata" value="0,0,0">
                                 <label>Maxi, Maxj, Maxk:</label>
-                                <input type="text" id="Max" name="Max" value="9,0,0">
+                                <input type="text" id="Max" name="Max" value="1,0,0">
                                 <label>Iteri, Iterj, Iterk:</label>
                                 <input type="text" id="Iter" name="Iter" value="1,1,1">
 
                                 <label>Dend1stX, Dend1stY:</label>
-                                <input type="text" id="Dend1st" name="Dend1st" value="100,100">
+                                <input type="text" id="Dend1st" name="Dend1st" value="0,30">
                                 <label>DendShiftX, DendShiftY:</label>
                                 <input type="text" id="DendShift" name="DendShift" value="1,0">
                                 <label>DendNextShiftX, DendNextShiftY:</label>
-                                <input type="text" id="DendNextShift" name="DendNextShift" value="1,0">
+                                <input type="text" id="DendNextShift" name="DendNextShift" value="0,1">
 
                                 <input type="submit" value="Добавить">
                             </form>
@@ -364,11 +364,11 @@
             <form action="/genfiles-generate" target="output" method="post" onsubmit="formsubmit();">
 
                 <label>R: Typer, Coren, Typemedi, Force, Divforce, Threshold, A</label>
-                <input type="text" id="Receptor" name="Receptor" value="12,0,33,1,1,1,0xffffffff">
+                <input type="text" id="Receptor" name="Receptor" value="12,0,0x21,1,1,1,0xffffffff">
                 <label>N: Typen, Coren, MaxXOtherCore, D, A</label>
                 <input type="text" id="Neuron" name="Neuron" value="0x21,0,0,0xffff,0xffff">
                 <label>P: Typep, Coren, D</label>
-                <input type="text" id="Preffector" name="Preffector" value="1,0,0xffffffff">
+                <input type="text" id="Preffector" name="Preffector" value="12,0,0xffffffff">
                 <label>C: GLUC,O2,WASTE,OMEGA,K,Na,CO,NO,ACh,CHOL,AA,GLU,GABA,GLN,NE,DOP,SER,TYR,TRP,ASP</label>
                 <input type="text" id="Chemical" name="Chemical" value="0x100,0x100,0,0x100,50,50,10,10,50,50,0,0,0,0,0,0,0,0,0,0">
                 <input type="submit" value="Создать файлы генов">
@@ -395,7 +395,7 @@
                         <form action="/gendataout-generate" target="output" method="post" onsubmit="formsubmit();">
 
                             <label>Datatype, Fps, Httpchan, Len</label>
-                            <input type="text" name="Dataf" value="6,100,1,1">
+                            <input type="text" name="Dataf" value="7,100,1,1">
                             <input type="submit" value="Создать файл генов">
                         </form>
                     </div><!-- end of sub accordion item body contents -->

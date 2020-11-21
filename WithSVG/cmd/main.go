@@ -229,7 +229,7 @@ func genfilesgenerate(c* gin.Context)  {
 			return
 		}
 
-		if err:=agent.StructsFileWrite("./tmp/receptors.genes",greceptors,binary.LittleEndian); err!=nil{
+		if err:=agent.StructsFileWrite("./tmp/GenReceptor.genes",greceptors,binary.LittleEndian); err!=nil{
 			svgError(c,err.Error())
 			return
 		}
@@ -281,7 +281,7 @@ func genfilesgenerate(c* gin.Context)  {
 			return
 		}
 
-		if err:=agent.StructsFileWrite("./tmp/neurons.genes",gneurons,binary.LittleEndian); err!=nil{
+		if err:=agent.StructsFileWrite("./tmp/GenNeuron.genes",gneurons,binary.LittleEndian); err!=nil{
 			svgError(c,err.Error())
 			return
 		}
@@ -303,7 +303,7 @@ func genfilesgenerate(c* gin.Context)  {
 			return
 		}
 
-		if err := agent.StructsFileWrite("./tmp/preffectors.genes", gpreffectors,binary.LittleEndian); err != nil {
+		if err := agent.StructsFileWrite("./tmp/GenPreffector.genes", gpreffectors,binary.LittleEndian); err != nil {
 			svgError(c,err.Error())
 			return
 		}

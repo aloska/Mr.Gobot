@@ -145,20 +145,36 @@ type Receptors struct {
 
 func (re *Receptors) Init(o *Organism) bool{
 //сюда входим с известными путями к файлам
-	//создаем mmap на ген данных
-	if err:=re.mmapGenData(); err!=nil{
-		o.agent.errorr("DataInput не может создать mmap: "+err.Error())
-		o.agent.log.Error("DataInput не может создать mmap: "+err.Error())
+	//создаем mmap на ген рецепторов
+	if err:=re.mmapGenReceptor(); err!=nil{
+		o.agent.errorr("Receptors не может создать mmap: "+err.Error())
+		o.agent.log.Error("Receptors не может создать mmap: "+err.Error())
 		return false
 	}
-	//проверка TODO убрать
-	/*
-	re.genes[0].Serv4=0x55555555
-	re.bytearrayGens.Flush()
-	re.bytearrayGens.Unmap()
 
-	 */
+	//создаем файл рецепторов, если нет
+	if !fileExists(re.filenameRecs){
+		o.agent.info("Файла рецепторов пока нет. Создаем. "+re.filenameRecs)
+		o.agent.log.Info("Файла рецепторов пока нет. Создаем. "+re.filenameRecs)
 
+		if err:=re.createReceptorsFile(); err!=nil{
+			o.agent.errorr("Receptors не может создать файл рецепторов: "+err.Error())
+			o.agent.log.Error("Receptors не может создать файл рецепторов: "+err.Error())
+			return false
+		}
+	}
+
+	//создаем ммап на рецепторы
+	if err:=re.mmapReceptors(); err!=nil{
+		o.agent.errorr("Receptors не может создать mmap на рецепторы: "+err.Error())
+		o.agent.log.Error("Receptors не может создать mmap на рецепторы: "+err.Error())
+		return false
+	}
+
+	//todo проверка -убрать
+	o.agent.warning("re.recs[0].Axons[10].N " + strconv.Itoa(int(re.recs[0].Axons[10].N)))
+	x,y:=NumberToXY(re.recs[0].Axons[10].N, re.genes[re.recs[0].Gen].MaxX)
+	o.agent.warning("x,y " +strconv.Itoa(int(x) )+", "+strconv.Itoa(int(y)) )
 	return true
 }
 
