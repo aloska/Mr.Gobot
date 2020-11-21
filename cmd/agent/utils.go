@@ -6,6 +6,8 @@ import (
 	"os"
 )
 
+
+
 type structsFileReaderWriter interface{}
 
 /*StructsFileWrite - пишет любые данные в файл пачкой. Файл не должен существовать!
@@ -17,7 +19,7 @@ StructsFileWrite("/путь/к/файлу", any)
 Протестировано на:
 GenData
 */
-func StructsFileWrite(filename string, fw structsFileReaderWriter) error {
+func StructsFileWrite(filename string, fw structsFileReaderWriter, order binary.ByteOrder) error {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		f, err := os.Create(filename)
 		if err != nil {
@@ -25,7 +27,7 @@ func StructsFileWrite(filename string, fw structsFileReaderWriter) error {
 		}
 		defer f.Close()
 
-		err = binary.Write(f, binary.BigEndian, fw)
+		err = binary.Write(f, order, fw)
 		if err != nil {
 			return fmt.Errorf("can't write to file: %v", filename)
 		}
@@ -40,11 +42,11 @@ func StructsFileWrite(filename string, fw structsFileReaderWriter) error {
 Протестировано на:
 GenData
 */
-func StructsFileRead(filename string, fw structsFileReaderWriter) error {
+func StructsFileRead(filename string, fw structsFileReaderWriter, order binary.ByteOrder) error {
 	if _, err := os.Stat(filename); err == nil {
 		if file, err := os.Open(filename); err == nil {
 			defer file.Close()
-			err = binary.Read(file, binary.BigEndian, fw)
+			err = binary.Read(file, order, fw)
 
 			if err == nil {
 				return nil
@@ -59,4 +61,23 @@ func StructsFileRead(filename string, fw structsFileReaderWriter) error {
 
 	}
 	return fmt.Errorf("unknown error %v", filename)
+}
+
+//StructsFileReadEOF - читает любые данные до io.EOF - можно в цикле читать, пока ошибка не будет EOF,
+//File должен быть открыт
+func StructsFileReadEOF(file *os.File, fw structsFileReaderWriter, order binary.ByteOrder) error {
+	err:= binary.Read(file, order, fw)
+	if err == nil {
+			return nil
+		}
+	return err
+}
+
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }

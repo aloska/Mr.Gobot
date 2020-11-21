@@ -7,7 +7,7 @@ import (
 
 func TestGenDataGenerate(t *testing.T) {
 	filename := "c:/ALOSKA/my/tmp/GenData.genes"
-	data := GenData{DATAUINT32BIG, 0, 0, 100, 1, 1, 0, 0}
+	data := GenData{Datatype: DATAUINT32BIG,Fps: 100 }
 
 	var datanew GenData
 	if err := StructsFileWrite(filename, &data,binary.LittleEndian); err != nil {

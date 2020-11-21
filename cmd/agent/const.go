@@ -1,16 +1,27 @@
 package agent
 
-/*CoreEnum - константы номеров ядра
- */
-type CoreEnum uint16
+/*номер синаптического поля (ядра или входа или выхода), в синапсах которого находятся аксоны или дендриты
+
+зарегестрированные константы не отражают реальный номер поля, а просто являются как бы ссылками, говорящими
+программисту, что эти отростки относятся к неким стандартным полям
+
+0xffff - отростки в поле синапсов вегетативной системы
+
+0xfffe - отростки расположены в общем синаптическом файле всех входов мозга (для реализации связей между разными входами)
+Поскольку нейроны могут быть расположены не только в мозге, но и в входных устройствах, у всех входных устройств может быть свое
+синаптическое поле, и есть общее синаптическое поле (в простых агентах это может не использоваться, но возможность такая есть)
+
+0
+*/
+type SynEnum uint16
 
 const (
-	//COREMY - аксоны направлены в то же поле, в котором находится клетка
-	COREMY CoreEnum = 0xffff
-	//COREINPUTS - аксоны направлены в общее поле чувств
-	COREINPUTS CoreEnum = 0xfffe
-	//COREOUTPUTS - аксоны направлены в общее поле действий
-	COREOUTPUTS CoreEnum = 0xfffd
+	//SYNVEGETATIC - синаптическое поле вегетативной системы
+	SYNVEGETATIC SynEnum = 0xffff
+	//SYNINPUTS - общее поле чувств
+	SYNINPUTS SynEnum = 0xfffe
+	//SYNOUTPUTS - общее поле действий
+	SYNOUTPUTS SynEnum = 0xfffd
 )
 
 /*NeuronTypeEnum - константы типов нейронов
@@ -75,6 +86,9 @@ const (
 	}
 	*/
 	DATAUINT32BIG DataTypeEnum = 6
+
+	//DATAUINT32 - uint32
+	DATAUINT32 DataTypeEnum=7
 )
 
 /*ReceptorTypeEnum - константы типов рецепторов
@@ -86,4 +100,15 @@ const (
 	RECEPTORDATAUINT32BIGPOS ReceptorTypeEnum = 12
 	//RECEPTORDATAUINT32BIGNEG - отрицательный рецептор, нацеленный на беззнаковое целое 4-байтовое
 	RECEPTORDATAUINT32BIGNEG ReceptorTypeEnum = 13
+)
+
+/*PreffectorTypeEnum - константы типов преффекторов
+*/
+type PreffectorTypeEnum uint16
+
+const (
+	//PREFFECTORUINT32POS - позитивный преффектор, нацеленный на беззнаковое целое 4-байтовое
+	PREFFECTORUINT32POS PreffectorTypeEnum=12
+	//PREFFECTORUINT32NEG - отрицательный преффектор, нацеленный на беззнаковое целое 4-байтовое
+	PREFFECTORUINT32NEG PreffectorTypeEnum=13
 )
