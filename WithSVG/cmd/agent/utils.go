@@ -7,7 +7,6 @@ import (
 )
 
 
-
 type structsFileReaderWriter interface{}
 
 /*StructsFileWrite - пишет любые данные в файл пачкой. Файл не должен существовать!

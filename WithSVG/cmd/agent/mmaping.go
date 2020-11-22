@@ -175,3 +175,63 @@ func (ce *Cells) mmapNeuron() error{
 
 	return nil
 }
+
+func (sy *Synapses) mmapTypicalChe() error{
+	//открываем файл
+	f, err := openFile(os.O_RDWR, sy.filedesc)
+	if err!=nil{
+		return err
+	}
+	//создаем mmap
+	sy.bytearrayTypicalChe, err = mmap.Map(f, mmap.RDWR, 0)
+	if err!=nil{
+		return err
+	}
+	//делаем unsafe на структуру
+	sy.TypicalChe=(*Chemical)(unsafe.Pointer(&sy.bytearrayTypicalChe[0]))
+	return nil
+}
+
+func (sy *Synapses) mmapSynapse() error{
+	//проверяем, есть ли уже файл с данными
+	isneedfill:=false
+	if !fileExists(sy.filename){
+		//создаем файл данных
+		f, err:=os.Create(sy.filename)
+		if err!=nil{
+			return err
+		}
+		err=f.Truncate(int64(sy.maxX)*int64(sy.maxY)*int64(unsafe.Sizeof(*sy.TypicalChe)))
+		if err!=nil{
+			return err
+		}
+		f.Close()
+		isneedfill=true //надо заполнить после после маппинга, потому что оно нулячее
+	}
+
+	//открываем файл
+	f, err := openFile(os.O_RDWR, sy.filename)
+	if err!=nil{
+		return err
+	}
+	//создаем mmap
+	sy.bytearray, err = mmap.Map(f, mmap.RDWR, 0)
+	if err!=nil{
+		return err
+	}
+	//делаем unsafe на структуру
+	var header reflect.SliceHeader //TODO - возможно его надо в саму структуру положить? Если мусорщик удалит, потеряем контроль над стурктурой
+	header.Data =(uintptr)(unsafe.Pointer(&sy.bytearray[0]))
+	header.Len = len(sy.bytearray)/int(reflect.TypeOf(sy.syn).Elem().Size())
+	header.Cap = header.Len
+	sy.syn=*(*[]Chemical)(unsafe.Pointer(&header))
+
+	//теперь синапсы заливаем содержимым из типичной ячейки, потому что они только что созданы
+	if isneedfill {
+		for i:=0;i<len(sy.syn);i++{
+			sy.syn[i]=*sy.TypicalChe
+		}
+		sy.bytearray.Flush()
+	}
+	return nil
+}

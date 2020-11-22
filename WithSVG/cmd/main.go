@@ -59,6 +59,7 @@ func getRoutes() {
 	r.POST("/genfiles-generate",genfilesgenerate)
 	r.POST("/gendatain-generate",gendataingenerate)
 	r.POST("/gendataout-generate",gendataoutgenerate)
+	r.POST("/gensyndesc-generate",gensyndescgenerate)
 
 	r.POST("/set-settings", setsettings)
 	r.POST("/del-entities", delentities)
@@ -201,6 +202,41 @@ func gendataoutgenerate(c *gin.Context)  {
 	svgInfo(c, "Файл гена в папке ./tmp")
 }
 
+func gensyndescgenerate(c *gin.Context){
+	sslice:=strings.Split(c.PostForm("SynDesc"),",")
+	cslice:=strings.Split(c.PostForm("Chemical"),",")
+	filename:="syn-"+sslice[1]+"x"+sslice[2]+"."+sslice[0]
+
+	chemic := agent.Chemical{
+		uint16(getfromstringslice(cslice, c, 0)),
+		uint16(getfromstringslice(cslice, c, 1)),
+		uint16(getfromstringslice(cslice, c, 2)),
+		uint16(getfromstringslice(cslice, c, 3)),
+		byte(getfromstringslice(cslice, c, 4)),
+		byte(getfromstringslice(cslice, c, 5)),
+		byte(getfromstringslice(cslice, c, 6)),
+		byte(getfromstringslice(cslice, c, 7)),
+		byte(getfromstringslice(cslice, c, 8)),
+		byte(getfromstringslice(cslice, c, 9)),
+		byte(getfromstringslice(cslice, c, 10)),
+		byte(getfromstringslice(cslice, c, 11)),
+		byte(getfromstringslice(cslice, c, 12)),
+		byte(getfromstringslice(cslice, c, 13)),
+		byte(getfromstringslice(cslice, c, 14)),
+		byte(getfromstringslice(cslice, c, 15)),
+		byte(getfromstringslice(cslice, c, 16)),
+		byte(getfromstringslice(cslice, c, 17)),
+		byte(getfromstringslice(cslice, c, 18)),
+		byte(getfromstringslice(cslice, c, 19)),
+	}
+
+	if err:=agent.StructsFileWrite("./tmp/"+filename,chemic,binary.LittleEndian); err!=nil{
+		svgError(c,err.Error())
+		return
+	}
+	svgInfo(c, "Файл в папке ./tmp")
+}
+
 func genfilesgenerate(c* gin.Context)  {
 	rslice:=strings.Split(c.PostForm("Receptor"),",")
 	nslice:=strings.Split(c.PostForm("Neuron"),",")
@@ -273,7 +309,7 @@ func genfilesgenerate(c* gin.Context)  {
 			gneurons[i].Typen = agent.NeuronTypeEnum(getfromstringslice(nslice, c, 0))
 			gneurons[i].SynNumber = agent.SynEnum(getfromstringslice(nslice, c, 1))
 			gneurons[i].MaxX = uint32(ViewX)
-			gneurons[i].MaxXOtherCore = uint32(getfromstringslice(nslice, c, 2))
+			gneurons[i].MaxXOtherSyn = uint32(getfromstringslice(nslice, c, 2))
 			gneurons[i].Neur = neuron
 		}
 		if globalErr{

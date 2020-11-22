@@ -11,6 +11,7 @@ import (
 	"os"
 	"regexp"
 	"runtime"
+	"strconv"
 	"time"
 )
 
@@ -64,8 +65,9 @@ func (a* Agent) Live (pathtoOrganism string){
 func (a* Agent) checkpaths() bool{
 	pterm.DefaultSection.Println("Проверка структуры папок и файлов...")
 
-	pslice:=[]string{"/Senses", "/Actions", "/Brain", "/Vegetatic"}
+	synverify:=map[int]int{}//для проверки уникальности номеров синаптических полей
 
+	pslice:=[]string{"/Senses", "/Actions", "/Brain", "/Vegetatic"}
 	p, _ := pterm.DefaultProgressbar.WithTotal(len(pslice)).WithTitle("Проверяем папки").Start()
 	for i := 0; i < p.Total; i++ {
 		p.Title = "Папка " + pslice[i]
@@ -105,6 +107,21 @@ func (a* Agent) checkpaths() bool{
 						a.log.Error(serr,zap.String("/Senses", "Плохое имя файла "+file.Name()))
 						return false
 			}
+			//если это синаптическое поле - занесем его номер и проверим, не было ли такого уже
+			if match, _:= regexp.MatchString("syn-[0-9]+x[0-9]+.[0-9]+",file.Name()); match{
+				//отпарсим номер и размер
+				re := regexp.MustCompile(`[0-9]+`)
+				ss:=re.FindAllString(file.Name(), -1)
+				num,_:=strconv.Atoi(ss[2])
+				a.info("Обнаружено синаптическое поле "+file.Name()+" в /Senses")
+				if _, found := synverify[num]; found{
+					serr:="Номера синаптических полей совпадают! "+file.Name()
+					pterm.Error.Println(serr)
+					a.log.Error(serr,zap.String("/Senses", "Плохое имя файла "+file.Name()))
+					return false
+				}
+				synverify[num]=1
+			}
 
 		}
 	}
@@ -133,6 +150,21 @@ func (a* Agent) checkpaths() bool{
 					pterm.Error.Println(serr)
 					a.log.Error(serr,zap.String("/Senses/"+inp, "Плохое имя файла "+file.Name()))
 					return false
+				}
+				//если это синаптическое поле - занесем его номер и проверим, не было ли такого уже
+				if match, _:= regexp.MatchString("syn-[0-9]+x[0-9]+.[0-9]+",file.Name()); match{
+					//отпарсим номер и размер
+					re := regexp.MustCompile(`[0-9]+`)
+					ss:=re.FindAllString(file.Name(), -1)
+					num,_:=strconv.Atoi(ss[2])
+					a.info("Обнаружено синаптическое поле "+file.Name()+" в /Senses/"+inp)
+					if _, found := synverify[num]; found{
+						serr:="Номера синаптических полей совпадают! "+file.Name()
+						pterm.Error.Println(serr)
+						a.log.Error(serr,zap.String("/Senses/"+inp, "Плохое имя файла "+file.Name()))
+						return false
+					}
+					synverify[num]=1
 				}
 
 				//GenData.genes должен быть обязательно
@@ -179,6 +211,21 @@ func (a* Agent) checkpaths() bool{
 				a.log.Error(serr,zap.String("/Actions", "Плохое имя файла "+file.Name()))
 				return false
 			}
+			//если это синаптическое поле - занесем его номер и проверим, не было ли такого уже
+			if match, _:= regexp.MatchString("syn-[0-9]+x[0-9]+.[0-9]+",file.Name()); match{
+				//отпарсим номер и размер
+				re := regexp.MustCompile(`[0-9]+`)
+				ss:=re.FindAllString(file.Name(), -1)
+				num,_:=strconv.Atoi(ss[2])
+				a.info("Обнаружено синаптическое поле "+file.Name()+" в /Actions")
+				if _, found := synverify[num]; found{
+					serr:="Номера синаптических полей совпадают! "+file.Name()
+					pterm.Error.Println(serr)
+					a.log.Error(serr,zap.String("/Actions", "Плохое имя файла "+file.Name()))
+					return false
+				}
+				synverify[num]=1
+			}
 		}
 	}
 	pterm.Info.Println("/Actions выглядит сносно")
@@ -206,6 +253,21 @@ func (a* Agent) checkpaths() bool{
 					pterm.Error.Println(serr)
 					a.log.Error(serr,zap.String("/Actions/"+inp, "Плохое имя файла "+file.Name()))
 					return false
+				}
+				//если это синаптическое поле - занесем его номер и проверим, не было ли такого уже
+				if match, _:= regexp.MatchString("syn-[0-9]+x[0-9]+.[0-9]+",file.Name()); match{
+					//отпарсим номер и размер
+					re := regexp.MustCompile(`[0-9]+`)
+					ss:=re.FindAllString(file.Name(), -1)
+					num,_:=strconv.Atoi(ss[2])
+					a.info("Обнаружено синаптическое поле "+file.Name()+" в /Actions/"+inp)
+					if _, found := synverify[num]; found{
+						serr:="Номера синаптических полей совпадают! "+file.Name()
+						pterm.Error.Println(serr)
+						a.log.Error(serr,zap.String("/Actions/"+inp, "Плохое имя файла "+file.Name()))
+						return false
+					}
+					synverify[num]=1
 				}
 
 				//GenDataOut.genes должен быть обязательно
@@ -275,6 +337,21 @@ func (a* Agent) checkpaths() bool{
 					a.log.Error(serr,zap.String("/Brain/"+inp, "Плохое имя файла "+file.Name()))
 					return false
 				}
+				//если это синаптическое поле - занесем его номер и проверим, не было ли такого уже
+				if match, _:= regexp.MatchString("syn-[0-9]+x[0-9]+.[0-9]+",file.Name()); match{
+					//отпарсим номер и размер
+					re := regexp.MustCompile(`[0-9]+`)
+					ss:=re.FindAllString(file.Name(), -1)
+					num,_:=strconv.Atoi(ss[2])
+					a.info("Обнаружено синаптическое поле "+file.Name()+" в /Brain/"+inp)
+					if _, found := synverify[num]; found{
+						serr:="Номера синаптических полей совпадают! "+file.Name()
+						pterm.Error.Println(serr)
+						a.log.Error(serr,zap.String("/Brain/"+inp, "Плохое имя файла "+file.Name()))
+						return false
+					}
+					synverify[num]=1
+				}
 
 				//GenNeuron-xxx.genes и syn-[0-9]+x[0-9]+.[0-9]+ должен быть обязательно
 				if match, _ := regexp.MatchString("GenNeuron-[0-9]+.genes", file.Name()); match{
@@ -319,6 +396,21 @@ func (a* Agent) checkpaths() bool{
 				a.log.Error(serr,zap.String("/Vegetatic/", "Плохое имя файла "+file.Name()))
 				return false
 			}
+			//если это синаптическое поле - занесем его номер и проверим, не было ли такого уже
+			if match, _:= regexp.MatchString("syn-[0-9]+x[0-9]+.[0-9]+",file.Name()); match{
+				//отпарсим номер и размер
+				re := regexp.MustCompile(`[0-9]+`)
+				ss:=re.FindAllString(file.Name(), -1)
+				num,_:=strconv.Atoi(ss[2])
+				a.info("Обнаружено синаптическое поле "+file.Name()+" в /Vegetatic")
+				if _, found := synverify[num]; found{
+					serr:="Номера синаптических полей совпадают! "+file.Name()
+					pterm.Error.Println(serr)
+					a.log.Error(serr,zap.String("/Vegetatic", "Плохое имя файла "+file.Name()))
+					return false
+				}
+				synverify[num]=1
+			}
 		}
 	}
 	pterm.Info.Println("/Vegetatic выглядит сносно")
@@ -343,11 +435,26 @@ func (a* Agent) checkpaths() bool{
 				//должны быть только файлы  Neuron-XXX.neurons GenNeuron-XXX.genes Synapse-XXX.chemical
 				pat:="(syn-[0-9]+x[0-9]+.[0-9]+|DataOut.data|GenDataOut.genes|GenPreffector-[0-9]+.genes|Preffector-[0-9]+.preffectors|Neuron-[0-9]+.neurons|Synapse-[0-9]+.chemical|GenNeuron-[0-9]+.genes)"
 				if match, _ := regexp.MatchString(pat, file.Name()); !match{
-					serr:="В /Actions/Effector-xxx/ не может быть "+file.Name()
+					serr:="В /Vegetatic/Effector-xxx/ не может быть "+file.Name()
 					pterm.Warning.Println("Что это за файл? "+file.Name())
 					pterm.Error.Println(serr)
 					a.log.Error(serr,zap.String("/Vegetatic/"+inp, "Плохое имя файла "+file.Name()))
 					return false
+				}
+				//если это синаптическое поле - занесем его номер и проверим, не было ли такого уже
+				if match, _:= regexp.MatchString("syn-[0-9]+x[0-9]+.[0-9]+",file.Name()); match{
+					//отпарсим номер и размер
+					re := regexp.MustCompile(`[0-9]+`)
+					ss:=re.FindAllString(file.Name(), -1)
+					num,_:=strconv.Atoi(ss[2])
+					a.info("Обнаружено синаптическое поле "+file.Name()+" в /Vegetatic/"+inp)
+					if _, found := synverify[num]; found{
+						serr:="Номера синаптических полей совпадают! "+file.Name()
+						pterm.Error.Println(serr)
+						a.log.Error(serr,zap.String("/Vegetatic/"+inp, "Плохое имя файла "+file.Name()))
+						return false
+					}
+					synverify[num]=1
 				}
 
 				//GenDataOut.genes должен быть обязательно

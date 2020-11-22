@@ -401,6 +401,20 @@
                     </div><!-- end of sub accordion item body contents -->
                 </div><!-- end of sub accordion item body -->
             </div><!-- end of sub accordion item -->
+            <div class="accordion__item js-accordion-item">
+                <div class="accordion-header js-accordion-header">Файл описания синапсов</div>
+                <div class="accordion-body js-accordion-body">
+                    <div class="accordion-body__contents">
+                        <form action="/gensyndesc-generate" target="output" method="post" onsubmit="formsubmit();">
+                            <label>num, maxX, MaxY</label>
+                            <input type="text" name="SynDesc" value="0,64,64">
+                            <label>C: GLUC,O2,WASTE,OMEGA,K,Na,CO,NO,ACh,CHOL,AA,GLU,GABA,GLN,NE,DOP,SER,TYR,TRP,ASP</label>
+                            <input type="text" name="Chemical" value="0x100,0x100,0,0x100,100,100,0,0,0,0,0,0,0,0,0,0,0,30,30,30">
+                            <input type="submit" value="Создать файл описания">
+                        </form>
+                    </div><!-- end of sub accordion item body contents -->
+                </div><!-- end of sub accordion item body -->
+            </div><!-- end of sub accordion item -->
         </div><!-- end of sub accordion -->
     </div><!-- end of accordion body -->
 </div><!-- end of accordion item -->

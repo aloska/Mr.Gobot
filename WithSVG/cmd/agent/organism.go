@@ -12,12 +12,40 @@ import (
 
  */
 type Synapses struct {
+	filedesc string  //файл описания синапсов в формате syn-[0-9]+x[0-9]+.[0-9]+
+	bytearrayTypicalChe mmap.MMap  //замапленный файл синапсов
+	TypicalChe *Chemical //в файле описания содержится типичный состав химии, и он в этом поле отражен
+
 	number    uint16     //уникальный номер синаптического поля (ядра или входа или выхода)
 	filename  string     //имя файла, где записаны синапсы
 	bytearray mmap.MMap  //замапленный файл синапсов
 	syn       []Chemical //тот же файл в удобном виде, как слайс Chemical с веществами
 	maxX      uint32     //ширина синаптического поля
 	maxY      uint32     //высота
+}
+
+func (sy *Synapses) Init(o *Organism) bool{
+	//сюда входим с известными путями к файлам
+
+	//читаем сожержимое файла описания в typicalChe
+	if err:=sy.mmapTypicalChe(); err!=nil{
+		o.agent.errorr("Synapses не может прочитать TypicalChe из файла описания: "+err.Error())
+		o.agent.log.Error("Synapses не может прочитать TypicalChe из файла описания: "+err.Error())
+		return false
+	}
+
+	//создаем mmap синапсов (если его нет - функция сама создаст)
+	if err:=sy.mmapSynapse(); err!=nil{
+		o.agent.errorr("Synapses не может сделать ммап: "+err.Error())
+		o.agent.log.Error("Synapses не может сделать ммап: "+err.Error())
+		return false
+	}
+
+	//добавляем это поле синапсов в быстрый доступ организма
+	o.synapsesMap[sy.number]=sy
+
+
+	return true
 }
 
 /*Cells - клетки, ммап на файл клеток, и описывающий их геном
@@ -60,7 +88,7 @@ func (ce *Cells) Init(o *Organism) bool{
 		return false
 	}
 
-	
+
 
 	return true
 }
@@ -78,13 +106,17 @@ type Core struct {
 
 func (co *Core) Init(o *Organism) bool{
 //сюда входим с известными путем и номером ядра
-	//ищем гены нейронов
+	//ищем гены нейронов и файл-описание синапса
 	gneuronfiles:=[]string{}
+	syndescfile:=""
 	files, _ := ioutil.ReadDir(co.path)
 	for _, file := range files {
 		if match, _ := regexp.MatchString("(GenNeuron-[0-9]+.genes)",
 			file.Name()); match{
 			gneuronfiles = append(gneuronfiles,file.Name())
+		}else if match, _ := regexp.MatchString("(syn-[0-9]+x[0-9]+.[0-9]+)",
+			file.Name()); match{
+			syndescfile = file.Name()
 		}
 	}
 	//остортируем
@@ -109,7 +141,24 @@ func (co *Core) Init(o *Organism) bool{
 		}
 	}
 
-	//TODO синапсы
+	//отпарсим номер и размер
+	re = regexp.MustCompile(`[0-9]+`)
+	ss:=re.FindAllString(syndescfile, -1)
+	mx,_:=strconv.Atoi(ss[0])
+	my,_:=strconv.Atoi(ss[1])
+	num,_:=strconv.Atoi(ss[2])
+	co.synapses = Synapses{
+		number: uint16(num),
+		maxX: uint32(mx),
+		maxY: uint32(my),
+		filename: co.path+"/Synapse-"+ss[2]+".chemical",
+		filedesc: co.path+"/"+syndescfile}
+	//инициализируем синапсы
+	if !co.synapses.Init(o){
+		o.agent.errorr(co.synapses.filename+" не может инициализироваться")
+		o.agent.log.Error(co.synapses.filename+" не может инициализироваться")
+		return false
+	}
 	return  true
 }
 
@@ -303,11 +352,17 @@ func (in* Input) Init(o *Organism) bool{
 
 	//ищем гены рецепторов
 	receptorfiles:=[]string{}
+	isSyn:=false
+	syndescfile:="" //и заодно файл-описание синапсов, если есть
 	files, _ := ioutil.ReadDir(in.path)
 	for _, file := range files {
 		if match, _ := regexp.MatchString("(GenReceptor-[0-9]+.genes)",
 			file.Name()); match{
 			receptorfiles = append(receptorfiles,file.Name())
+		}else if match, _ := regexp.MatchString("(syn-[0-9]+x[0-9]+.[0-9]+)",
+			file.Name()); match{
+			syndescfile = file.Name()
+			isSyn=true
 		}
 	}
 	//остортируем
@@ -332,7 +387,60 @@ func (in* Input) Init(o *Organism) bool{
 		}
 	}
 
-	//TODO синапсы нейроны, если надо
+
+	//есть ли свое синаптическое поле?
+	if isSyn{
+		//ищем гены нейронов
+		gneuronfiles:=[]string{}
+
+		files, _ := ioutil.ReadDir(in.path)
+		for _, file := range files {
+			if match, _ := regexp.MatchString("(GenNeuron-[0-9]+.genes)",
+				file.Name()); match{
+				gneuronfiles = append(gneuronfiles,file.Name())
+			}
+		}
+		//остортируем
+		if !sort.StringsAreSorted(gneuronfiles){
+			sort.Strings(gneuronfiles)
+		}
+		//добавляем
+		re := regexp.MustCompile("[0-9]+")
+		for _, neus:= range gneuronfiles{
+
+			in.cells=append(in.cells,
+				Cells{
+					filenameGens: in.path+"/"+neus,
+					filenameCells: in.path+"/Neuron-"+re.FindString(neus)+".neurons"	})
+		}
+		//инициализируем
+		for i:=0;i<len(in.cells);i++{
+			if !in.cells[i].Init(o){
+				o.agent.errorr(in.cells[i].filenameGens+" не может инициализироваться")
+				o.agent.log.Error(in.cells[i].filenameGens+" не может инициализироваться")
+				return false
+			}
+		}
+
+		//отпарсим номер и размер
+		re = regexp.MustCompile(`[0-9]+`)
+		ss:=re.FindAllString(syndescfile, -1)
+		mx,_:=strconv.Atoi(ss[0])
+		my,_:=strconv.Atoi(ss[1])
+		num,_:=strconv.Atoi(ss[2])
+		in.synapses = Synapses{
+			number: uint16(num),
+			maxX: uint32(mx),
+			maxY: uint32(my),
+			filename: in.path+"/Synapse-"+ss[2]+".chemical",
+			filedesc: in.path+"/"+syndescfile}
+		//инициализируем синапсы
+		if !in.synapses.Init(o){
+			o.agent.errorr(in.synapses.filename+" не может инициализироваться")
+			o.agent.log.Error(in.synapses.filename+" не может инициализироваться")
+			return false
+		}
+	}
 	return true
 }
 
@@ -341,8 +449,8 @@ func (in* Input) Init(o *Organism) bool{
 type Senses struct {
 	inputs []Input //все входы
 
-	synapsesInputs Synapses //синаптическое поле всех входов
-	cellsInputs    []Cells  /*слайс обслуживает файлы с нейронами и геномами этих нейронов, если они заданы, для общего синаптичесского поля всех входов
+	synapses Synapses //синаптическое поле всех входов
+	cells    []Cells  /*слайс обслуживает файлы с нейронами и геномами этих нейронов, если они заданы, для общего синаптичесского поля всех входов
 	этих нейронов может не быть, и тогда это значит, что общего синаптического поля входов нет
 	такое поведение может использоваться для очень простых агентов
 	*/
@@ -354,15 +462,16 @@ func (s *Senses) Init(o *Organism) bool{
 	s.organism=o
 	//Найдем все входы
 	inputs:=[]string{}
-	filesgeneralSynapse:=[]string{}
+	syndescfile:="" //и заодно файл-описание синапсов, если есть
+	isSyn:=false
 	files, _ := ioutil.ReadDir(o.path+"/Senses")
 	for _, file := range files {
 		if file.IsDir(){
 			inputs = append(inputs,file.Name())
-		} else{
-			//здесь файлы в корне папки /Senses
-			//TODO - Запустить синаптическое поле, общее для всех входов
-			filesgeneralSynapse=append(filesgeneralSynapse,file.Name())
+		} else if match, _ := regexp.MatchString("(syn-[0-9]+x[0-9]+.[0-9]+)",
+			file.Name()); match{
+			syndescfile = file.Name()
+			isSyn=true
 		}
 	}
 
@@ -388,10 +497,65 @@ func (s *Senses) Init(o *Organism) bool{
 			return false
 		}
 	}
+
+	//есть ли свое синаптическое поле?
+	if isSyn{
+		//ищем гены нейронов
+		gneuronfiles:=[]string{}
+
+		files, _ := ioutil.ReadDir(o.path+"/Senses")
+		for _, file := range files {
+			if match, _ := regexp.MatchString("(GenNeuron-[0-9]+.genes)",
+				file.Name()); match{
+				gneuronfiles = append(gneuronfiles,file.Name())
+			}
+		}
+		//остортируем
+		if !sort.StringsAreSorted(gneuronfiles){
+			sort.Strings(gneuronfiles)
+		}
+		//добавляем
+		re := regexp.MustCompile("[0-9]+")
+		for _, neus:= range gneuronfiles{
+
+			s.cells=append(s.cells,
+				Cells{
+					filenameGens: o.path+"/Senses/"+neus,
+					filenameCells: o.path+"/Senses/Neuron-"+re.FindString(neus)+".neurons"	})
+		}
+		//инициализируем
+		for i:=0;i<len(s.cells);i++{
+			if !s.cells[i].Init(o){
+				o.agent.errorr(s.cells[i].filenameGens+" не может инициализироваться")
+				o.agent.log.Error(s.cells[i].filenameGens+" не может инициализироваться")
+				return false
+			}
+		}
+
+		//отпарсим номер и размер
+		re = regexp.MustCompile(`[0-9]+`)
+		ss:=re.FindAllString(syndescfile, -1)
+		mx,_:=strconv.Atoi(ss[0])
+		my,_:=strconv.Atoi(ss[1])
+		num,_:=strconv.Atoi(ss[2])
+		s.synapses = Synapses{
+			number: uint16(num),
+			maxX: uint32(mx),
+			maxY: uint32(my),
+			filename: o.path+"/Senses/Synapse-"+ss[2]+".chemical",
+			filedesc: o.path+"/Senses/"+syndescfile}
+		//инициализируем синапсы
+		if !s.synapses.Init(o){
+			o.agent.errorr(s.synapses.filename+" не может инициализироваться")
+			o.agent.log.Error(s.synapses.filename+" не может инициализироваться")
+			return false
+		}
+	}
+
+
 	o.agent.info("/Senses готовы к работе")
 	o.agent.log.Info("/Senses готовы к работе")
 
-	//TODO синапсы общего поля входов, если надо
 	return true
 }
 
