@@ -199,3 +199,76 @@ func (ce *Cells) createNeuronsFile() error{
 
 	return nil
 }
+
+//генерация файла преффекторов
+func (p *Preffectors) createPreffectorsFile() error {
+	var pres          []Preffector
+
+	for genindex, rrr:=range p.genes{
+		//сначала проверим, что ген в порядке
+		switch {
+		case rrr.MaxX==0:
+			return errors.New("Ген преффектора №"+strconv.Itoa(genindex)+", "+
+				p.filenameGens+" MaxX==0")
+		case rrr.Ndata>rrr.Maxi:
+			return errors.New("Ген преффектора №"+strconv.Itoa(genindex)+", "+
+				p.filenameGens+" Ndata>Maxi")
+		case rrr.NdataW>rrr.Maxj:
+			return errors.New("Ген преффектора №"+strconv.Itoa(genindex)+", "+
+				p.filenameGens+" NdataW>Maxj")
+		case rrr.NdataWB>rrr.Maxk:
+			return errors.New("Ген преффектора №"+strconv.Itoa(genindex)+", "+
+				p.filenameGens+" NdataW>Maxj")
+		case rrr.Iteri==0 || rrr.Iterj==0 || rrr.Iterk==0:
+			return errors.New("Ген преффектора №"+strconv.Itoa(genindex)+", "+
+				p.filenameGens+" Iter[ijk] должны быть > 0")
+
+		}
+
+		cur:=0
+		for i:=rrr.Ndata; i<= rrr.Maxi; i=i+rrr.Iteri{
+			for j:=rrr.NdataW; j<= rrr.Maxj; j=j+rrr.Iterj{
+				for k:=rrr.NdataWB; k<=rrr.Maxk; k=k+rrr.Iterk {
+					pres = append(pres, Preffector{
+						Buffer: rrr.Prefec.Buffer,
+						Typep: rrr.Typep,
+						SynNumber: rrr.SynNumber,
+						Ndata: i,
+						NdataW: j,
+						NdataWb: k,
+						Gen: uint16(genindex),
+						D: rrr.Prefec.D,
+						Dendrites: [32]Dendrite{} })
+					cur++
+				}
+			}
+		}
+
+		x:=rrr.Dend1stX
+		y:= rrr.Dend1stY
+
+		for c:=0; c<cur; c++ {
+			xs:=x
+			ys:=y
+			for i:=0;i<32;i++{
+				//уровни кальция, тип дендрита... берем из типичного преффектора в генах
+				pres[c].Dendrites[i].Typed=rrr.Prefec.Dendrites[i].Typed
+				pres[c].Dendrites[i].Ca=rrr.Prefec.Dendrites[i].Ca
+				//Номер синапса в файле синапсов генерируется, исходя из координат
+				pres[c].Dendrites[i].N=XYToNumber(x,y,rrr.MaxX)
+
+				x=x+uint32(rrr.DendShiftX)
+				y=y+uint32(rrr.DendShiftY)
+
+			}
+			x=xs+uint32(rrr.DendNextShiftX)
+			y=ys+uint32(rrr.DendNextShiftY)
+		}
+	}
+
+	if err:=StructsFileWrite(p.filenamePres,pres,binary.LittleEndian); err!=nil{
+
+		return err
+	}
+	return nil
+}

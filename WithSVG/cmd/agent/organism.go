@@ -577,6 +577,26 @@ type DataOutput struct {
 	dataRune   []DataRune
 	dataUInt32 []DataUInt32
 }
+func (d *DataOutput) Init(o* Organism) bool{
+	//сюда входим с известными путями к файлам
+
+	//создаем mmap на ген данных
+	if err:=d.mmapGenData(); err!=nil{
+		o.agent.errorr("DataInput не может создать mmap: "+err.Error())
+		o.agent.log.Error("DataInput не может создать mmap: "+err.Error())
+		return false
+	}
+	//создаем mmap на файл данных, если файла нет, функция сама создаст его
+	if err:=d.mmapData(); err!=nil{
+		o.agent.errorr("DataInput не может создать mmap: "+err.Error())
+		o.agent.log.Error("DataInput не может создать mmap: "+err.Error())
+		return false
+	}
+
+	d.typeData=d.genData.Datatype
+
+	return true
+}
 
 /*Preffectors - преффекторы, ммап на файл преффекторов, и описывающий их геном
 файлов преффекторов для одного выхода может быть много
@@ -589,6 +609,37 @@ type Preffectors struct {
 	filenamePres  string       //имя файла, где записаны преффекторы
 	bytearrayPres mmap.MMap    //замапленный файл клеток
 	prefs         []Preffector //тот же файл в удобном виде, как слайс Preffector с отдельными генами для каждого вида
+}
+
+func (pre *Preffectors) Init(o *Organism) bool{
+	//сюда входим с известными путями к файлам
+	//создаем mmap на ген преффекторов
+	if err:=pre.mmapGenPreffector(); err!=nil{
+		o.agent.errorr("Preffectors не может создать mmap: "+err.Error())
+		o.agent.log.Error("Preffectors не может создать mmap: "+err.Error())
+		return false
+	}
+
+	//создаем файл рецепторов, если нет
+	if !fileExists(pre.filenamePres){
+		o.agent.info("Файла преффекторов пока нет. Создаем. "+pre.filenamePres)
+		o.agent.log.Info("Файла преффекторов пока нет. Создаем. "+pre.filenamePres)
+
+		if err:=pre.createPreffectorsFile(); err!=nil{
+			o.agent.errorr("Preffectors не может создать файл преффекторов: "+err.Error())
+			o.agent.log.Error("Preffectors не может создать файл преффекторов: "+err.Error())
+			return false
+		}
+	}
+
+	//создаем ммап на преффекторы
+	if err:=pre.mmapPreffectors(); err!=nil{
+		o.agent.errorr("Preffectors не может создать mmap на преффекторов: "+err.Error())
+		o.agent.log.Error("Preffectors не может создать mmap на преффекторов: "+err.Error())
+		return false
+	}
+
+	return true
 }
 
 /*Effector - считывает данные со своих префекторов и складывает значения в выходной файл
@@ -608,12 +659,117 @@ type Effector struct {
 	cells    []Cells  //слайс обслуживает файлы с нейронами и геномами этих нейронов, если они заданы
 }
 
+func (ef *Effector) Init(o *Organism) bool{
+	//сюда входим с известными путем и номером выхода
+	//скажем DataInput где его файлы
+	ef.dataOutput.filenameGen=ef.path+"/GenDataOut.genes"
+	ef.dataOutput.filenameData=ef.path+"/DataOut.data"
+	//инициализация
+	if !ef.dataOutput.Init(o){
+		o.agent.log.Error("dataOutput не может инициализироваться")
+		o.agent.errorr("dataOutput не может инициализироваться")
+		return false
+	}
+	//ищем гены преффекторов
+	preffectorfiles:=[]string{}
+	isSyn:=false
+	syndescfile:="" //и заодно файл-описание синапсов, если есть
+	files, _ := ioutil.ReadDir(ef.path)
+	for _, file := range files {
+		if match, _ := regexp.MatchString("(GenPreffector-[0-9]+.genes)",
+			file.Name()); match{
+			preffectorfiles = append(preffectorfiles,file.Name())
+		}else if match, _ := regexp.MatchString("(syn-[0-9]+x[0-9]+.[0-9]+)",
+			file.Name()); match{
+			syndescfile = file.Name()
+			isSyn=true
+		}
+	}
+	//остортируем
+	if !sort.StringsAreSorted(preffectorfiles){
+		sort.Strings(preffectorfiles)
+	}
+	//добавляем
+	re := regexp.MustCompile("[0-9]+")
+	for _, recs:= range preffectorfiles{
+
+		ef.preffectors=append(ef.preffectors,
+			Preffectors{
+				filenameGens: ef.path+"/"+recs,
+				filenamePres: ef.path+"/Preffector-"+re.FindString(recs)+".preffectors"	})
+	}
+	//инициализируем
+	for i:=0;i<len(ef.preffectors);i++{
+		if !ef.preffectors[i].Init(o){
+			o.agent.errorr(ef.preffectors[i].filenameGens+" не может инициализироваться")
+			o.agent.log.Error(ef.preffectors[i].filenameGens+" не может инициализироваться")
+			return false
+		}
+	}
+
+	//есть ли свое синаптическое поле?
+	if isSyn{
+		//ищем гены нейронов
+		gneuronfiles:=[]string{}
+
+		files, _ := ioutil.ReadDir(ef.path)
+		for _, file := range files {
+			if match, _ := regexp.MatchString("(GenNeuron-[0-9]+.genes)",
+				file.Name()); match{
+				gneuronfiles = append(gneuronfiles,file.Name())
+			}
+		}
+		//остортируем
+		if !sort.StringsAreSorted(gneuronfiles){
+			sort.Strings(gneuronfiles)
+		}
+		//добавляем
+		re := regexp.MustCompile("[0-9]+")
+		for _, neus:= range gneuronfiles{
+
+			ef.cells=append(ef.cells,
+				Cells{
+					filenameGens: ef.path+"/"+neus,
+					filenameCells: ef.path+"/Neuron-"+re.FindString(neus)+".neurons"	})
+		}
+		//инициализируем
+		for i:=0;i<len(ef.cells);i++{
+			if !ef.cells[i].Init(o){
+				o.agent.errorr(ef.cells[i].filenameGens+" не может инициализироваться")
+				o.agent.log.Error(ef.cells[i].filenameGens+" не может инициализироваться")
+				return false
+			}
+		}
+
+		//отпарсим номер и размер
+		re = regexp.MustCompile(`[0-9]+`)
+		ss:=re.FindAllString(syndescfile, -1)
+		mx,_:=strconv.Atoi(ss[0])
+		my,_:=strconv.Atoi(ss[1])
+		num,_:=strconv.Atoi(ss[2])
+		ef.synapses = Synapses{
+			number: uint16(num),
+			maxX: uint32(mx),
+			maxY: uint32(my),
+			filename: ef.path+"/Synapse-"+ss[2]+".chemical",
+			filedesc: ef.path+"/"+syndescfile}
+		//инициализируем синапсы
+		if !ef.synapses.Init(o){
+			o.agent.errorr(ef.synapses.filename+" не может инициализироваться")
+			o.agent.log.Error(ef.synapses.filename+" не может инициализироваться")
+			return false
+		}
+	}
+
+	return true
+}
+
 /*Actions - все выходы (действия организма, кроме внутренних)
  */
 type Actions struct {
 	effectors []Effector //все выходы
-	synapsesOutputs Synapses //синаптическое поле всех выходов (может не быть)
-	cellsOutputs    []Cells  /*слайс обслуживает файлы с нейронами и геномами этих нейронов, если они заданы,
+	synapses Synapses //синаптическое поле всех выходов (может не быть)
+	cells    []Cells  /*слайс обслуживает файлы с нейронами и геномами этих нейронов, если они заданы,
 	для общего синаптичесского поля всех выходов
 	этих нейронов может не быть, и тогда это значит, что общего синаптического поля вЫходов нет
 	такое поведение может использоваться для большинства агентов.
@@ -625,6 +781,102 @@ type Actions struct {
 
 //Init - инициализация Действий системы
 func (ac *Actions) Init(o *Organism) bool{
+	ac.organism=o
+
+	//Найдем все выходы
+	effecs:=[]string{}
+	syndescfile:=""
+	isSyn:=false
+	files, _ := ioutil.ReadDir(o.path+"/Actions")
+	for _, file := range files {
+		if file.IsDir(){
+			effecs = append(effecs,file.Name())
+		} else if match, _ := regexp.MatchString("(syn-[0-9]+x[0-9]+.[0-9]+)",
+			file.Name()); match{
+			syndescfile = file.Name()
+			isSyn=true
+		}
+	}
+	//остортируем выходы
+	if !sort.StringsAreSorted(effecs){
+		sort.Strings(effecs)
+	}
+	//добавляем выходы
+	re := regexp.MustCompile("[0-9]+")
+	for _,eff:=range effecs{
+		num, _:=strconv.Atoi(re.FindString(eff))
+		ac.effectors=append(ac.effectors,
+			Effector{
+				number: uint16(num),
+				path: o.path+"/Actions/"+eff})
+
+	}
+	//инициализируем выходы
+	for i:=0;i<len(ac.effectors);i++{
+		if !ac.effectors[i].Init(o){
+			o.agent.errorr(strconv.Itoa(int(ac.effectors[i].number))+" не может инициализироваться")
+			o.agent.log.Error(strconv.Itoa(int(ac.effectors[i].number))+" не может инициализироваться")
+			return false
+		}
+	}
+
+	//есть ли свое синаптическое поле?
+	if isSyn{
+		//ищем гены нейронов
+		gneuronfiles:=[]string{}
+
+		files, _ := ioutil.ReadDir(o.path+"/Actions")
+		for _, file := range files {
+			if match, _ := regexp.MatchString("(GenNeuron-[0-9]+.genes)",
+				file.Name()); match{
+				gneuronfiles = append(gneuronfiles,file.Name())
+			}
+		}
+		//остортируем
+		if !sort.StringsAreSorted(gneuronfiles){
+			sort.Strings(gneuronfiles)
+		}
+		//добавляем
+		re := regexp.MustCompile("[0-9]+")
+		for _, neus:= range gneuronfiles{
+
+			ac.cells=append(ac.cells,
+				Cells{
+					filenameGens: o.path+"/Actions/"+neus,
+					filenameCells: o.path+"/Actions/Neuron-"+re.FindString(neus)+".neurons"	})
+		}
+		//инициализируем
+		for i:=0;i<len(ac.cells);i++{
+			if !ac.cells[i].Init(o){
+				o.agent.errorr(ac.cells[i].filenameGens+" не может инициализироваться")
+				o.agent.log.Error(ac.cells[i].filenameGens+" не может инициализироваться")
+				return false
+			}
+		}
+
+		//отпарсим номер и размер
+		re = regexp.MustCompile(`[0-9]+`)
+		ss:=re.FindAllString(syndescfile, -1)
+		mx,_:=strconv.Atoi(ss[0])
+		my,_:=strconv.Atoi(ss[1])
+		num,_:=strconv.Atoi(ss[2])
+		ac.synapses = Synapses{
+			number: uint16(num),
+			maxX: uint32(mx),
+			maxY: uint32(my),
+			filename: o.path+"/Actions/Synapse-"+ss[2]+".chemical",
+			filedesc: o.path+"/Actions/"+syndescfile}
+		//инициализируем синапсы
+		if !ac.synapses.Init(o){
+			o.agent.errorr(ac.synapses.filename+" не может инициализироваться")
+			o.agent.log.Error(ac.synapses.filename+" не может инициализироваться")
+			return false
+		}
+	}
+
+
+	o.agent.info("/Actions готовы к работе")
+	o.agent.log.Info("/Actions готовы к работе")
 
 	return true
 }
@@ -643,7 +895,102 @@ type Vegetatic struct {
 
 //Init - инициализация вегетативной системы
 func (v *Vegetatic) Init(o *Organism) bool{
+//инициализация очень похожа на Actions (один в один))
+	v.organism = v.organism
 
+	//Найдем все выходы
+	effecs:=[]string{}
+	syndescfile:=""
+	isSyn:=false
+	files, _ := ioutil.ReadDir(o.path+"/Vegetatic")
+	for _, file := range files {
+		if file.IsDir(){
+			effecs = append(effecs,file.Name())
+		} else if match, _ := regexp.MatchString("(syn-[0-9]+x[0-9]+.[0-9]+)",
+			file.Name()); match{
+			syndescfile = file.Name()
+			isSyn=true
+		}
+	}
+	//остортируем выходы
+	if !sort.StringsAreSorted(effecs){
+		sort.Strings(effecs)
+	}
+	//добавляем выходы
+	re := regexp.MustCompile("[0-9]+")
+	for _,eff:=range effecs{
+		num, _:=strconv.Atoi(re.FindString(eff))
+		v.effectors=append(v.effectors,
+			Effector{
+				number: uint16(num),
+				path: o.path+"/Vegetatic/"+eff})
+
+	}
+	//инициализируем выходы
+	for i:=0;i<len(v.effectors);i++{
+		if !v.effectors[i].Init(o){
+			o.agent.errorr(strconv.Itoa(int(v.effectors[i].number))+" не может инициализироваться")
+			o.agent.log.Error(strconv.Itoa(int(v.effectors[i].number))+" не может инициализироваться")
+			return false
+		}
+	}
+
+	//есть ли свое синаптическое поле?
+	if isSyn{
+		//ищем гены нейронов
+		gneuronfiles:=[]string{}
+
+		files, _ := ioutil.ReadDir(o.path+"/Vegetatic")
+		for _, file := range files {
+			if match, _ := regexp.MatchString("(GenNeuron-[0-9]+.genes)",
+				file.Name()); match{
+				gneuronfiles = append(gneuronfiles,file.Name())
+			}
+		}
+		//остортируем
+		if !sort.StringsAreSorted(gneuronfiles){
+			sort.Strings(gneuronfiles)
+		}
+		//добавляем
+		re := regexp.MustCompile("[0-9]+")
+		for _, neus:= range gneuronfiles{
+
+			v.cells=append(v.cells,
+				Cells{
+					filenameGens: o.path+"/Vegetatic/"+neus,
+					filenameCells: o.path+"/Vegetatic/Neuron-"+re.FindString(neus)+".neurons"	})
+		}
+		//инициализируем
+		for i:=0;i<len(v.cells);i++{
+			if !v.cells[i].Init(o){
+				o.agent.errorr(v.cells[i].filenameGens+" не может инициализироваться")
+				o.agent.log.Error(v.cells[i].filenameGens+" не может инициализироваться")
+				return false
+			}
+		}
+
+		//отпарсим номер и размер
+		re = regexp.MustCompile(`[0-9]+`)
+		ss:=re.FindAllString(syndescfile, -1)
+		mx,_:=strconv.Atoi(ss[0])
+		my,_:=strconv.Atoi(ss[1])
+		num,_:=strconv.Atoi(ss[2])
+		v.synapses = Synapses{
+			number: uint16(num),
+			maxX: uint32(mx),
+			maxY: uint32(my),
+			filename: o.path+"/Vegetatic/Synapse-"+ss[2]+".chemical",
+			filedesc: o.path+"/Vegetatic/"+syndescfile}
+		//инициализируем синапсы
+		if !v.synapses.Init(o){
+			o.agent.errorr(v.synapses.filename+" не может инициализироваться")
+			o.agent.log.Error(v.synapses.filename+" не может инициализироваться")
+			return false
+		}
+	}
+
+	o.agent.info("/Vegetatic готовы к работе")
+	o.agent.log.Info("/Vegetatic готовы к работе")
 	return true
 }
 /*Organism - самая полная структура, состоящая из мозга, входных и выходных устройств
