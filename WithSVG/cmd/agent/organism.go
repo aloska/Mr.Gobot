@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"fmt"
 	mmap "github.com/edsrzf/mmap-go"
 	"io/ioutil"
 	"regexp"
@@ -16,7 +17,7 @@ type Synapses struct {
 	bytearrayTypicalChe mmap.MMap  //замапленный файл синапсов
 	TypicalChe *Chemical //в файле описания содержится типичный состав химии, и он в этом поле отражен
 
-	number    uint16     //уникальный номер синаптического поля (ядра или входа или выхода)
+	number    SynEnum     //уникальный номер синаптического поля (ядра или входа или выхода)
 	filename  string     //имя файла, где записаны синапсы
 	bytearray mmap.MMap  //замапленный файл синапсов
 	syn       []Chemical //тот же файл в удобном виде, как слайс Chemical с веществами
@@ -88,7 +89,10 @@ func (ce *Cells) Init(o *Organism) bool{
 		return false
 	}
 
-
+	//добавляем себя в слайс быстрого доступа
+	o.cellsSlice=append(o.cellsSlice, ce)
+	//увеличиваем общее количество клеток организма
+	o.countall+=len(ce.neurons)
 
 	return true
 }
@@ -148,7 +152,7 @@ func (co *Core) Init(o *Organism) bool{
 	my,_:=strconv.Atoi(ss[1])
 	num,_:=strconv.Atoi(ss[2])
 	co.synapses = Synapses{
-		number: uint16(num),
+		number: SynEnum(num),
 		maxX: uint32(mx),
 		maxY: uint32(my),
 		filename: co.path+"/Synapse-"+ss[2]+".chemical",
@@ -323,6 +327,9 @@ func (re *Receptors) Init(o *Organism) bool{
 		return false
 	}
 
+	//увеличиваем общее количество клеток организма
+	o.countall+=len(re.recs)
+
 	return true
 }
 
@@ -429,7 +436,7 @@ func (in* Input) Init(o *Organism) bool{
 		my,_:=strconv.Atoi(ss[1])
 		num,_:=strconv.Atoi(ss[2])
 		in.synapses = Synapses{
-			number: uint16(num),
+			number: SynEnum(num),
 			maxX: uint32(mx),
 			maxY: uint32(my),
 			filename: in.path+"/Synapse-"+ss[2]+".chemical",
@@ -539,7 +546,7 @@ func (s *Senses) Init(o *Organism) bool{
 		my,_:=strconv.Atoi(ss[1])
 		num,_:=strconv.Atoi(ss[2])
 		s.synapses = Synapses{
-			number: uint16(num),
+			number: SynEnum(num),
 			maxX: uint32(mx),
 			maxY: uint32(my),
 			filename: o.path+"/Senses/Synapse-"+ss[2]+".chemical",
@@ -550,6 +557,9 @@ func (s *Senses) Init(o *Organism) bool{
 			o.agent.log.Error(s.synapses.filename+" не может инициализироваться")
 			return false
 		}
+		//добавим также в мапу синапсов для быстрого доступа,
+		//в итоге это поле синапсов будет лежать в мапе и под своим номером, и под номером SYNINPUTS=0xfffe
+		o.synapsesMap[SYNINPUTS]=&s.synapses
 	}
 
 
@@ -638,6 +648,8 @@ func (pre *Preffectors) Init(o *Organism) bool{
 		o.agent.log.Error("Preffectors не может создать mmap на преффекторов: "+err.Error())
 		return false
 	}
+	//увеличиваем общее количество клеток организма
+	o.countall+=len(pre.prefs)
 
 	return true
 }
@@ -748,7 +760,7 @@ func (ef *Effector) Init(o *Organism) bool{
 		my,_:=strconv.Atoi(ss[1])
 		num,_:=strconv.Atoi(ss[2])
 		ef.synapses = Synapses{
-			number: uint16(num),
+			number: SynEnum(num),
 			maxX: uint32(mx),
 			maxY: uint32(my),
 			filename: ef.path+"/Synapse-"+ss[2]+".chemical",
@@ -861,7 +873,7 @@ func (ac *Actions) Init(o *Organism) bool{
 		my,_:=strconv.Atoi(ss[1])
 		num,_:=strconv.Atoi(ss[2])
 		ac.synapses = Synapses{
-			number: uint16(num),
+			number: SynEnum(num),
 			maxX: uint32(mx),
 			maxY: uint32(my),
 			filename: o.path+"/Actions/Synapse-"+ss[2]+".chemical",
@@ -872,6 +884,10 @@ func (ac *Actions) Init(o *Organism) bool{
 			o.agent.log.Error(ac.synapses.filename+" не может инициализироваться")
 			return false
 		}
+
+		//добавим также в мапу синапсов для быстрого доступа,
+		//в итоге это поле синапсов будет лежать в мапе и под своим номером, и под номером SYNOUTPUTS=0xfffd
+		o.synapsesMap[SYNOUTPUTS]=&ac.synapses
 	}
 
 
@@ -976,7 +992,7 @@ func (v *Vegetatic) Init(o *Organism) bool{
 		my,_:=strconv.Atoi(ss[1])
 		num,_:=strconv.Atoi(ss[2])
 		v.synapses = Synapses{
-			number: uint16(num),
+			number: SynEnum(num),
 			maxX: uint32(mx),
 			maxY: uint32(my),
 			filename: o.path+"/Vegetatic/Synapse-"+ss[2]+".chemical",
@@ -987,6 +1003,10 @@ func (v *Vegetatic) Init(o *Organism) bool{
 			o.agent.log.Error(v.synapses.filename+" не может инициализироваться")
 			return false
 		}
+
+		//добавим также в мапу синапсов для быстрого доступа,
+		//в итоге это поле синапсов будет лежать в мапе и под своим номером, и под номером SYNVEGETATIC=0xffff
+		o.synapsesMap[SYNVEGETATIC]=&v.synapses
 	}
 
 	o.agent.info("/Vegetatic готовы к работе")
@@ -1003,11 +1023,17 @@ type Organism struct {
 	actions   Actions   //действия
 	vegetatic Vegetatic //вегетативная система
 
-	synapsesMap map[uint16] *Synapses	/*мапа со всеми синаптическими полями для быстрого доступа
+	synapsesMap map[SynEnum] *Synapses	/*мапа со всеми реально существующими
+	синаптическими полями для быстрого доступа
 	(добавляет сюда тот, в ком есть поле)
 	а сами синапсы лежат в тех структурах, в папках которых они есть
 	Если у входа есть синаптическое поле - он его и создает и отвечает за него
 	*/
+	cellsSlice []*Cells /*слайс указателей всех реально существующих
+	Cells для быстрого доступа
+	Добавляет в слайс сама Cells во время Init*/
+
+	countall int //общее количество клеток организма (нейроны, рецепторы, преффекторы)
 
 	agent *Agent
 }
@@ -1016,7 +1042,7 @@ type Organism struct {
 func (o *Organism) Init(a *Agent) bool{
 	o.path=a.path
 	o.agent=a
-	o.synapsesMap=make(map[uint16]*Synapses)
+	o.synapsesMap=make(map[SynEnum]*Synapses)
 
 	if !o.senses.Init(o) {
 		return false
@@ -1034,9 +1060,106 @@ func (o *Organism) Init(a *Agent) bool{
 	return true
 }
 
-//Live Организм начинает жить (комманда сверху)
-func (o *Organism) Live() {
+//Check проверка работоспособности
+func (o *Organism) Check(a *Agent, c chan error) {
+	//проверим нейроны
+	for i:=0;i<len(o.cellsSlice);i++ {
+		//проверим, что все дендриты и аксоны не выходят за границы синаптических полей
+		for j:=0; j<len(o.cellsSlice[i].neurons);j++{
+			//количество синапсов в синаптическом поле, в котором находится нейрон
+			lenn:=uint32(len(o.synapsesMap[o.cellsSlice[i].neurons[j].SynNumber].syn))
+			if o.cellsSlice[i].neurons[j].N>= lenn{
+				//номер клетки больше количества синапсов в поле!
+				o.agent.log.Error(fmt.Sprintf("геном: %v, номер гена: %v", o.cellsSlice[i].filenameGens, o.cellsSlice[i].neurons[j].Gen))
+				c<-fmt.Errorf("номер нейрона %v больше количества синапсов в поле %v!", o.cellsSlice[i].neurons[j].N, o.cellsSlice[i].neurons[j].SynNumber)
+			}
+			//бежим по дендритам
+			for _, d:=range o.cellsSlice[i].neurons[j].Dendrites{
+				if d.N>=lenn{
+					//номер дендрита больше количества синапсов
+					o.agent.log.Error(fmt.Sprintf("геном: %v, номер гена: %v", o.cellsSlice[i].filenameGens, o.cellsSlice[i].neurons[j].Gen))
+					c<-fmt.Errorf("номер дендрита %v нейрона больше количества синапсов в поле %v!", d.N, o.cellsSlice[i].neurons[j].SynNumber)
+				}
+			}
+			//количество синапсов в синаптическом поле, в котором находится аксоны нейрона
+			lenna:=uint32(len(o.synapsesMap[o.cellsSlice[i].neurons[j].SynNumberAxons].syn))
+			//бежим по аксонам
+			for _, d:=range o.cellsSlice[i].neurons[j].Axons{
+				if d.N>=lenna{
+					//номер дендрита больше количества синапсов
+					o.agent.log.Error(fmt.Sprintf("геном: %v, номер гена: %v", o.cellsSlice[i].filenameGens, o.cellsSlice[i].neurons[j].Gen))
+					c<-fmt.Errorf("номер аксона %v нейрона больше количества синапсов в поле %v!", d.N, o.cellsSlice[i].neurons[j].SynNumber)
+				}
+			}
+			//все в порядке
+			c<-nil
+		}
+	}
+	//проверим рецепторы
+	for _, inp:=range o.senses.inputs{
+		for _, recs:= range inp.receptors{
+			for k:=0;k<len(recs.recs);k++ {
+				lenn := uint32(len(o.synapsesMap[recs.recs[k].SynNumber].syn))
+				//бежим по аксонам
+				for _, d := range recs.recs[k].Axons {
+					if d.N >= lenn {
+						//номер дендрита больше количества синапсов
+						o.agent.log.Error(fmt.Sprintf("геном: %v, номер гена: %v", recs.filenameGens, recs.recs[k].Gen))
+						c <- fmt.Errorf("номер аксона %v нейрона больше количества синапсов в поле %v!", d.N, recs.recs[k].SynNumber )
+					}
+				}
+				//все в порядке
+				c<-nil
+			}
+		}
+	}
+	//проверим преффекторы
+	for _, ef:=range o.actions.effectors{
+		for _, pre:= range ef.preffectors{
+			for k:=0;k<len(pre.prefs);k++ {
+				lenn := uint32(len(o.synapsesMap[pre.prefs[k].SynNumber].syn))
+				//бежим по дендритам
+				for _, d := range pre.prefs[k].Dendrites {
+					if d.N >= lenn {
+						//номер дендрита больше количества синапсов
+						o.agent.log.Error(fmt.Sprintf("геном: %v, номер гена: %v", pre.filenameGens, pre.prefs[k].Gen))
+						c <- fmt.Errorf("номер дендрита %v нейрона больше количества синапсов в поле %v!", d.N, pre.prefs[k].SynNumber )
+					}
+				}
+				//все в порядке
+				c<-nil
+			}
+		}
+	}
+	close(c)
+}
 
+//Live Организм начинает жить (комманда сверху)
+//Вызывается через go
+func (o *Organism) Live() {
+//сюда попападаем только после инициализации организма
+	for {
+		select {
+		case <- o.agent.sleep :
+			//TODO сделать flush всему и остановиться
+			//при попадании сюда, блокируемся и ждем комманды live или quit
+			select {
+			case <-o.agent.live:
+				//комманда жить!
+				//можно здесь ничего не делать, мы покинем select и попадем в default, где основная жизнь
+			case <-o.agent.quit:
+				//сюда лучше попадать после сна, иначе данные не сохранятся
+				o.agent.wga.Done()
+				return
+			}
+		case <-o.agent.quit:
+			//сюда лучше попадать после сна, иначе данные не сохранятся
+			o.agent.wga.Done()
+			return
+		default:
+			//TODO главная работа начинается здесь
+		}
+	}
 }
 
 //Sleep - орагнизм идет спать (команда сверху)

@@ -1,0 +1,5 @@
+{"level":"INFO","time":"2020-11-23T14:59:11.617+0700","caller":"agent/agent.go:45","message":"Старт организма","path":"c:/ALOSKA/work/Organism-1"}
+{"level":"INFO","time":"2020-11-23T14:59:11.692+0700","caller":"agent/organism.go:567","message":"/Senses готовы к работе"}
+{"level":"INFO","time":"2020-11-23T14:59:11.695+0700","caller":"agent/organism.go:213","message":"/Brain готовы к работе"}
+{"level":"INFO","time":"2020-11-23T14:59:11.700+0700","caller":"agent/organism.go:895","message":"/Actions готовы к работе"}
+{"level":"INFO","time":"2020-11-23T14:59:11.701+0700","caller":"agent/organism.go:1013","message":"/Vegetatic готовы к работе"}

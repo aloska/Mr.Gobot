@@ -1,29 +1,41 @@
 package agent
 
 import (
+	"context"
+	"fmt"
+	"github.com/cheggaaa/pb/v3"
 	"github.com/gin-gonic/gin"
 	"github.com/pterm/pterm"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/ini.v1"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"regexp"
 	"runtime"
 	"strconv"
+	"sync"
 	"time"
 )
+
 
 type Agent struct{
 	path string		//путь к организму
 	o *Organism		//собсно организм
-	server *gin.Engine //сервер http
+	router *gin.Engine //роутер http
+	server *http.Server //сервер http
 	port int    //порт сервера
 	config *ini.File //ини-конфигурация
 	logfile string //путь к лог-файлу (лежит в папке организма /vm/logs/)
 	log *zap.Logger
 
+	//каналы для управления организмом
+	live chan struct{}	//комманда на жизнь
+	sleep chan struct{} //комманда спать
+	quit chan struct{}  //выключаемся
+	wga sync.WaitGroup	//wait-group для гороутин, запущенных агентом
 }
 
 func (a* Agent) Live (pathtoOrganism string){
@@ -50,16 +62,91 @@ func (a* Agent) Live (pathtoOrganism string){
 	}
 
 	//Инициализируем организм
+	pterm.DefaultSection.Println("Инициализация...")
 	a.o=&Organism{}
 	if! a.o.Init(a){
 		a.fatalout()
 		return
 	}
+	pterm.Success.Println("Инициализация прошла успешно")
 
-
+	//Проверка работоспособности
+	pterm.DefaultSection.Println("Проверка работоспособности...")
+	tmpl := `{{ yellow "Пока все хорошо:" }} {{ bar . "[" "=" (cycle . "↖" "↗" "↘" "↙" ) "." "]"}} {{speed . | rndcolor }} {{percent .}}  {{string . "Проверка..." | green}}`
+	// start bar based on our template
+	bar := pb.ProgressBarTemplate(tmpl).Start(a.o.countall)
+	//канал, для получения данных от организма о состоянии проверки
+	c := make(chan error)
+	//погнали
+	go a.o.Check(a,c)
+	//читаем из канала до закрытия
+	isok:=true
+	for err:= range c {
+		bar.Increment()
+		if err!=nil{
+			a.log.Error(err.Error())
+			isok=false
+		}
+	}
+	bar.Finish()
+	println()
+	if !isok{
+		a.errorr("Во время работы обнаружены ошибки. Смотри лог.")
+		a.fatalout()
+		return
+	}
 
 	//все прошло удачно
+	pterm.DefaultSection.Println("Go Live!")
 
+	//каналы для контроля организмом
+	a.live = make(chan struct{})
+	a.sleep = make(chan struct{})
+	a.quit = make(chan struct{})
+	//запускаем асинхронно организм
+	a.wga.Add(1)
+	go a.o.Live()
+
+	//запускаем http-server
+	pterm.DefaultSection.Println("Запускаем http-server")
+	a.router=gin.Default()
+	a.makeRoutes()
+	//эти пляски для нормального выключения сервера по srv.shutdown
+	a.server = &http.Server{
+		Addr:    ":"+strconv.Itoa(a.port),
+		Handler: a.router,
+	}
+	//здесь мы блокируемся
+	if err := a.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		a.log.Fatal(fmt.Sprintf( "listen: %s\n", err))
+	}
+
+	a.welcome()
+	pterm.Println("Ну пока!")
+
+}
+
+func (a* Agent) makeRoutes(){
+	a.router.GET("/", func(c *gin.Context) {
+		c.String(http.StatusOK, "Welcome Okagamga2.0 agent")
+	})
+	a.router.GET("/quitall", a.quitall)
+}
+
+func (a *Agent) quitall(c* gin.Context){
+	//сначала сохраним организм
+	a.sleep<- struct{}{}
+	time.Sleep(time.Second)//чтоб наверняка организм получил предыдущий сигнал
+	a.quit<- struct{}{}
+	a.wga.Wait() //подождем, пока организм не выключится
+
+	c.String(http.StatusOK, "Bye Okagamga2.0 agent")
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	//ctx - контекст нужен для того, чтобы сервер успел отправить что не отправил
+	if err := a.server.Shutdown(ctx); err != nil {
+		a.log.Warn(fmt.Sprintf( "listen: %s\n", err))
+	}
 }
 
 func (a* Agent) checkpaths() bool{
@@ -68,20 +155,14 @@ func (a* Agent) checkpaths() bool{
 	synverify:=map[int]int{}//для проверки уникальности номеров синаптических полей
 
 	pslice:=[]string{"/Senses", "/Actions", "/Brain", "/Vegetatic"}
-	p, _ := pterm.DefaultProgressbar.WithTotal(len(pslice)).WithTitle("Проверяем папки").Start()
-	for i := 0; i < p.Total; i++ {
-		p.Title = "Папка " + pslice[i]
+	for i := 0; i < 4; i++ {
 		if  _, err :=  os.Stat(a.path+pslice[i]); os.IsNotExist(err) {
 			pterm.Error.Println("Нет папки "+pslice[i])
 			return false
 		} else {
 			pterm.Success.Println("Есть папка " + pslice[i])
-			p.Increment()
 		}
-		time.Sleep(time.Second / 2)
 	}
-	p.Stop()
-
 
 	pterm.DefaultSection.Println("Проверка папки /Senses...")
 	inputs:=[]string{}
@@ -476,7 +557,7 @@ func (a* Agent) checkpaths() bool{
 			return false
 		}
 	}
-	pterm.Info.Println("Похоже, все папки и файлы Организма в порядке... Но это не точно! ")
+	pterm.Success.Println("Похоже, все папки и файлы Организма в порядке... Но это не точно! ")
 	return true
 }
 
