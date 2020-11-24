@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"sync"
 )
 
 /*Synapses - структура с файлом синапсов, хранящая все  Chemistry, самая интенсивно используемая
@@ -912,7 +913,7 @@ type Vegetatic struct {
 //Init - инициализация вегетативной системы
 func (v *Vegetatic) Init(o *Organism) bool{
 //инициализация очень похожа на Actions (один в один))
-	v.organism = v.organism
+	v.organism = o
 
 	//Найдем все выходы
 	effecs:=[]string{}
@@ -1034,7 +1035,8 @@ type Organism struct {
 	Добавляет в слайс сама Cells во время Init*/
 
 	countall int //общее количество клеток организма (нейроны, рецепторы, преффекторы)
-
+	wgo sync.WaitGroup //синхронизация гороутин организма
+	state string //состояние организма "live" "pause" "quit"
 	agent *Agent
 }
 
@@ -1140,24 +1142,31 @@ func (o *Organism) Live() {
 //сюда попападаем только после инициализации организма
 	for {
 		select {
-		case <- o.agent.sleep :
-			//TODO сделать flush всему и остановиться
-			//при попадании сюда, блокируемся и ждем комманды live или quit
-			select {
-			case <-o.agent.live:
-				//комманда жить!
-				//можно здесь ничего не делать, мы покинем select и попадем в default, где основная жизнь
-			case <-o.agent.quit:
+		case <- o.agent.pause:
+			o.state="pause"
+			select{
+			case <-o.agent.live://просто разблокируем select
+				o.state="live"
+			case<-o.agent.quit:
 				//сюда лучше попадать после сна, иначе данные не сохранятся
+				o.state="quit"
 				o.agent.wga.Done()
 				return
 			}
 		case <-o.agent.quit:
 			//сюда лучше попадать после сна, иначе данные не сохранятся
+			o.state="quit"
 			o.agent.wga.Done()
 			return
+		case <- o.agent.live:
+			o.state="live"
+		//можно ничего не делать, на следубщем цикле зайдем в дефолт и погнали	(но прочитать канал надо!)
 		default:
 			//TODO главная работа начинается здесь
+			//а пока шаг за шагом
+			if o.state=="live" { //эта проверка нужна!!
+				o.Step()
+			}
 		}
 	}
 }
@@ -1165,6 +1174,16 @@ func (o *Organism) Live() {
 //Sleep - орагнизм идет спать (команда сверху)
 func (o *Organism) Sleep(){
 
+}
+
+//Sleep - орагнизм делает шаг (каждая клетка выполнит один ход ассинхронно)
+func (o *Organism) Step(){
+	o.wgo.Add(4)
+	go o.senses.Step()
+	go o.brain.Step()
+	go o.actions.Step()
+	go o.vegetatic.Step()
+	o.wgo.Wait()		//пока все не сделают работу, шаг не закончен
 }
 
 /*

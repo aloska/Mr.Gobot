@@ -31,9 +31,10 @@ type Agent struct{
 	logfile string //путь к лог-файлу (лежит в папке организма /vm/logs/)
 	log *zap.Logger
 
+	doatstart string //запись в конйигурационном файле, как начать жить "pause", "live"
 	//каналы для управления организмом
 	live chan struct{}	//комманда на жизнь
-	sleep chan struct{} //комманда спать
+	pause chan struct{} //пауза
 	quit chan struct{}  //выключаемся
 	wga sync.WaitGroup	//wait-group для гороутин, запущенных агентом
 }
@@ -95,17 +96,27 @@ func (a* Agent) Live (pathtoOrganism string){
 		a.fatalout()
 		return
 	}
+	time.Sleep(time.Second)
+	fmt.Println()
 
 	//все прошло удачно
 	pterm.DefaultSection.Println("Go Live!")
 
 	//каналы для контроля организмом
 	a.live = make(chan struct{})
-	a.sleep = make(chan struct{})
 	a.quit = make(chan struct{})
+	a.pause = make(chan struct{})
+
 	//запускаем асинхронно организм
 	a.wga.Add(1)
 	go a.o.Live()
+	switch a.doatstart {
+	case "pause":
+		a.pause <- struct{}{}
+		break
+	default:
+		a.live <- struct{}{}
+	}
 
 	//запускаем http-server
 	pterm.DefaultSection.Println("Запускаем http-server")
@@ -121,6 +132,7 @@ func (a* Agent) Live (pathtoOrganism string){
 		a.log.Fatal(fmt.Sprintf( "listen: %s\n", err))
 	}
 
+	//а здесь конец работы
 	a.welcome()
 	pterm.Println("Ну пока!")
 
@@ -130,15 +142,34 @@ func (a* Agent) makeRoutes(){
 	a.router.GET("/", func(c *gin.Context) {
 		c.String(http.StatusOK, "Welcome Okagamga2.0 agent")
 	})
-	a.router.GET("/quitall", a.quitall)
+	a.router.GET("/quitall", a.routeQuitall)
+	a.router.GET("/step", a.routeStep)
 }
 
-func (a *Agent) quitall(c* gin.Context){
+func (a *Agent) routeStep (c *gin.Context){
+	if a.o.state!="pause" {
+		a.pause <- struct{}{}
+	}
+	time.Sleep(time.Second/10)
+	strt:=time.Now()
+	a.o.Step()
+	elapsed := time.Since(strt)
+	c.String(http.StatusOK, fmt.Sprintf("Step complete in %v", elapsed))
+}
+
+func (a *Agent) routeQuitall(c* gin.Context){
 	//сначала сохраним организм
-	a.sleep<- struct{}{}
-	time.Sleep(time.Second)//чтоб наверняка организм получил предыдущий сигнал
+	if a.o.state!="pause" {
+		a.pause <- struct{}{}
+	}
+	time.Sleep(time.Second)
+	a.o.Sleep()
 	a.quit<- struct{}{}
 	a.wga.Wait() //подождем, пока организм не выключится
+
+	close(a.live)
+	close(a.pause)
+	close(a.quit)
 
 	c.String(http.StatusOK, "Bye Okagamga2.0 agent")
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
@@ -658,6 +689,8 @@ func (a* Agent) readConfig() bool {
 		pterm.Error.Println(err)
 		return false
 	}
+	a.doatstart=a.config.Section("organism").Key("doatstart").String()
+
 	pterm.Info.Println("Концигурационный файл в порядке!")
 	return  true
 }
