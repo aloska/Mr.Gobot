@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="http://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css"  />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script type="module" src="https://unpkg.com/ionicons@5.2.3/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule="" src="https://unpkg.com/ionicons@5.2.3/dist/ionicons/ionicons.js"></script>
+    <script src="plain-draggable.min.js"></script>
+    <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+    <script src="https://pagecdn.io/lib/mathjs/7.1.0/math.min.js" crossorigin="anonymous"  ></script>
+    <title>Телеметрия</title>
+
+    <style>
+        body {
+            /*font-size: 62.5%;*/
+            background: #f6f6f6;
+            font-family: 'Open Sans Condensed', arial, sans;
+            border: none;
+            padding: 0px;
+        }
+        .divgraph{
+            float:left;
+            width: 500px;
+            margin: 5px 5px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.22);
+            -moz-box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.22);
+            -webkit-box-shadow:  0px 0px 15px rgba(0, 0, 0, 0.22);
+        }
+
+        .accordion {
+            font-size: 1rem;
+            width: 400px;
+            margin: 0 auto;
+            border-radius: 5px;
+        }
+
+        .accordion-header,
+        .accordion-body {
+            background: #d7d7d7;
+        }
+
+        .accordion-header {
+            padding: 1em 1em;
+            background: #5b659a;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 0.8em;
+            letter-spacing: .1em;
+            transition: all .3s;
+            text-transform: uppercase;
+        }
+
+        .accordion__item {
+            border-bottom: 1px solid #515776;
+        }
+
+        .accordion__item .accordion__item {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .accordion-header:hover {
+            background: #8e99d2;
+            position: relative;
+            z-index: 5;
+        }
+
+        .accordion-body {
+            background: #fcfcfc;
+            color: #353535;
+            display: none;
+        }
+
+        .accordion-body__contents {
+            padding: 1em 1em;
+            font-size: .85em;
+        }
+
+        .accordion__item.active:last-child .accordion-header {
+            border-radius: unset;
+        }
+
+        .accordion:first-child > .accordion__item > .accordion-header {
+            border-bottom: 1px solid transparent;
+        }
+
+        .accordion__item > .accordion-header:after {
+            content: "\f3d0";
+            font-family: IonIcons;
+            font-size: 1.2em;
+            float: right;
+            position: relative;
+            top: -2px;
+            transition: .3s all;
+            transform: rotate(0deg);
+        }
+
+        .accordion__item.active > .accordion-header:after {
+            transform: rotate(-180deg);
+        }
+
+        .accordion__item.active .accordion-header {
+            background: #49a5a5;
+        }
+
+        .accordion__item .accordion__item .accordion-header {
+            background: #f1f1f1;
+            color: #353535;
+        }
+
+        @media screen and (max-width: 1000px) {
+            body {
+                padding: 1em;
+            }
+
+            .accordion {
+                width: 400px;
+            }
+        }
+
+        .iframe-style{
+            alignment: top;
+            display: block;
+            border: none;
+            padding: 0px;
+            background: #FFFFFF;
+            margin: 10px 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.22);
+            -moz-box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.22);
+            -webkit-box-shadow:  0px 0px 15px rgba(0, 0, 0, 0.22);
+        }
+        .iframe-style iframe{
+
+            width: 100%;
+            border: none;
+
+        }
+        .form-style-8{
+            position: absolute;
+            z-index: 1000;
+            font-family: 'Open Sans Condensed', arial, sans;
+            width: 400px;
+            padding: 0px;
+            background: #FFFFFF;
+            margin: 10px 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.22);
+            -moz-box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.22);
+            -webkit-box-shadow:  0px 0px 15px rgba(0, 0, 0, 0.22);
+
+        }
+        .form-style-8 h2{
+            background: #515776;
+            text-transform: uppercase;
+            font-family: 'Open Sans Condensed', sans-serif;
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 100;
+            padding: 10px;
+            margin: -10px -10px 10px -10px;
+        }
+        .form-style-8 input[type="text"],
+        .form-style-8 input[type="date"],
+        .form-style-8 input[type="datetime"],
+        .form-style-8 input[type="email"],
+        .form-style-8 input[type="number"],
+        .form-style-8 input[type="search"],
+        .form-style-8 input[type="time"],
+        .form-style-8 input[type="url"],
+        .form-style-8 input[type="password"],
+        .form-style-8 textarea,
+        .form-style-8 select
+        {
+            box-sizing: border-box;
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            outline: none;
+            display: block;
+            width: 100%;
+            padding: 0px;
+            border: none;
+            border-bottom: 1px solid #ddd;
+            background: transparent;
+            margin-bottom: 10px;
+            font: 16px Arial, Helvetica, sans-serif;
+            height: 45px;
+        }
+        .form-style-8 textarea{
+            resize:none;
+            overflow: hidden;
+        }
+        .form-style-8 input[type="button"],
+        .form-style-8 input[type="submit"]{
+            -moz-box-shadow: inset 0px 1px 0px 0px #45D6D6;
+            -webkit-box-shadow: inset 0px 1px 0px 0px #45D6D6;
+            box-shadow: inset 0px 1px 0px 0px #45D6D6;
+            background-color: #2CBBBB;
+            border: 1px solid #27A0A0;
+            display: inline-block;
+            cursor: pointer;
+            color: #FFFFFF;
+            font-family: 'Open Sans Condensed', sans-serif;
+            font-size: 14px;
+            padding: 8px 18px;
+            text-decoration: none;
+            text-transform: uppercase;
+        }
+        .form-style-8 input[type="button"]:hover,
+        .form-style-8 input[type="submit"]:hover {
+            background:linear-gradient(to bottom, #34CACA 5%, #30C9C9 100%);
+            background-color:#34CACA;
+        }
+
+        div#accord{
+            left: 1100px;
+            top: 0px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="accordion js-accordion form-style-8" id="accord">
+    <h2 class="draggable">Телеметрия организма</h2>
+    <div class="accordion__item js-accordion-item">
+        <div class="accordion-header js-accordion-header">Базовые графики</div>
+        <div class="accordion-body js-accordion-body">
+            <!--div class="accordion-body__contents">
+            </div-->
+            <div class="accordion js-accordion">
+                <div class="accordion__item js-accordion-item">
+                    <div class="accordion-header js-accordion-header">Синаптическое поле</div>
+                    <div class="accordion-body js-accordion-body">
+                        <div class="accordion-body__contents">
+                            <form>
+                                <label>Номер поля:</label>
+                                <input type="text" id="iDrawSynNum" value="0">
+                                <input type="button" id="bDrawSynNum" value="Нарисовать">
+                            </form>
+                        </div><!-- end of sub accordion item body contents -->
+                    </div><!-- end of sub accordion item body -->
+                </div><!-- end of sub accordion item -->
+                <div class="accordion__item js-accordion-item">
+                    <div class="accordion-header js-accordion-header">Ген нейронов</div>
+                    <div class="accordion-body js-accordion-body">
+                        <div class="accordion-body__contents">
+                        </div><!-- end of sub accordion item body contents -->
+                    </div><!-- end of sub accordion item body -->
+                </div><!-- end of sub accordion item -->
+                <div class="accordion__item js-accordion-item">
+                    <div class="accordion-header js-accordion-header">Ген преффекторов</div>
+                    <div class="accordion-body js-accordion-body">
+                        <div class="accordion-body__contents">
+
+                        </div><!-- end of sub accordion item body contents -->
+                    </div><!-- end of sub accordion item body -->
+                </div><!-- end of sub accordion item -->
+            </div><!-- end of sub accordion -->
+        </div><!-- end of accordion body -->
+    </div><!-- end of accordion item -->
+    <div class="accordion__item js-accordion-item">
+        <div class="accordion-header js-accordion-header" id="delentitiesdiv">Комманды</div>
+        <div class="accordion-body js-accordion-body">
+            <div class="accordion-body__contents">
+                <div style="height: 60px">
+                    <input style="float:left" id="bStep" type="button" value="Step"/>
+                    <input style="float:left"  id="bPause" type="button" value="Pause"/>
+                    <input style="float:right"  id="bLive" type="button" value="Live"/>
+                </div>
+                <div id="divCommInfo">Информация о выполнении комманды</div>
+            </div>
+        </div><!-- end of accordion body -->
+    </div><!-- end of accordion item -->
+    <div class="accordion__item js-accordion-item">
+        <div class="accordion-header js-accordion-header">Опции</div>
+        <div class="accordion-body js-accordion-body">
+            <div class="accordion-body__contents">
+                Установи ченить, а?
+            </div>
+            <div class="accordion js-accordion">
+                <div class="accordion__item js-accordion-item">
+                    <div class="accordion-header js-accordion-header">Установки</div>
+                    <div class="accordion-body js-accordion-body">
+                        <div class="accordion-body__contents">
+
+                        </div><!-- end of sub accordion item body contents -->
+                    </div><!-- end of sub accordion item body -->
+                </div><!-- end of sub accordion item -->
+                <div class="accordion__item js-accordion-item">
+                    <div class="accordion-header js-accordion-header">Sub Panel 2</div>
+                    <div class="accordion-body js-accordion-body">
+                        <div class="accordion-body__contents">
+                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos sequi placeat distinctio dolor, amet magnam voluptatibus eos ex vero, sunt veritatis esse. Nostrum voluptatum et repudiandae vel sed, explicabo in?
+                        </div><!-- end of sub accordion item body contents -->
+                    </div><!-- end of sub accordion item body -->
+                </div><!-- end of sub accordion item -->
+            </div><!-- end of sub accordion -->
+        </div><!-- end of accordion body -->
+    </div><!-- end of accordion item -->
+    <div class="accordion__item js-accordion-item">
+        <div class="accordion-header js-accordion-header">Генерация файлов</div>
+        <div class="accordion-body js-accordion-body">
+            <div class="accordion-body__contents">
+
+            </div>
+            <div class="accordion js-accordion">
+                <div class="accordion__item js-accordion-item">
+                    <div class="accordion-header js-accordion-header">Файл гена данных</div>
+                    <div class="accordion-body js-accordion-body">
+                        <div class="accordion-body__contents">
+
+                        </div><!-- end of sub accordion item body contents -->
+                    </div><!-- end of sub accordion item body -->
+                </div><!-- end of sub accordion item -->
+                <div class="accordion__item js-accordion-item">
+                    <div class="accordion-header js-accordion-header">Файл гена выходных данных</div>
+                    <div class="accordion-body js-accordion-body">
+                        <div class="accordion-body__contents">
+
+                        </div><!-- end of sub accordion item body contents -->
+                    </div><!-- end of sub accordion item body -->
+                </div><!-- end of sub accordion item -->
+                <div class="accordion__item js-accordion-item">
+                    <div class="accordion-header js-accordion-header">Файл описания синапсов</div>
+                    <div class="accordion-body js-accordion-body">
+                        <div class="accordion-body__contents">
+
+                        </div><!-- end of sub accordion item body contents -->
+                    </div><!-- end of sub accordion item body -->
+                </div><!-- end of sub accordion item -->
+            </div><!-- end of sub accordion -->
+        </div><!-- end of accordion body -->
+    </div><!-- end of accordion item -->
+    <div class="accordion__item js-accordion-item">
+        <div class="accordion-header js-accordion-header">Отрисовка</div>
+        <div class="accordion-body js-accordion-body">
+            <div class="accordion-body__contents">
+
+            </div>
+            <div class="accordion js-accordion">
+                <div class="accordion__item js-accordion-item">
+                    <div class="accordion-header js-accordion-header">Линии сетки</div>
+                    <div class="accordion-body js-accordion-body">
+                        <div class="accordion-body__contents">
+
+                        </div><!-- end of sub accordion item body contents -->
+                    </div><!-- end of sub accordion item body -->
+                </div><!-- end of sub accordion item -->
+                <div class="accordion__item js-accordion-item">
+                    <div class="accordion-header js-accordion-header">Sub Panel 2</div>
+                    <div class="accordion-body js-accordion-body">
+                        <div class="accordion-body__contents">
+                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos sequi placeat distinctio dolor, amet magnam voluptatibus eos ex vero, sunt veritatis esse. Nostrum voluptatum et repudiandae vel sed, explicabo in?
+                        </div><!-- end of sub accordion item body contents -->
+                    </div><!-- end of sub accordion item body -->
+                </div><!-- end of sub accordion item -->
+            </div><!-- end of sub accordion -->
+        </div><!-- end of accordion body -->
+    </div><!-- end of accordion item -->
+    <div class="accordion__item js-accordion-item">
+        <div class="accordion-header js-accordion-header">Считать гены с файлов</div>
+        <div class="accordion-body js-accordion-body">
+            <div class="accordion-body__contents">
+                <span style="color: red">ВНИМАНИЕ! Все текущие сгенерированные данные будут утеряны. Запишите их в файл!</span>
+            </div>
+            <div class="accordion js-accordion">
+                <div class="accordion__item js-accordion-item">
+                    <div class="accordion-header js-accordion-header">Ген Данных</div>
+                    <div class="accordion-body js-accordion-body">
+                        <div class="accordion-body__contents">
+                        </div><!-- end of sub accordion item body contents -->
+                    </div><!-- end of sub accordion item body -->
+                </div><!-- end of sub accordion item -->
+                <div class="accordion__item js-accordion-item">
+                    <div class="accordion-header js-accordion-header">Sub Panel 2</div>
+                    <div class="accordion-body js-accordion-body">
+                        <div class="accordion-body__contents">
+                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos sequi placeat distinctio dolor, amet magnam voluptatibus eos ex vero, sunt veritatis esse. Nostrum voluptatum et repudiandae vel sed, explicabo in?
+                        </div><!-- end of sub accordion item body contents -->
+                    </div><!-- end of sub accordion item body -->
+                </div><!-- end of sub accordion item -->
+            </div><!-- end of sub accordion -->
+        </div><!-- end of accordion body -->
+    </div><!-- end of accordion item -->
+</div><!-- end of accordion -->
+
+
+<div id='idGLUC' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idO2' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idWASTE' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idOMEGA' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idK' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idNa' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idCO' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idNO' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idACh' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idCHOL' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idAA' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idGLU' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idGABA' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idGLN' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idNE' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idDOP' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idSER' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idTYR' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idTRP' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+<div id='idASP' class="divgraph"><!-- Plotly chart will be drawn inside this DIV --></div>
+
+<script type="text/javascript">
+    var accordion = (function(){
+
+        var $accordion = $('.js-accordion');
+        var $accordion_header = $accordion.find('.js-accordion-header');
+        var $accordion_item = $('.js-accordion-item');
+
+        // default settings
+        var settings = {
+            // animation speed
+            speed: 400,
+
+            // close all other accordion items if true
+            oneOpen: true
+        };
+
+        return {
+            // pass configurable object literal
+            init: function($settings) {
+                $accordion_header.on('click', function() {
+                    accordion.toggle($(this));
+                });
+
+                $.extend(settings, $settings);
+
+                // ensure only one accordion is active if oneOpen is true
+                if(settings.oneOpen && $('.js-accordion-item.active').length > 1) {
+                    $('.js-accordion-item.active:not(:first)').removeClass('active');
+                }
+
+                // reveal the active accordion bodies
+                $('.js-accordion-item.active').find('> .js-accordion-body').show();
+            },
+            toggle: function($this) {
+
+                if(settings.oneOpen && $this[0] != $this.closest('.js-accordion').find('> .js-accordion-item.active > .js-accordion-header')[0]) {
+                    $this.closest('.js-accordion')
+                        .find('> .js-accordion-item')
+                        .removeClass('active')
+                        .find('.js-accordion-body')
+                        .slideUp()
+                }
+
+                // show/hide the clicked accordion item
+                $this.closest('.js-accordion-item').toggleClass('active');
+                $this.next().stop().slideToggle(settings.speed);
+
+            }
+        }
+    })();
+
+    $(document).ready(function(){
+        accordion.init({ speed: 300, oneOpen: true });
+    });
+
+    window.addEventListener('load', function() {
+        'use strict';
+        new PlainDraggable(document.getElementById('accord'),
+            {handle: document.querySelector('#accord .draggable')});
+    });
+
+
+    function listToMatrix(list, elementsPerSubArray) {
+        var matrix = [], i, k;
+        for (i = 0, k = -1; i < list.length; i++) {
+            if (i % elementsPerSubArray === 0) {
+                k++;
+                matrix[k] = [];
+            }
+            matrix[k].push(list[i]);
+        }
+        return matrix;
+    }
+
+    $("#bDrawSynNum").click(function(){
+
+        $.get("http://localhost:8081/getSyn/"+$("#iDrawSynNum").val(),
+            function(obj, status){
+
+                var arrGLUC=[]
+                var arrO2=[]
+                var arrWASTE=[]
+                var arrOMEGA=[]
+                var arrK=[]
+                var arrNa=[]
+                var arrCO=[]
+                var arrNO=[]
+                var arrACh=[]
+                var arrCHOL=[]
+                var arrAA=[]
+                var arrGLU=[]
+                var arrGABA=[]
+                var arrGLN=[]
+                var arrNE=[]
+                var arrDOP=[]
+                var arrSER=[]
+                var arrTYR=[]
+                var arrTRP=[]
+                var arrASP=[]
+                obj.Datas.forEach(function synEach(item, index) {
+                    arrGLUC[index] = item.GLUC;
+                    arrO2[index] = item.O2;
+                    arrWASTE[index] = item.WASTE;
+                    arrOMEGA[index] = item.OMEGA;
+                    arrK[index] = item.K;
+                    arrNa[index] = item.Na;
+                    arrCO[index] = item.CO;
+                    arrNO[index] = item.NO;
+                    arrACh[index] = item.ACh;
+                    arrCHOL[index] = item.CHOL;
+                    arrAA[index] = item.AA;
+                    arrGLU[index] = item.GLU;
+                    arrGABA[index] = item.GABA;
+                    arrGLN[index] = item.GLN;
+                    arrNE[index] = item.NE;
+                    arrDOP[index] = item.DOP;
+                    arrSER[index] = item.SER;
+                    arrTYR[index] = item.TYR;
+                    arrTRP[index] = item.TRP;
+                    arrASP[index] = item.ASP;
+                });
+                GLUC=listToMatrix(arrGLUC,obj.MaxX)
+                O2=listToMatrix(arrO2,obj.MaxX)
+                WASTE=listToMatrix(arrWASTE,obj.MaxX)
+                OMEGA=listToMatrix(arrOMEGA,obj.MaxX)
+                K=listToMatrix(arrK,obj.MaxX)
+                Na=listToMatrix(arrNa,obj.MaxX)
+                CO=listToMatrix(arrCO,obj.MaxX)
+                NO=listToMatrix(arrNO,obj.MaxX)
+                ACh=listToMatrix(arrACh,obj.MaxX)
+                CHOL=listToMatrix(arrCHOL,obj.MaxX)
+                AA=listToMatrix(arrAA,obj.MaxX)
+                GLU=listToMatrix(arrGLU,obj.MaxX)
+                GABA=listToMatrix(arrGABA,obj.MaxX)
+                GLN=listToMatrix(arrGLN,obj.MaxX)
+                NE=listToMatrix(arrNE,obj.MaxX)
+                DOP=listToMatrix(arrDOP,obj.MaxX)
+                SER=listToMatrix(arrSER,obj.MaxX)
+                TYR=listToMatrix(arrTYR,obj.MaxX)
+                TRP=listToMatrix(arrTRP,obj.MaxX)
+                ASP=listToMatrix(arrASP,obj.MaxX)
+
+                Plotly.newPlot('idGLUC', [{z:GLUC, type:'heatmap',hoverongaps: false}], {title:"GLUC", width:500, height:500});
+                Plotly.newPlot('idO2', [{z:O2, type:'heatmap',hoverongaps: false}], {title:"O2", width:500, height:500});
+                Plotly.newPlot('idWASTE', [{z:WASTE, type:'heatmap',hoverongaps: false}], {title:"WASTE", width:500, height:500});
+                Plotly.newPlot('idOMEGA', [{z:OMEGA, type:'heatmap',hoverongaps: false}], {title:"OMEGA", width:500, height:500});
+                Plotly.newPlot('idK', [{z:K, type:'heatmap',hoverongaps: false}], {title:"K", width:500, height:500});
+                Plotly.newPlot('idNa', [{z:Na, type:'heatmap',hoverongaps: false}], {title:"Na", width:500, height:500});
+                Plotly.newPlot('idCO', [{z:CO, type:'heatmap',hoverongaps: false}], {title:"CO", width:500, height:500});
+                Plotly.newPlot('idNO', [{z:NO, type:'heatmap',hoverongaps: false}], {title:"NO", width:500, height:500});
+                Plotly.newPlot('idACh', [{z:ACh, type:'heatmap',hoverongaps: false}], {title:"ACh", width:500, height:500});
+                Plotly.newPlot('idCHOL', [{z:CHOL, type:'heatmap',hoverongaps: false}], {title:"CHOL", width:500, height:500});
+                Plotly.newPlot('idAA', [{z:AA, type:'heatmap',hoverongaps: false}], {title:"AA", width:500, height:500});
+                Plotly.newPlot('idGLU', [{z:GLU, type:'heatmap',hoverongaps: false}], {title:"GLU", width:500, height:500});
+                Plotly.newPlot('idGABA', [{z:GABA, type:'heatmap',hoverongaps: false}], {title:"GABA", width:500, height:500});
+                Plotly.newPlot('idGLN', [{z:GLN, type:'heatmap',hoverongaps: false}], {title:"GLN", width:500, height:500});
+                Plotly.newPlot('idNE', [{z:NE, type:'heatmap',hoverongaps: false}], {title:"NE", width:500, height:500});
+                Plotly.newPlot('idDOP', [{z:DOP, type:'heatmap',hoverongaps: false}], {title:"DOP", width:500, height:500});
+                Plotly.newPlot('idSER', [{z:SER, type:'heatmap',hoverongaps: false}], {title:"SER", width:500, height:500});
+                Plotly.newPlot('idTYR', [{z:TYR, type:'heatmap',hoverongaps: false}], {title:"TYR", width:500, height:500});
+                Plotly.newPlot('idTRP', [{z:TRP, type:'heatmap',hoverongaps: false}], {title:"TRP", width:500, height:500});
+                Plotly.newPlot('idASP', [{z:ASP, type:'heatmap',hoverongaps: false}], {title:"ASP", width:500, height:500});
+            });
+    });
+
+    $("#bStep").click(function(){
+       $.get("http://localhost:8081/step" ,
+           function(data,status){
+
+           $("#divCommInfo").html(data);
+       });
+    });
+
+    var data = [
+        {
+            z: math.random([64, 64]),
+            type: 'heatmap',
+            hoverongaps: false
+        }
+    ];
+
+    Plotly.newPlot('idGLUC', data, {title:"GLUC", width:500, height:500});
+    Plotly.newPlot('idO2', data, {title:"O2", width:500, height:500});
+    Plotly.newPlot('idWASTE', data, {title:"WASTE", width:500, height:500});
+    Plotly.newPlot('idOMEGA', data, {title:"OMEGA", width:500, height:500});
+
+</script>
+</body>
+</html>

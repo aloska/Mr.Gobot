@@ -1,6 +1,29 @@
 package agent
 
-func (r *Receptor) Step(o *Organism, gene *GenReceptor){
+func (r *Receptor) Step(o *Organism, gene *GenReceptor, datai *DataInput){
+	//сначала все аксоны выполняют синтез вещества на окончании
+	for i:=0;i<32;i++{
+		if r.A&(1<<i) != 0 { //проверяем, что данный аксон включен
+			switch r.Typemedi {
+			case NEURONACETILHOLIN: //ацетилхолин
+				//вычисляем ячейку в файле синапсов, от куда синтез идет o.synapsesMap[r.SynNumber].syn[r.Axons[i].N]
+				//один раз - по любому
+				r.Axons[i].AChSynt(&o.synapsesMap[r.SynNumber].syn[r.Axons[i].N])
+				//и еще столько раз, сколько ген захотел
+				for j:=byte(0);j<gene.SyntPerCicleAx;j++{
+					//ну и не фиг стараться, если больше не получается
+					if !r.Axons[i].AChSynt(&o.synapsesMap[r.SynNumber].syn[r.Axons[i].N]){
+						break
+					}
+				}
+			}
+		}
+	}
+	//анализ данных и плювание
+	switch r.Typer {
+	case RECEPTORDATAUINT32BIGPOS:
+		r.DoReceptorUInt32(&datai.dataUInt32[r.Ndata],o.synapsesMap[r.SynNumber])
+	}
 	o.wgo.Done()
 }
 
@@ -12,11 +35,11 @@ func (n *Neuron) Step(o *Organism, gene *GenNeuron){
 	o.wgo.Done()
 }
 
-func (res *Receptors) Step(o *Organism){
+func (res *Receptors) Step(o *Organism, datai *DataInput){
 	//по всем рецепторам
 	for i:=0;i<len(res.recs);i++{
 		o.wgo.Add(1)
-		go res.recs[i].Step(o, &res.genes[res.recs[i].Gen])
+		go res.recs[i].Step(o, &res.genes[res.recs[i].Gen], datai)
 	}
 	o.wgo.Done()
 }
@@ -43,7 +66,7 @@ func (in *Input) Step(o *Organism){
 	//по всем рецепторам
 	for i:=0;i<len(in.receptors);i++{
 		o.wgo.Add(1)
-		go in.receptors[i].Step(o)
+		go in.receptors[i].Step(o,&in.dataInput)
 	}
 	//и нейронам
 	for i:=0;i<len(in.cells);i++{

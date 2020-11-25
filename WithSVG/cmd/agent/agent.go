@@ -139,11 +139,33 @@ func (a* Agent) Live (pathtoOrganism string){
 }
 
 func (a* Agent) makeRoutes(){
+	a.router.LoadHTMLFiles("view/agent.html")
+	a.router.StaticFile("styles.css","view/styles.css")
+	a.router.StaticFile("plain-draggable.min.js","view/plain-draggable.min.js")
 	a.router.GET("/", func(c *gin.Context) {
-		c.String(http.StatusOK, "Welcome Okagamga2.0 agent")
+		c.HTML(http.StatusOK, "agent.html", map[string]interface{}{})
 	})
 	a.router.GET("/quitall", a.routeQuitall)
 	a.router.GET("/step", a.routeStep)
+	a.router.GET("/getSyn/:SynNum", a.routeGetSyn)
+}
+func (a *Agent) routeGetSyn(c *gin.Context){
+	if num, err:=strconv.Atoi(c.Param("SynNum")); err==nil{
+		if syn, ok:=a.o.synapsesMap[SynEnum(num)]; ok{
+
+			c.JSON(http.StatusOK,
+				struct {
+					MaxX uint32
+					MaxY uint32
+					Datas *[]Chemical
+				}{MaxX: syn.maxX, MaxY: syn.maxY, Datas: &syn.syn})
+		}else{
+			c.String(http.StatusNoContent,"Нет такого поля синапсов")
+		}
+	}else{
+		c.String(http.StatusBadRequest,"плохой номер поля")
+	}
+
 }
 
 func (a *Agent) routeStep (c *gin.Context){
