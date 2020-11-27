@@ -1,6 +1,6 @@
 package agent
 
-func (r *Receptor) Step(o *Organism, gene *GenReceptor, datai *DataInput){
+func (r *Receptor) Step(gene *GenReceptor, datai *DataInput){
 	//сначала все аксоны выполняют синтез вещества на окончании
 	for i:=0;i<32;i++{
 		if r.A&(1<<i) != 0 { //проверяем, что данный аксон включен
@@ -8,11 +8,11 @@ func (r *Receptor) Step(o *Organism, gene *GenReceptor, datai *DataInput){
 			case NEURONACETILHOLIN: //ацетилхолин
 				//вычисляем ячейку в файле синапсов, от куда синтез идет o.synapsesMap[r.SynNumber].syn[r.Axons[i].N]
 				//один раз - по любому
-				r.Axons[i].AChSynt(&o.synapsesMap[r.SynNumber].syn[r.Axons[i].N])
+				r.Axons[i].AChSynt(&org.synapsesMap[r.SynNumber].syn[r.Axons[i].N])
 				//и еще столько раз, сколько ген захотел
 				for j:=byte(0);j<gene.SyntPerCicleAx;j++{
 					//ну и не фиг стараться, если больше не получается
-					if !r.Axons[i].AChSynt(&o.synapsesMap[r.SynNumber].syn[r.Axons[i].N]){
+					if !r.Axons[i].AChSynt(&org.synapsesMap[r.SynNumber].syn[r.Axons[i].N]){
 						break
 					}
 				}
@@ -22,110 +22,110 @@ func (r *Receptor) Step(o *Organism, gene *GenReceptor, datai *DataInput){
 	//анализ данных и плювание
 	switch r.Typer {
 	case RECEPTORDATAUINT32BIGPOS:
-		r.DoReceptorUInt32(&datai.dataUInt32[r.Ndata],o.synapsesMap[r.SynNumber])
+		r.DoReceptorUInt32(&datai.dataUInt32[r.Ndata],org.synapsesMap[r.SynNumber])
 	}
-	o.wgo.Done()
+	org.wgo.Done()
 }
 
-func (p *Preffector) Step(o *Organism, gene *GenPreffector){
-	o.wgo.Done()
+func (p *Preffector) Step( gene *GenPreffector){
+	org.wgo.Done()
 }
 
-func (n *Neuron) Step(o *Organism, gene *GenNeuron){
-	o.wgo.Done()
+func (n *Neuron) Step(gene *GenNeuron){
+	org.wgo.Done()
 }
 
-func (res *Receptors) Step(o *Organism, datai *DataInput){
+func (res *Receptors) Step(datai *DataInput){
 	//по всем рецепторам
 	for i:=0;i<len(res.recs);i++{
-		o.wgo.Add(1)
-		go res.recs[i].Step(o, &res.genes[res.recs[i].Gen], datai)
+		org.wgo.Add(1)
+		go res.recs[i].Step( &res.genes[res.recs[i].Gen], datai)
 	}
-	o.wgo.Done()
+	org.wgo.Done()
 }
 
-func (pres *Preffectors) Step(o *Organism){
+func (pres *Preffectors) Step(){
 	//по всем преффекторам
 	for i:=0;i<len(pres.prefs);i++{
-		o.wgo.Add(1)
-		go pres.prefs[i].Step(o, &pres.genes[pres.prefs[i].Gen])
+		org.wgo.Add(1)
+		go pres.prefs[i].Step(&pres.genes[pres.prefs[i].Gen])
 	}
-	o.wgo.Done()
+	org.wgo.Done()
 }
 
-func (ce *Cells) Step(o *Organism){
+func (ce *Cells) Step(){
 	//по всем нейронам
 	for i:=0;i<len(ce.neurons);i++{
-		o.wgo.Add(1)
-		go ce.neurons[i].Step(o, &ce.genes[ce.neurons[i].Gen])
+		org.wgo.Add(1)
+		go ce.neurons[i].Step(&ce.genes[ce.neurons[i].Gen])
 	}
-	o.wgo.Done()
+	org.wgo.Done()
 }
 
-func (in *Input) Step(o *Organism){
+func (in *Input) Step(){
 	//по всем рецепторам
 	for i:=0;i<len(in.receptors);i++{
-		o.wgo.Add(1)
-		go in.receptors[i].Step(o,&in.dataInput)
+		org.wgo.Add(1)
+		go in.receptors[i].Step(&in.dataInput)
 	}
 	//и нейронам
 	for i:=0;i<len(in.cells);i++{
-		o.wgo.Add(1)
-		go in.cells[i].Step(o)
+		org.wgo.Add(1)
+		go in.cells[i].Step()
 	}
-	o.wgo.Done()
+	org.wgo.Done()
 }
 
-func (ef *Effector) Step(o *Organism){
+func (ef *Effector) Step(){
 	//по всем преффекторам
 	for i:=0;i<len(ef.preffectors);i++{
-		o.wgo.Add(1)
-		go ef.preffectors[i].Step(o)
+		org.wgo.Add(1)
+		go ef.preffectors[i].Step()
 	}
 	//и нейронам
 	for i:=0;i<len(ef.cells);i++{
-		o.wgo.Add(1)
-		go ef.cells[i].Step(o)
+		org.wgo.Add(1)
+		go ef.cells[i].Step()
 	}
-	o.wgo.Done()
+	org.wgo.Done()
 }
 
 //Step - один шаг жизни чувств
 func (s *Senses) Step(){
 	//бежим по всем входам
 	for i:=0;i<len(s.inputs);i++{
-		s.organism.wgo.Add(1)
-		go s.inputs[i].Step(s.organism)
+		org.wgo.Add(1)
+		go s.inputs[i].Step()
 	}
 	//и по нейронам общим, если есть
 	for i:=0;i<len(s.cells);i++{
-		s.organism.wgo.Add(1)
-		go s.cells[i].Step(s.organism)
+		org.wgo.Add(1)
+		go s.cells[i].Step()
 	}
 	//это в конце
-	s.organism.wgo.Done()
+	org.wgo.Done()
 }
 
 
 
-func (co *Core) Step (o *Organism){
+func (co *Core) Step (){
 	//по всем Cells
 	for i:=0;i<len(co.cells);i++{
-		o.wgo.Add(1)
-		go co.cells[i].Step(o)
+		org.wgo.Add(1)
+		go co.cells[i].Step()
 	}
-	o.wgo.Done()
+	org.wgo.Done()
 }
 
 //Step - один шаг жизни мозга
 func (b *Brain) Step(){
     //по всем ядрам
 	for i:=0;i<len(b.cores);i++{
-		b.organism.wgo.Add(1)
-		go b.cores[i].Step(b.organism)
+		org.wgo.Add(1)
+		go b.cores[i].Step()
 	}
 	//это в конце
-	b.organism.wgo.Done()
+	org.wgo.Done()
 }
 
 
@@ -133,31 +133,31 @@ func (b *Brain) Step(){
 func (ac *Actions) Step(){
 	//бежим по всем выходам
 	for i:=0;i<len(ac.effectors);i++{
-		ac.organism.wgo.Add(1)
-		go ac.effectors[i].Step(ac.organism)
+		org.wgo.Add(1)
+		go ac.effectors[i].Step()
 	}
 	//и по нейронам общим, если есть
 	for i:=0;i<len(ac.cells);i++{
-		ac.organism.wgo.Add(1)
-		go ac.cells[i].Step(ac.organism)
+		org.wgo.Add(1)
+		go ac.cells[i].Step()
 	}
 	//это в конце
-	ac.organism.wgo.Done()
+	org.wgo.Done()
 }
 
 //Step - один шаг жизни вегетатики
 func (v *Vegetatic) Step(){
 	//бежим по всем выходам
 	for i:=0;i<len(v.effectors);i++{
-		v.organism.wgo.Add(1)
-		go v.effectors[i].Step(v.organism)
+		org.wgo.Add(1)
+		go v.effectors[i].Step()
 	}
 	//и по нейронам общим, если есть
 	for i:=0;i<len(v.cells);i++{
-		v.organism.wgo.Add(1)
-		go v.cells[i].Step(v.organism)
+		org.wgo.Add(1)
+		go v.cells[i].Step()
 	}
 
 	//это в конце
-	v.organism.wgo.Done()
+	org.wgo.Done()
 }

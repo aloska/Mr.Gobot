@@ -20,10 +20,12 @@ import (
 	"time"
 )
 
+var (
+	org *Organism  //поскольку доступен почти всем и почти всегда, вынесем его в глоб
+)
 
 type Agent struct{
 	path string		//путь к организму
-	o *Organism		//собсно организм
 	router *gin.Engine //роутер http
 	server *http.Server //сервер http
 	port int    //порт сервера
@@ -64,8 +66,8 @@ func (a* Agent) Live (pathtoOrganism string){
 
 	//Инициализируем организм
 	pterm.DefaultSection.Println("Инициализация...")
-	a.o=&Organism{}
-	if! a.o.Init(a){
+	org=&Organism{}
+	if! org.Init(a){
 		a.fatalout()
 		return
 	}
@@ -75,11 +77,11 @@ func (a* Agent) Live (pathtoOrganism string){
 	pterm.DefaultSection.Println("Проверка работоспособности...")
 	tmpl := `{{ yellow "Пока все хорошо:" }} {{ bar . "[" "=" (cycle . "↖" "↗" "↘" "↙" ) "." "]"}} {{speed . | rndcolor }} {{percent .}}  {{string . "Проверка..." | green}}`
 	// start bar based on our template
-	bar := pb.ProgressBarTemplate(tmpl).Start(a.o.countall)
+	bar := pb.ProgressBarTemplate(tmpl).Start(org.countall)
 	//канал, для получения данных от организма о состоянии проверки
 	c := make(chan error)
 	//погнали
-	go a.o.Check(a,c)
+	go org.Check(a,c)
 	//читаем из канала до закрытия
 	isok:=true
 	for err:= range c {
@@ -109,7 +111,7 @@ func (a* Agent) Live (pathtoOrganism string){
 
 	//запускаем асинхронно организм
 	a.wga.Add(1)
-	go a.o.Live()
+	go org.Live()
 	switch a.doatstart {
 	case "pause":
 		a.pause <- struct{}{}
@@ -151,7 +153,7 @@ func (a* Agent) makeRoutes(){
 }
 func (a *Agent) routeGetSyn(c *gin.Context){
 	if num, err:=strconv.Atoi(c.Param("SynNum")); err==nil{
-		if syn, ok:=a.o.synapsesMap[SynEnum(num)]; ok{
+		if syn, ok:=org.synapsesMap[SynEnum(num)]; ok{
 
 			c.JSON(http.StatusOK,
 				struct {
@@ -169,23 +171,23 @@ func (a *Agent) routeGetSyn(c *gin.Context){
 }
 
 func (a *Agent) routeStep (c *gin.Context){
-	if a.o.state!="pause" {
+	if org.state!="pause" {
 		a.pause <- struct{}{}
 	}
 	time.Sleep(time.Second/10)
 	strt:=time.Now()
-	a.o.Step()
+	org.Step()
 	elapsed := time.Since(strt)
 	c.String(http.StatusOK, fmt.Sprintf("Step complete in %v", elapsed))
 }
 
 func (a *Agent) routeQuitall(c* gin.Context){
 	//сначала сохраним организм
-	if a.o.state!="pause" {
+	if org.state!="pause" {
 		a.pause <- struct{}{}
 	}
 	time.Sleep(time.Second)
-	a.o.Sleep()
+	org.Sleep()
 	a.quit<- struct{}{}
 	a.wga.Wait() //подождем, пока организм не выключится
 

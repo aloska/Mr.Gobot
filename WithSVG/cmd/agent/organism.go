@@ -26,25 +26,25 @@ type Synapses struct {
 	maxY      uint32     //высота
 }
 
-func (sy *Synapses) Init(o *Organism) bool{
+func (sy *Synapses) Init() bool{
 	//сюда входим с известными путями к файлам
 
 	//читаем сожержимое файла описания в typicalChe
 	if err:=sy.mmapTypicalChe(); err!=nil{
-		o.agent.errorr("Synapses не может прочитать TypicalChe из файла описания: "+err.Error())
-		o.agent.log.Error("Synapses не может прочитать TypicalChe из файла описания: "+err.Error())
+		org.agent.errorr("Synapses не может прочитать TypicalChe из файла описания: "+err.Error())
+		org.agent.log.Error("Synapses не может прочитать TypicalChe из файла описания: "+err.Error())
 		return false
 	}
 
 	//создаем mmap синапсов (если его нет - функция сама создаст)
 	if err:=sy.mmapSynapse(); err!=nil{
-		o.agent.errorr("Synapses не может сделать ммап: "+err.Error())
-		o.agent.log.Error("Synapses не может сделать ммап: "+err.Error())
+		org.agent.errorr("Synapses не может сделать ммап: "+err.Error())
+		org.agent.log.Error("Synapses не может сделать ммап: "+err.Error())
 		return false
 	}
 
 	//добавляем это поле синапсов в быстрый доступ организма
-	o.synapsesMap[sy.number]=sy
+	org.synapsesMap[sy.number]=sy
 
 
 	return true
@@ -63,37 +63,37 @@ type Cells struct {
 
 }
 
-func (ce *Cells) Init(o *Organism) bool{
+func (ce *Cells) Init() bool{
 //сюда входим с известными путями к файлам
 	//создаем mmap на гены нейронов
 	if err:=ce.mmapGenNeuron(); err!=nil{
-		o.agent.errorr("Cells не может создать mmap на гены: "+err.Error())
-		o.agent.log.Error("Cells не может создать mmap на гены: "+err.Error())
+		org.agent.errorr("Cells не может создать mmap на гены: "+err.Error())
+		org.agent.log.Error("Cells не может создать mmap на гены: "+err.Error())
 		return false
 	}
 
 	//создаем файл нейронов, если нет
 	if !fileExists(ce.filenameCells){
-		o.agent.info("Файла нейронов пока нет. Создаем. "+ce.filenameCells)
-		o.agent.log.Info("Файла нейронов пока нет. Создаем. "+ce.filenameCells)
+		org.agent.info("Файла нейронов пока нет. Создаем. "+ce.filenameCells)
+		org.agent.log.Info("Файла нейронов пока нет. Создаем. "+ce.filenameCells)
 
 		if err:=ce.createNeuronsFile(); err!=nil{
-			o.agent.errorr("Cells не может создать файл нейронов: "+err.Error())
-			o.agent.log.Error("Cells не может создать файл нейронов: "+err.Error())
+			org.agent.errorr("Cells не может создать файл нейронов: "+err.Error())
+			org.agent.log.Error("Cells не может создать файл нейронов: "+err.Error())
 			return false
 		}
 	}
 	//создаем ммап на нейроны
 	if err:=ce.mmapNeuron(); err!=nil{
-		o.agent.errorr("Cells не может создать mmap нейронов: "+err.Error())
-		o.agent.log.Error("Cells не может создать mmap нейронов: "+err.Error())
+		org.agent.errorr("Cells не может создать mmap нейронов: "+err.Error())
+		org.agent.log.Error("Cells не может создать mmap нейронов: "+err.Error())
 		return false
 	}
 
 	//добавляем себя в слайс быстрого доступа
-	o.cellsSlice=append(o.cellsSlice, ce)
+	org.cellsSlice=append(org.cellsSlice, ce)
 	//увеличиваем общее количество клеток организма
-	o.countall+=len(ce.neurons)
+	org.countall+=len(ce.neurons)
 
 	return true
 }
@@ -109,7 +109,7 @@ type Core struct {
 	cells    []Cells   //слайс обслуживает файлы с клетками и геномами этих клеток
 }
 
-func (co *Core) Init(o *Organism) bool{
+func (co *Core) Init() bool{
 //сюда входим с известными путем и номером ядра
 	//ищем гены нейронов и файл-описание синапса
 	gneuronfiles:=[]string{}
@@ -139,9 +139,9 @@ func (co *Core) Init(o *Organism) bool{
 	}
 	//инициализируем
 	for i:=0;i<len(co.cells);i++{
-		if !co.cells[i].Init(o){
-			o.agent.errorr(co.cells[i].filenameGens+" не может инициализироваться")
-			o.agent.log.Error(co.cells[i].filenameGens+" не может инициализироваться")
+		if !co.cells[i].Init(){
+			org.agent.errorr(co.cells[i].filenameGens+" не может инициализироваться")
+			org.agent.log.Error(co.cells[i].filenameGens+" не может инициализироваться")
 			return false
 		}
 	}
@@ -159,9 +159,9 @@ func (co *Core) Init(o *Organism) bool{
 		filename: co.path+"/Synapse-"+ss[2]+".chemical",
 		filedesc: co.path+"/"+syndescfile}
 	//инициализируем синапсы
-	if !co.synapses.Init(o){
-		o.agent.errorr(co.synapses.filename+" не может инициализироваться")
-		o.agent.log.Error(co.synapses.filename+" не может инициализироваться")
+	if !co.synapses.Init(){
+		org.agent.errorr(co.synapses.filename+" не может инициализироваться")
+		org.agent.log.Error(co.synapses.filename+" не может инициализироваться")
 		return false
 	}
 	return  true
@@ -172,15 +172,14 @@ func (co *Core) Init(o *Organism) bool{
 type Brain struct {
 	path     string    //папка, где расположены все ядра, а входные и выходные устройства входят в состав организма
 	cores    []Core    //мозг состоит из ядер
-	organism *Organism //ссылка на весь родительский организм
 }
 
 //Init - инициализация мозга системы
-func (b *Brain) Init(o *Organism) bool{
-	b.organism=o
+func (b *Brain) Init() bool{
+
 	//Найдем все ядра
 	cores:=[]string{}
-	files, _ := ioutil.ReadDir(o.path+"/Brain")
+	files, _ := ioutil.ReadDir(org.path+"/Brain")
 	for _, file := range files {
 		if file.IsDir(){
 			cores = append(cores,file.Name())
@@ -199,19 +198,19 @@ func (b *Brain) Init(o *Organism) bool{
 		b.cores=append(b.cores,
 			Core{
 				number: uint16(num),
-				path:o.path+"/Brain/"+cor})
+				path:org.path+"/Brain/"+cor})
 
 	}
 	//инициализируем ядра
 	for i:=0;i<len(b.cores);i++{
-		if !b.cores[i].Init(o){
-			o.agent.errorr(strconv.Itoa(int(b.cores[i].number))+" не может инициализироваться")
-			o.agent.log.Error(strconv.Itoa(int(b.cores[i].number))+" не может инициализироваться")
+		if !b.cores[i].Init(){
+			org.agent.errorr(strconv.Itoa(int(b.cores[i].number))+" не может инициализироваться")
+			org.agent.log.Error(strconv.Itoa(int(b.cores[i].number))+" не может инициализироваться")
 			return false
 		}
 	}
-	o.agent.info("/Brain готов к работе")
-	o.agent.log.Info("/Brain готовы к работе")
+	org.agent.info("/Brain готов к работе")
+	org.agent.log.Info("/Brain готовы к работе")
 	return true
 }
 
@@ -267,19 +266,19 @@ type DataInput struct {
 }
 
 //Init -
-func (d *DataInput) Init(o* Organism) bool{
+func (d *DataInput) Init() bool{
 //сюда входим с известными путями к файлам
 
 	//создаем mmap на ген данных
 	if err:=d.mmapGenData(); err!=nil{
-		o.agent.errorr("DataInput не может создать mmap: "+err.Error())
-		o.agent.log.Error("DataInput не может создать mmap: "+err.Error())
+		org.agent.errorr("DataInput не может создать mmap: "+err.Error())
+		org.agent.log.Error("DataInput не может создать mmap: "+err.Error())
 		return false
 	}
 	//создаем mmap на файл данных, если файла нет, функция сама создаст его
 	if err:=d.mmapData(); err!=nil{
-		o.agent.errorr("DataInput не может создать mmap: "+err.Error())
-		o.agent.log.Error("DataInput не может создать mmap: "+err.Error())
+		org.agent.errorr("DataInput не может создать mmap: "+err.Error())
+		org.agent.log.Error("DataInput не может создать mmap: "+err.Error())
 		return false
 	}
 
@@ -300,36 +299,36 @@ type Receptors struct {
 	recs          []Receptor //тот же файл в удобном виде, как слайс Receptor с отдельными генами для каждого вида
 }
 
-func (re *Receptors) Init(o *Organism) bool{
+func (re *Receptors) Init() bool{
 //сюда входим с известными путями к файлам
 	//создаем mmap на ген рецепторов
 	if err:=re.mmapGenReceptor(); err!=nil{
-		o.agent.errorr("Receptors не может создать mmap: "+err.Error())
-		o.agent.log.Error("Receptors не может создать mmap: "+err.Error())
+		org.agent.errorr("Receptors не может создать mmap: "+err.Error())
+		org.agent.log.Error("Receptors не может создать mmap: "+err.Error())
 		return false
 	}
 
 	//создаем файл рецепторов, если нет
 	if !fileExists(re.filenameRecs){
-		o.agent.info("Файла рецепторов пока нет. Создаем. "+re.filenameRecs)
-		o.agent.log.Info("Файла рецепторов пока нет. Создаем. "+re.filenameRecs)
+		org.agent.info("Файла рецепторов пока нет. Создаем. "+re.filenameRecs)
+		org.agent.log.Info("Файла рецепторов пока нет. Создаем. "+re.filenameRecs)
 
 		if err:=re.createReceptorsFile(); err!=nil{
-			o.agent.errorr("Receptors не может создать файл рецепторов: "+err.Error())
-			o.agent.log.Error("Receptors не может создать файл рецепторов: "+err.Error())
+			org.agent.errorr("Receptors не может создать файл рецепторов: "+err.Error())
+			org.agent.log.Error("Receptors не может создать файл рецепторов: "+err.Error())
 			return false
 		}
 	}
 
 	//создаем ммап на рецепторы
 	if err:=re.mmapReceptors(); err!=nil{
-		o.agent.errorr("Receptors не может создать mmap на рецепторы: "+err.Error())
-		o.agent.log.Error("Receptors не может создать mmap на рецепторы: "+err.Error())
+		org.agent.errorr("Receptors не может создать mmap на рецепторы: "+err.Error())
+		org.agent.log.Error("Receptors не может создать mmap на рецепторы: "+err.Error())
 		return false
 	}
 
 	//увеличиваем общее количество клеток организма
-	o.countall+=len(re.recs)
+	org.countall+=len(re.recs)
 
 	return true
 }
@@ -346,15 +345,15 @@ type Input struct {
 	cells     []Cells     //слайс обслуживает файлы с нейронами и геномами этих нейронов, если они заданы
 }
 
-func (in* Input) Init(o *Organism) bool{
+func (in* Input) Init() bool{
 //сюда входим с известными путем и номером входа
 	//скажем DataInput где его файлы
 	in.dataInput.filenameGen=in.path+"/GenData.genes"
 	in.dataInput.filenameData=in.path+"/Data.data"
 	//инициализация
-	if !in.dataInput.Init(o){
-		o.agent.log.Error("InputData не может инициализироваться")
-		o.agent.errorr("InputData не может инициализироваться")
+	if !in.dataInput.Init(){
+		org.agent.log.Error("InputData не может инициализироваться")
+		org.agent.errorr("InputData не может инициализироваться")
 		return false
 	}
 
@@ -388,9 +387,9 @@ func (in* Input) Init(o *Organism) bool{
 	}
 	//инициализируем
 	for i:=0;i<len(in.receptors);i++{
-		if !in.receptors[i].Init(o){
-			o.agent.errorr(in.receptors[i].filenameGens+" не может инициализироваться")
-			o.agent.log.Error(in.receptors[i].filenameGens+" не может инициализироваться")
+		if !in.receptors[i].Init(){
+			org.agent.errorr(in.receptors[i].filenameGens+" не может инициализироваться")
+			org.agent.log.Error(in.receptors[i].filenameGens+" не может инициализироваться")
 			return false
 		}
 	}
@@ -423,9 +422,9 @@ func (in* Input) Init(o *Organism) bool{
 		}
 		//инициализируем
 		for i:=0;i<len(in.cells);i++{
-			if !in.cells[i].Init(o){
-				o.agent.errorr(in.cells[i].filenameGens+" не может инициализироваться")
-				o.agent.log.Error(in.cells[i].filenameGens+" не может инициализироваться")
+			if !in.cells[i].Init(){
+				org.agent.errorr(in.cells[i].filenameGens+" не может инициализироваться")
+				org.agent.log.Error(in.cells[i].filenameGens+" не может инициализироваться")
 				return false
 			}
 		}
@@ -443,9 +442,9 @@ func (in* Input) Init(o *Organism) bool{
 			filename: in.path+"/Synapse-"+ss[2]+".chemical",
 			filedesc: in.path+"/"+syndescfile}
 		//инициализируем синапсы
-		if !in.synapses.Init(o){
-			o.agent.errorr(in.synapses.filename+" не может инициализироваться")
-			o.agent.log.Error(in.synapses.filename+" не может инициализироваться")
+		if !in.synapses.Init(){
+			org.agent.errorr(in.synapses.filename+" не может инициализироваться")
+			org.agent.log.Error(in.synapses.filename+" не может инициализироваться")
 			return false
 		}
 	}
@@ -462,17 +461,17 @@ type Senses struct {
 	этих нейронов может не быть, и тогда это значит, что общего синаптического поля входов нет
 	такое поведение может использоваться для очень простых агентов
 	*/
-	organism *Organism //ссылка на весь родительский организм
+
 }
 
 //Init - инициализация Чувств системы
-func (s *Senses) Init(o *Organism) bool{
-	s.organism=o
+func (s *Senses) Init() bool{
+
 	//Найдем все входы
 	inputs:=[]string{}
 	syndescfile:="" //и заодно файл-описание синапсов, если есть
 	isSyn:=false
-	files, _ := ioutil.ReadDir(o.path+"/Senses")
+	files, _ := ioutil.ReadDir(org.path+"/Senses")
 	for _, file := range files {
 		if file.IsDir(){
 			inputs = append(inputs,file.Name())
@@ -494,14 +493,14 @@ func (s *Senses) Init(o *Organism) bool{
 		s.inputs=append(s.inputs,
 			Input{
 				number: uint16(num),
-				path:o.path+"/Senses/"+inp})
+				path:org.path+"/Senses/"+inp})
 
 	}
 	//инициализируем входы
 	for i:=0;i<len(s.inputs);i++{
-		if !s.inputs[i].Init(o){
-			o.agent.errorr(strconv.Itoa(int(s.inputs[i].number))+" не может инициализироваться")
-			o.agent.log.Error(strconv.Itoa(int(s.inputs[i].number))+" не может инициализироваться")
+		if !s.inputs[i].Init(){
+			org.agent.errorr(strconv.Itoa(int(s.inputs[i].number))+" не может инициализироваться")
+			org.agent.log.Error(strconv.Itoa(int(s.inputs[i].number))+" не может инициализироваться")
 			return false
 		}
 	}
@@ -511,7 +510,7 @@ func (s *Senses) Init(o *Organism) bool{
 		//ищем гены нейронов
 		gneuronfiles:=[]string{}
 
-		files, _ := ioutil.ReadDir(o.path+"/Senses")
+		files, _ := ioutil.ReadDir(org.path+"/Senses")
 		for _, file := range files {
 			if match, _ := regexp.MatchString("(GenNeuron-[0-9]+.genes)",
 				file.Name()); match{
@@ -528,14 +527,14 @@ func (s *Senses) Init(o *Organism) bool{
 
 			s.cells=append(s.cells,
 				Cells{
-					filenameGens: o.path+"/Senses/"+neus,
-					filenameCells: o.path+"/Senses/Neuron-"+re.FindString(neus)+".neurons"	})
+					filenameGens: org.path+"/Senses/"+neus,
+					filenameCells: org.path+"/Senses/Neuron-"+re.FindString(neus)+".neurons"	})
 		}
 		//инициализируем
 		for i:=0;i<len(s.cells);i++{
-			if !s.cells[i].Init(o){
-				o.agent.errorr(s.cells[i].filenameGens+" не может инициализироваться")
-				o.agent.log.Error(s.cells[i].filenameGens+" не может инициализироваться")
+			if !s.cells[i].Init(){
+				org.agent.errorr(s.cells[i].filenameGens+" не может инициализироваться")
+				org.agent.log.Error(s.cells[i].filenameGens+" не может инициализироваться")
 				return false
 			}
 		}
@@ -550,22 +549,22 @@ func (s *Senses) Init(o *Organism) bool{
 			number: SynEnum(num),
 			maxX: uint32(mx),
 			maxY: uint32(my),
-			filename: o.path+"/Senses/Synapse-"+ss[2]+".chemical",
-			filedesc: o.path+"/Senses/"+syndescfile}
+			filename: org.path+"/Senses/Synapse-"+ss[2]+".chemical",
+			filedesc: org.path+"/Senses/"+syndescfile}
 		//инициализируем синапсы
-		if !s.synapses.Init(o){
-			o.agent.errorr(s.synapses.filename+" не может инициализироваться")
-			o.agent.log.Error(s.synapses.filename+" не может инициализироваться")
+		if !s.synapses.Init(){
+			org.agent.errorr(s.synapses.filename+" не может инициализироваться")
+			org.agent.log.Error(s.synapses.filename+" не может инициализироваться")
 			return false
 		}
 		//добавим также в мапу синапсов для быстрого доступа,
 		//в итоге это поле синапсов будет лежать в мапе и под своим номером, и под номером SYNINPUTS=0xfffe
-		o.synapsesMap[SYNINPUTS]=&s.synapses
+		org.synapsesMap[SYNINPUTS]=&s.synapses
 	}
 
 
-	o.agent.info("/Senses готовы к работе")
-	o.agent.log.Info("/Senses готовы к работе")
+	org.agent.info("/Senses готовы к работе")
+	org.agent.log.Info("/Senses готовы к работе")
 
 	return true
 }
@@ -588,19 +587,19 @@ type DataOutput struct {
 	dataRune   []DataRune
 	dataUInt32 []DataUInt32
 }
-func (d *DataOutput) Init(o* Organism) bool{
+func (d *DataOutput) Init() bool{
 	//сюда входим с известными путями к файлам
 
 	//создаем mmap на ген данных
 	if err:=d.mmapGenData(); err!=nil{
-		o.agent.errorr("DataInput не может создать mmap: "+err.Error())
-		o.agent.log.Error("DataInput не может создать mmap: "+err.Error())
+		org.agent.errorr("DataInput не может создать mmap: "+err.Error())
+		org.agent.log.Error("DataInput не может создать mmap: "+err.Error())
 		return false
 	}
 	//создаем mmap на файл данных, если файла нет, функция сама создаст его
 	if err:=d.mmapData(); err!=nil{
-		o.agent.errorr("DataInput не может создать mmap: "+err.Error())
-		o.agent.log.Error("DataInput не может создать mmap: "+err.Error())
+		org.agent.errorr("DataInput не может создать mmap: "+err.Error())
+		org.agent.log.Error("DataInput не может создать mmap: "+err.Error())
 		return false
 	}
 
@@ -622,35 +621,35 @@ type Preffectors struct {
 	prefs         []Preffector //тот же файл в удобном виде, как слайс Preffector с отдельными генами для каждого вида
 }
 
-func (pre *Preffectors) Init(o *Organism) bool{
+func (pre *Preffectors) Init() bool{
 	//сюда входим с известными путями к файлам
 	//создаем mmap на ген преффекторов
 	if err:=pre.mmapGenPreffector(); err!=nil{
-		o.agent.errorr("Preffectors не может создать mmap: "+err.Error())
-		o.agent.log.Error("Preffectors не может создать mmap: "+err.Error())
+		org.agent.errorr("Preffectors не может создать mmap: "+err.Error())
+		org.agent.log.Error("Preffectors не может создать mmap: "+err.Error())
 		return false
 	}
 
 	//создаем файл рецепторов, если нет
 	if !fileExists(pre.filenamePres){
-		o.agent.info("Файла преффекторов пока нет. Создаем. "+pre.filenamePres)
-		o.agent.log.Info("Файла преффекторов пока нет. Создаем. "+pre.filenamePres)
+		org.agent.info("Файла преффекторов пока нет. Создаем. "+pre.filenamePres)
+		org.agent.log.Info("Файла преффекторов пока нет. Создаем. "+pre.filenamePres)
 
 		if err:=pre.createPreffectorsFile(); err!=nil{
-			o.agent.errorr("Preffectors не может создать файл преффекторов: "+err.Error())
-			o.agent.log.Error("Preffectors не может создать файл преффекторов: "+err.Error())
+			org.agent.errorr("Preffectors не может создать файл преффекторов: "+err.Error())
+			org.agent.log.Error("Preffectors не может создать файл преффекторов: "+err.Error())
 			return false
 		}
 	}
 
 	//создаем ммап на преффекторы
 	if err:=pre.mmapPreffectors(); err!=nil{
-		o.agent.errorr("Preffectors не может создать mmap на преффекторов: "+err.Error())
-		o.agent.log.Error("Preffectors не может создать mmap на преффекторов: "+err.Error())
+		org.agent.errorr("Preffectors не может создать mmap на преффекторов: "+err.Error())
+		org.agent.log.Error("Preffectors не может создать mmap на преффекторов: "+err.Error())
 		return false
 	}
 	//увеличиваем общее количество клеток организма
-	o.countall+=len(pre.prefs)
+	org.countall+=len(pre.prefs)
 
 	return true
 }
@@ -672,15 +671,15 @@ type Effector struct {
 	cells    []Cells  //слайс обслуживает файлы с нейронами и геномами этих нейронов, если они заданы
 }
 
-func (ef *Effector) Init(o *Organism) bool{
+func (ef *Effector) Init() bool{
 	//сюда входим с известными путем и номером выхода
 	//скажем DataInput где его файлы
 	ef.dataOutput.filenameGen=ef.path+"/GenDataOut.genes"
 	ef.dataOutput.filenameData=ef.path+"/DataOut.data"
 	//инициализация
-	if !ef.dataOutput.Init(o){
-		o.agent.log.Error("dataOutput не может инициализироваться")
-		o.agent.errorr("dataOutput не может инициализироваться")
+	if !ef.dataOutput.Init(){
+		org.agent.log.Error("dataOutput не может инициализироваться")
+		org.agent.errorr("dataOutput не может инициализироваться")
 		return false
 	}
 	//ищем гены преффекторов
@@ -713,9 +712,9 @@ func (ef *Effector) Init(o *Organism) bool{
 	}
 	//инициализируем
 	for i:=0;i<len(ef.preffectors);i++{
-		if !ef.preffectors[i].Init(o){
-			o.agent.errorr(ef.preffectors[i].filenameGens+" не может инициализироваться")
-			o.agent.log.Error(ef.preffectors[i].filenameGens+" не может инициализироваться")
+		if !ef.preffectors[i].Init(){
+			org.agent.errorr(ef.preffectors[i].filenameGens+" не может инициализироваться")
+			org.agent.log.Error(ef.preffectors[i].filenameGens+" не может инициализироваться")
 			return false
 		}
 	}
@@ -747,9 +746,9 @@ func (ef *Effector) Init(o *Organism) bool{
 		}
 		//инициализируем
 		for i:=0;i<len(ef.cells);i++{
-			if !ef.cells[i].Init(o){
-				o.agent.errorr(ef.cells[i].filenameGens+" не может инициализироваться")
-				o.agent.log.Error(ef.cells[i].filenameGens+" не может инициализироваться")
+			if !ef.cells[i].Init(){
+				org.agent.errorr(ef.cells[i].filenameGens+" не может инициализироваться")
+				org.agent.log.Error(ef.cells[i].filenameGens+" не может инициализироваться")
 				return false
 			}
 		}
@@ -767,9 +766,9 @@ func (ef *Effector) Init(o *Organism) bool{
 			filename: ef.path+"/Synapse-"+ss[2]+".chemical",
 			filedesc: ef.path+"/"+syndescfile}
 		//инициализируем синапсы
-		if !ef.synapses.Init(o){
-			o.agent.errorr(ef.synapses.filename+" не может инициализироваться")
-			o.agent.log.Error(ef.synapses.filename+" не может инициализироваться")
+		if !ef.synapses.Init(){
+			org.agent.errorr(ef.synapses.filename+" не может инициализироваться")
+			org.agent.log.Error(ef.synapses.filename+" не может инициализироваться")
 			return false
 		}
 	}
@@ -788,19 +787,16 @@ type Actions struct {
 	такое поведение может использоваться для большинства агентов.
 	Но для сложных агентов оно нужно - что-то типа мозжечка, корректирующего сложные синхронные слаженные поведения многих выходов
 	*/
-
-	organism *Organism //ссылка на весь родительский организм
 }
 
 //Init - инициализация Действий системы
-func (ac *Actions) Init(o *Organism) bool{
-	ac.organism=o
+func (ac *Actions) Init() bool{
 
 	//Найдем все выходы
 	effecs:=[]string{}
 	syndescfile:=""
 	isSyn:=false
-	files, _ := ioutil.ReadDir(o.path+"/Actions")
+	files, _ := ioutil.ReadDir(org.path+"/Actions")
 	for _, file := range files {
 		if file.IsDir(){
 			effecs = append(effecs,file.Name())
@@ -821,14 +817,14 @@ func (ac *Actions) Init(o *Organism) bool{
 		ac.effectors=append(ac.effectors,
 			Effector{
 				number: uint16(num),
-				path: o.path+"/Actions/"+eff})
+				path: org.path+"/Actions/"+eff})
 
 	}
 	//инициализируем выходы
 	for i:=0;i<len(ac.effectors);i++{
-		if !ac.effectors[i].Init(o){
-			o.agent.errorr(strconv.Itoa(int(ac.effectors[i].number))+" не может инициализироваться")
-			o.agent.log.Error(strconv.Itoa(int(ac.effectors[i].number))+" не может инициализироваться")
+		if !ac.effectors[i].Init(){
+			org.agent.errorr(strconv.Itoa(int(ac.effectors[i].number))+" не может инициализироваться")
+			org.agent.log.Error(strconv.Itoa(int(ac.effectors[i].number))+" не может инициализироваться")
 			return false
 		}
 	}
@@ -838,7 +834,7 @@ func (ac *Actions) Init(o *Organism) bool{
 		//ищем гены нейронов
 		gneuronfiles:=[]string{}
 
-		files, _ := ioutil.ReadDir(o.path+"/Actions")
+		files, _ := ioutil.ReadDir(org.path+"/Actions")
 		for _, file := range files {
 			if match, _ := regexp.MatchString("(GenNeuron-[0-9]+.genes)",
 				file.Name()); match{
@@ -855,14 +851,14 @@ func (ac *Actions) Init(o *Organism) bool{
 
 			ac.cells=append(ac.cells,
 				Cells{
-					filenameGens: o.path+"/Actions/"+neus,
-					filenameCells: o.path+"/Actions/Neuron-"+re.FindString(neus)+".neurons"	})
+					filenameGens: org.path+"/Actions/"+neus,
+					filenameCells: org.path+"/Actions/Neuron-"+re.FindString(neus)+".neurons"	})
 		}
 		//инициализируем
 		for i:=0;i<len(ac.cells);i++{
-			if !ac.cells[i].Init(o){
-				o.agent.errorr(ac.cells[i].filenameGens+" не может инициализироваться")
-				o.agent.log.Error(ac.cells[i].filenameGens+" не может инициализироваться")
+			if !ac.cells[i].Init(){
+				org.agent.errorr(ac.cells[i].filenameGens+" не может инициализироваться")
+				org.agent.log.Error(ac.cells[i].filenameGens+" не может инициализироваться")
 				return false
 			}
 		}
@@ -877,23 +873,23 @@ func (ac *Actions) Init(o *Organism) bool{
 			number: SynEnum(num),
 			maxX: uint32(mx),
 			maxY: uint32(my),
-			filename: o.path+"/Actions/Synapse-"+ss[2]+".chemical",
-			filedesc: o.path+"/Actions/"+syndescfile}
+			filename: org.path+"/Actions/Synapse-"+ss[2]+".chemical",
+			filedesc: org.path+"/Actions/"+syndescfile}
 		//инициализируем синапсы
-		if !ac.synapses.Init(o){
-			o.agent.errorr(ac.synapses.filename+" не может инициализироваться")
-			o.agent.log.Error(ac.synapses.filename+" не может инициализироваться")
+		if !ac.synapses.Init(){
+			org.agent.errorr(ac.synapses.filename+" не может инициализироваться")
+			org.agent.log.Error(ac.synapses.filename+" не может инициализироваться")
 			return false
 		}
 
 		//добавим также в мапу синапсов для быстрого доступа,
 		//в итоге это поле синапсов будет лежать в мапе и под своим номером, и под номером SYNOUTPUTS=0xfffd
-		o.synapsesMap[SYNOUTPUTS]=&ac.synapses
+		org.synapsesMap[SYNOUTPUTS]=&ac.synapses
 	}
 
 
-	o.agent.info("/Actions готовы к работе")
-	o.agent.log.Info("/Actions готовы к работе")
+	org.agent.info("/Actions готовы к работе")
+	org.agent.log.Info("/Actions готовы к работе")
 
 	return true
 }
@@ -906,20 +902,18 @@ type Vegetatic struct {
 
 	synapses Synapses //обслуживает файл с синапсами этого выхода (если они есть!!)
 	cells    []Cells  //слайс обслуживает файлы с нейронами и геномами этих нейронов, если они заданы
-
-	organism *Organism //ссылка на весь родительский организм
 }
 
 //Init - инициализация вегетативной системы
-func (v *Vegetatic) Init(o *Organism) bool{
+func (v *Vegetatic) Init() bool{
 //инициализация очень похожа на Actions (один в один))
-	v.organism = o
+
 
 	//Найдем все выходы
 	effecs:=[]string{}
 	syndescfile:=""
 	isSyn:=false
-	files, _ := ioutil.ReadDir(o.path+"/Vegetatic")
+	files, _ := ioutil.ReadDir(org.path+"/Vegetatic")
 	for _, file := range files {
 		if file.IsDir(){
 			effecs = append(effecs,file.Name())
@@ -940,14 +934,14 @@ func (v *Vegetatic) Init(o *Organism) bool{
 		v.effectors=append(v.effectors,
 			Effector{
 				number: uint16(num),
-				path: o.path+"/Vegetatic/"+eff})
+				path: org.path+"/Vegetatic/"+eff})
 
 	}
 	//инициализируем выходы
 	for i:=0;i<len(v.effectors);i++{
-		if !v.effectors[i].Init(o){
-			o.agent.errorr(strconv.Itoa(int(v.effectors[i].number))+" не может инициализироваться")
-			o.agent.log.Error(strconv.Itoa(int(v.effectors[i].number))+" не может инициализироваться")
+		if !v.effectors[i].Init(){
+			org.agent.errorr(strconv.Itoa(int(v.effectors[i].number))+" не может инициализироваться")
+			org.agent.log.Error(strconv.Itoa(int(v.effectors[i].number))+" не может инициализироваться")
 			return false
 		}
 	}
@@ -957,7 +951,7 @@ func (v *Vegetatic) Init(o *Organism) bool{
 		//ищем гены нейронов
 		gneuronfiles:=[]string{}
 
-		files, _ := ioutil.ReadDir(o.path+"/Vegetatic")
+		files, _ := ioutil.ReadDir(org.path+"/Vegetatic")
 		for _, file := range files {
 			if match, _ := regexp.MatchString("(GenNeuron-[0-9]+.genes)",
 				file.Name()); match{
@@ -974,14 +968,14 @@ func (v *Vegetatic) Init(o *Organism) bool{
 
 			v.cells=append(v.cells,
 				Cells{
-					filenameGens: o.path+"/Vegetatic/"+neus,
-					filenameCells: o.path+"/Vegetatic/Neuron-"+re.FindString(neus)+".neurons"	})
+					filenameGens: org.path+"/Vegetatic/"+neus,
+					filenameCells: org.path+"/Vegetatic/Neuron-"+re.FindString(neus)+".neurons"	})
 		}
 		//инициализируем
 		for i:=0;i<len(v.cells);i++{
-			if !v.cells[i].Init(o){
-				o.agent.errorr(v.cells[i].filenameGens+" не может инициализироваться")
-				o.agent.log.Error(v.cells[i].filenameGens+" не может инициализироваться")
+			if !v.cells[i].Init(){
+				org.agent.errorr(v.cells[i].filenameGens+" не может инициализироваться")
+				org.agent.log.Error(v.cells[i].filenameGens+" не может инициализироваться")
 				return false
 			}
 		}
@@ -996,22 +990,22 @@ func (v *Vegetatic) Init(o *Organism) bool{
 			number: SynEnum(num),
 			maxX: uint32(mx),
 			maxY: uint32(my),
-			filename: o.path+"/Vegetatic/Synapse-"+ss[2]+".chemical",
-			filedesc: o.path+"/Vegetatic/"+syndescfile}
+			filename: org.path+"/Vegetatic/Synapse-"+ss[2]+".chemical",
+			filedesc: org.path+"/Vegetatic/"+syndescfile}
 		//инициализируем синапсы
-		if !v.synapses.Init(o){
-			o.agent.errorr(v.synapses.filename+" не может инициализироваться")
-			o.agent.log.Error(v.synapses.filename+" не может инициализироваться")
+		if !v.synapses.Init(){
+			org.agent.errorr(v.synapses.filename+" не может инициализироваться")
+			org.agent.log.Error(v.synapses.filename+" не может инициализироваться")
 			return false
 		}
 
 		//добавим также в мапу синапсов для быстрого доступа,
 		//в итоге это поле синапсов будет лежать в мапе и под своим номером, и под номером SYNVEGETATIC=0xffff
-		o.synapsesMap[SYNVEGETATIC]=&v.synapses
+		org.synapsesMap[SYNVEGETATIC]=&v.synapses
 	}
 
-	o.agent.info("/Vegetatic готовы к работе")
-	o.agent.log.Info("/Vegetatic готовы к работе")
+	org.agent.info("/Vegetatic готовы к работе")
+	org.agent.log.Info("/Vegetatic готовы к работе")
 	return true
 }
 /*Organism - самая полная структура, состоящая из мозга, входных и выходных устройств
@@ -1046,16 +1040,16 @@ func (o *Organism) Init(a *Agent) bool{
 	o.agent=a
 	o.synapsesMap=make(map[SynEnum]*Synapses)
 
-	if !o.senses.Init(o) {
+	if !o.senses.Init() {
 		return false
 	}
-	if !o.brain.Init(o) {
+	if !o.brain.Init() {
 		return false
 	}
-	if !o.actions.Init(o) {
+	if !o.actions.Init() {
 		return false
 	}
-	if !o.vegetatic.Init(o){
+	if !o.vegetatic.Init(){
 		return false
 	}
 

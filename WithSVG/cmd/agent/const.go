@@ -112,3 +112,11 @@ const (
 	//PREFFECTORUINT32NEG - отрицательный преффектор, нацеленный на беззнаковое целое 4-байтовое
 	PREFFECTORUINT32NEG PreffectorTypeEnum=13
 )
+
+type NeuronStateEnum byte
+
+const (
+	//NUNDEF - неопределенное состояние
+	NUNDEF NeuronStateEnum=0
+
+)
