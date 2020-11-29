@@ -1,5 +1,7 @@
 package agent
 
+import "math/rand"
+
 //NumberToXY - переводит index в одномерном массиве в двумерные координаты x, y
 func NumberToXY(N uint32, maxX uint32) (uint32, uint32) {
 	return N % maxX, N / maxX
@@ -54,13 +56,8 @@ type Dendrite struct {
 	*/
 	Typed DendriteTypeEnum
 	Ca byte   //количество кальция в этом шипике
-	Na byte   //количество натрия на шипике
-	KorCl byte /*К или хлор, некоторые дендриты имеют хлорные каналы, вместо калиевых,
-	например, ГАМК-рецепторы,
-	это позволяет очень быстро восстановить заряд на концевой пластинке,
-	и как следствие затормозить активность
-	Хлор входит и тормозит, он отрицательный,
-	Калий выходит и тормозит - он положительный*/
+	State byte	//состояние дендрита - используется ВМ
+	Charge int8	//заряд на дендрите -  заряды всех дендритов средневзвешиваются, и в соме ПД или нет
 	N  uint32 //номер синапса в файле синапсов. Координаты его вычисляются по номеру:  y = N / maxX   x = N % maxX
 
 }
@@ -211,20 +208,291 @@ type Neuron struct {
 	Axons     [16]Axon     //[]Координаты аксонов в общем файле синапсов, количество везикул и кальций
 	//[]
 }
+//CalcCharge - функция вычисления заряда клетки в средне-стабильной среде
+func (n *Neuron) CalcCharge() int{
+	ret:=int((float32(n.Chemic.Na) - float32(NAORG) + float32(n.Chemic.K) - float32(KORG)-130)/1.7)
+	return ret
+}
 
-//Live - главная функция, запускающая все процессы в клетке
-/*
-ВМ создает указатель на структуру Neuron из файла клеток  и говорит ей   go Neuron.Live(),
-и переходит к следующей клетке
+func (n *Neuron) Gradient(){
+	if n.Chemic.Na>NAORG{
+		n.Chemic.Na-=1
+	}
+	if n.Chemic.Na<NAORG{
+		n.Chemic.Na+=1
+	}
+	if n.Chemic.K>KORG{
+		n.Chemic.K-=1
+	}
+	if n.Chemic.K<KORG{
+		n.Chemic.K+=1
+	}
+}
 
-Нейрон ничего не знает прямо о своих связях - все есть химия
-*/
-func (n *Neuron) Live() {
-	switch n.Typen {
-	case NEURONSTEM: //стволовая клетка
-		break
-	case NEURONACETILHOLIN: //ацх-эргическая
-		break
+//DendrCharge - Заряд на всех дендритах
+func (n *Neuron) DendrCharge() int{
+	//пробегаемся по дендритам и вычисляем их сумарное зарядное влияние на сому (среднее арифм или геом)
+	k:=1
+	chdend:=0
+	for i:=0;i<16;i++{
+		if n.D&(1<<i) != 0 { //проверяем, что данный дендрит включен
+			k++
+			chdend+=int(n.Dendrites[i].Charge)
+		}
+	}
+	chdend=chdend/k //k будет больше на 1 от реально существующих включеных дендритов норм? todo
+	if chdend>MAXALLDENDRCHARGE {//ограничение по максимуму влияния дендритов
+		return MAXALLDENDRCHARGE
+	}
+	if chdend < -MAXALLDENDRCHARGE{
+		return -MAXALLDENDRCHARGE
+	}
+	return chdend
+}
+
+//DoDendrites -
+func (n *Neuron) DoDendrites(gene *GenNeuron){
+	somacharge:=n.CalcCharge()
+	for i:=0;i<16;i++{
+		if n.D&(1<<i) != 0 { //проверяем, что данный дендрит включен
+			if somacharge>MINSOMACHARGE{//если заряд сомы больше MINSOMACHARGE, значит она делает ПД, и ее кальциевые каналы открыты
+				n.Dendrites[i].Ca=MAXCASOMA //и значит кальций входит в дендрит через сому
+			}else if n.Dendrites[i].Ca>1 {//кальций выходит из каналов
+				n.Dendrites[i].Ca-=1
+				if n.Dendrites[i].Ca>MAXCA*2{
+					n.Dendrites[i].Ca=byte((int16(n.Dendrites[i].Ca)*7 + int16(MINCA))/8)
+				}
+			}
+			//сила рецепторов
+			Power:=byte(0xf0 & n.Dendrites[i].Typed)
+
+			//чем сильней рецептор, тем быстрее выходит кальций
+			if n.Dendrites[i].Ca> Power/0x10{
+				n.Dendrites[i].Ca-=Power/0x10
+			}else {
+				n.Dendrites[i].Ca=1
+			}
+			var medi byte =0 //величина медиатора
+			switch n.Dendrites[i].Typed {
+			case DENDRGABAION, DENDRGABAMETA:
+				//todo
+			case DENDRACHION, DENDRACHMETA:
+				medi=org.synapsesMap[n.SynNumber].syn[n.Dendrites[i].N].ACh
+			}
+			//если мы в долгосрочной депрессии, мы пропускаем обработку синапса совсем, аксону это не понравится и он отключится (или нет - это нне наши проблемы)
+			if n.Dendrites[i].State<200 && medi>0{ //мы не в долгосрочной депресии и есть ли медиатор в синапсе?
+				isBreakMedi:=false //тормозный ли медиатор
+				//эстераза разрушает ацх, а если мы в депрессии - то не разрушаем
+				switch n.Dendrites[i].Typed {
+				case DENDRGABAION, DENDRGABAMETA:
+					//todo
+					isBreakMedi=true
+				case DENDRACHION, DENDRACHMETA:
+					org.synapsesMap[n.SynNumber].syn[n.Dendrites[i].N].CHOL=medi //+n.c.CHOL //здесь в реале надо прибавить существующий холин
+					org.synapsesMap[n.SynNumber].syn[n.Dendrites[i].N].ACh=0
+				}
+
+				//достаточно ли медиатора, чтобы открыть ионные каналы (зависит также от силы дендрита)
+				if medi*(Power/0x10) >= MINMEDIREACT  {
+					//количество заряда (относительное). поскольку ацх - возбужд, заряд от нуля до +120
+					ch := int(float32(Power)/10* float32(medi) / (float32(n.Dendrites[i].Ca) + 4))
+					//ограничение заряда 
+					if ch > MAXDENDRCHARGE {
+						n.Dendrites[i].Charge = int8(MAXDENDRCHARGE)
+					} else {
+						n.Dendrites[i].Charge = int8(ch)
+					}
+					if isBreakMedi{//если тормозный, то заряд жеж отрицательный
+						n.Dendrites[i].Charge = -n.Dendrites[i].Charge
+					}
+
+				}else{
+					n.Dendrites[i].Charge = 0
+				}
+
+			}else{//если медиатора нет или мы в ДД - наши каналы закрыты, заряд КП 0
+				n.Dendrites[i].Charge = 0
+			}
+
+			//обучение проходит только если медиатор присутствовал в щели в минимальном количестве
+			//иначе получим такую штуку, что мы приспосабливаемся не к работе пресинаптического нейрона
+			if medi>=MINMEDI{
+				//если в ДД, уменьшаем ожидание
+				if n.Dendrites[i].State>200 {
+					n.Dendrites[i].State--
+				}else if n.Dendrites[i].State>102 && n.Dendrites[i].State<150{//если в ДП, тоже уменьшаем
+					n.Dendrites[i].State--
+				} else{
+					//состояние обучения
+					switch n.Dendrites[i].State{
+					case 1: //обычная работа
+						if n.Dendrites[i].Ca>MAXCA && medi>MAXMEDI{
+							//здесь краткосрочная депрессия ставится на проверку
+							n.Dendrites[i].State=10
+						}else if n.Dendrites[i].Ca<MINCA && medi>MAXMEDI{
+							//краткосрочная потенциация ставится на проверку
+							n.Dendrites[i].State=100
+						}
+					case 9://конец краткосрочной депрессии
+						if n.Dendrites[i].Ca>MAXCA && medi>MAXMEDI{
+							//здесь краткосрочная депрессия продолжается
+							n.Dendrites[i].State+=1
+						}else {
+							n.Dendrites[i].State=1//нормальный режим
+						}
+					case 10, 11, 12:
+						if n.Dendrites[i].Ca>MAXCA && medi>MAXMEDI{
+							//здесь краткосрочная депрессия продолжается
+							n.Dendrites[i].State+=1
+						}else {
+							n.Dendrites[i].State-=1
+						}
+					case 13:
+						if n.Dendrites[i].Ca>MAXCA && medi>MAXMEDI{
+							//таки депрессия
+							if Power == 0x10 {//уже некуда депрессировать, переходим в долговременную депрессию
+								n.Dendrites[i].State=255
+								break
+							}else {
+								Power=Power-0x10
+								n.Dendrites[i].State-=1 //дадим шанс не выключить еще рецепторов на следующем шаге
+							}
+							n.Dendrites[i].Typed = DendriteTypeEnum(Power + (byte(n.Dendrites[i].Typed)&0x0f))
+						}else {
+							n.Dendrites[i].State-=1
+						}
+					case 100:
+						if n.Dendrites[i].Ca<MINCA && medi>MAXMEDI{
+							//краткосрочная потенциация продолжает проверку
+							n.Dendrites[i].State=101
+						} else{
+							//показалось
+							n.Dendrites[i].State=1
+						}
+					case 101:
+						if n.Dendrites[i].Ca<MINCA && medi>MAXMEDI{
+							//таки да, нейрон пресинаптический плюет когда надо, увеличиваем кол-во рецепторов
+							if Power<0xf0{
+								Power+=0x10
+							} else {
+								//итак максимально сильный дендрит... TODO!
+							}
+							n.Dendrites[i].Typed = DendriteTypeEnum(Power + (byte(n.Dendrites[i].Typed)&0x0f))
+							n.Dendrites[i].State=110 //это же долговременная потенциация? доверяем пресинаптическому нейрону некоторое время
+						} else{
+							//показалось
+							n.Dendrites[i].State=1
+						}
+					case 102:
+						n.Dendrites[i].State=1 //ДП (долговременная потенциация) окончена, обычная работа
+					case 200: //долговременная депрессия (ДД) конец, но мы идем в краткосрочную
+						n.Dendrites[i].State=9
+
+					default:
+						if n.Dendrites[i].Ca>MAXCA && medi>MAXMEDI{
+							//здесь краткосрочная депрессия ставится на проверку
+							n.Dendrites[i].State=10
+						}else if n.Dendrites[i].Ca<MINCA && medi>MAXMEDI{
+							//краткосрочная потенциация ставится на проверку
+							n.Dendrites[i].State=100
+						}
+						n.Dendrites[i].State=1
+					}
+				}
+				//поскольку в синапсе есть медиатор, он открыл каналы кальция, и кальций входит в дендрит из синапса
+				//и в принципе, может немного выйти, если нейромедиатора мало, а кальция много
+				n.Dendrites[i].Ca=byte((int(n.Dendrites[i].Ca)*2+int(medi))/3)
+			}
+			
+		}
+	}
+}
+
+func (n *Neuron) NaOpened(){
+	if n.Chemic.Na < 150{
+		n.Chemic.Na+=90
+	}else if n.Chemic.Na < 210{
+		n.Chemic.Na+=40
+	}else if n.Chemic.Na < 240{
+		n.Chemic.Na+=20
+	}else if n.Chemic.Na < 250{
+		n.Chemic.Na+=3
+	}
+}
+func (n *Neuron) KOpened(){
+	if n.Chemic.K>150{
+		n.Chemic.K-=40
+	}else if n.Chemic.K>75{
+		n.Chemic.K-=25
+	}else if n.Chemic.K>20{
+		n.Chemic.K-=8
+	}else if n.Chemic.K>5{
+		n.Chemic.K-=3
+	}
+}
+
+//DoLiveCicle - главная функция жизни нейрона
+func (n *Neuron) DoLiveCicle(gene *GenNeuron){
+	charge:=n.CalcCharge()
+	//качаем насосом Na-K
+	if n.CalcCharge()>CHARGENORM-20{//если уже почти норма, то нефиг качать, оно через каналы выйдет
+		//в геноме написано, сколько раз за цикл делаем дополнительно или уменьшительно
+		n.Chemic.DoNaKATPasa()//один раз по-любому
+		for i:=gene.AddNaKATPasa+ADDNAKATPASA;i>0;i++ {
+			n.Chemic.DoNaKATPasa()
+		}
+	}
+	//общий заряд
+	charge+=n.DendrCharge()
+
+	switch n.State {
+	case 1://нормальная работа
+		if charge<CHARGENORM{ //глубокая реполяризация, каналы открыты для выравнивания
+			n.Gradient()
+		}else if charge>NACHANOPEN{
+			n.State=10
+			n.NaOpened()
+			charge=n.CalcCharge()
+			if charge>=NACHANCLOSE{
+				n.State=20
+			}
+		}
+	case 10://начало деполяризации
+		if charge>=NACHANOPEN && charge<=NACHANCLOSE{
+			n.NaOpened()
+			charge=n.CalcCharge()
+		}
+		if charge>=KCHANOPEN {
+			n.KOpened()
+			charge=n.CalcCharge()
+
+			if charge> NACHANOPEN && n.Chemic.Na<NAVALCHANREOPEN && n.Chemic.K>KVALCHANREOPEN{
+				n.State=1
+			}
+		}
+		if charge>=NACHANCLOSE{
+			n.State=20
+		}
+
+	case 20://только калиевый ток
+		n.KOpened()
+		charge=n.CalcCharge()
+		if charge<KCHANCLOSE {
+			n.State=1
+		}
+		if charge> NACHANOPEN && n.Chemic.Na<NAVALCHANREOPEN && n.Chemic.K>KVALCHANREOPEN{
+			n.State=10
+		}
+
+	default:
+		n.State=1
 
 	}
+	if rand.Intn(100)>10{
+		n.Gradient()
+	}
+}
+
+func (n *Neuron) DoAxons(gene *GenNeuron){
+
 }

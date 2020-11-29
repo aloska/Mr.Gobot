@@ -23,6 +23,8 @@ func (r *Receptor) Step(gene *GenReceptor, datai *DataInput){
 	switch r.Typer {
 	case RECEPTORDATAUINT32BIGPOS:
 		r.DoReceptorUInt32(&datai.dataUInt32[r.Ndata],org.synapsesMap[r.SynNumber])
+	case RECEPTORDATAUINT32BIGBIT:
+		r.DoReceptorUInt32Bit(&datai.dataUInt32[r.Ndata],org.synapsesMap[r.SynNumber])
 	}
 	org.wgo.Done()
 }
@@ -32,6 +34,14 @@ func (p *Preffector) Step( gene *GenPreffector){
 }
 
 func (n *Neuron) Step(gene *GenNeuron){
+	if n.Typen==NEURONSTEM{
+
+	}else {
+		n.DoDendrites(gene)
+		n.DoLiveCicle(gene)
+		n.DoAxons(gene)
+	}
+
 	org.wgo.Done()
 }
 

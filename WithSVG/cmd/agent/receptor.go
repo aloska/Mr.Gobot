@@ -29,12 +29,13 @@ type Receptor struct {
 	обычно - это величина, ниже (или выше, если рецептор отрицательного типа) которой рецептор молчит
 	*/
 
-	Typer ReceptorTypeEnum //Тип рецептора  - четные значения для положительных рецепторов, нечетные - для отрицательных
+	Typer ReceptorTypeEnum //Тип рецептора  - четные значения для положительных рецепторов, нечетные - для отрицательных (обычно)
 	SynNumber SynEnum /*номер поля синапсов, в синапсах которого находятся аксоны	 */
 	Ndata   uint32 //номер ячейки с данными, на которую нацелен рецептор
 
 	NdataW  byte   //номер бита/байта/слова... из этой ячейки
-	NdataWb byte
+	NdataWb byte	//еще что угодно
+
 	Serv1 byte
 	Typemedi NeuronTypeEnum //byte тип выплевываемого медиатора (обычно ацетилхолин)
 	Force    uint16 //сила реакции
@@ -91,4 +92,30 @@ func (r *Receptor) DoReceptorUInt32(d *DataUInt32, s *Synapses) byte {
 		}
 	}
 	return 0
+}
+
+/*DoReceptorUInt32 - запустить обработку ячейки данных. Возвращает количество вещества, которое он вбросил аксонами
+ */
+func (r *Receptor) DoReceptorUInt32Bit(d *DataUInt32, s *Synapses) byte {
+	var (
+		val uint32  //значение, которое анализируем
+
+		res byte    //количества вещества, которое хотим выплюнуть
+	)
+	val = d.Data[r.NdataW]
+	res=0
+	//проходимся по всем аксонам
+	for i := 0; i < 32; i++ {
+		if r.A&(1<<i) != 0 { //проверяем, что данный аксон включен
+			switch r.Typemedi {
+			case NEURONACETILHOLIN: //ацетилхолин
+				res=MAXMEDI+byte(1+i)
+				if (1<<i)&val > 0 {//стоит ли бит в
+					r.Axons[i].DoAChMediate(&s.syn[r.Axons[i].N], res)
+				}
+			}
+
+		}
+	}
+	return res
 }

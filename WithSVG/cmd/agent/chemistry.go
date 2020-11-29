@@ -182,8 +182,19 @@ func (c *Chemical) DoAAtoGLNEstarasa() bool {
 	return true
 }
 
-//DoNaKATPasa - может вызвать только клетка, перекачка натрия и калия
-func (c *Chemical) DoNaKATPasa(to *Chemical) bool {
+//упрощенная версия используется, без одмена со средой, т.к. принята среда вполне стабильной
+func (c *Chemical) DoNaKATPasa(){
+
+	if c.Na>5 {
+		c.Na-=3
+	}
+	if c.K<250{
+		c.K+=2
+	}
+}
+
+//DoNaKATPasa2 - может вызвать только клетка, перекачка натрия и калия НЕ ИСПОЛЬЗУЕТСЯ
+func (c *Chemical) DoNaKATPasa2(to *Chemical) bool {
 	/*
 		Очень важный цикл перекачки Натрия наружу и калия внутрь
 	*/
