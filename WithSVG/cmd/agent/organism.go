@@ -13,6 +13,8 @@ import (
 /*Synapses - структура с файлом синапсов, хранящая все  Chemistry, самая интенсивно используемая
 
  */
+
+
 type Synapses struct {
 	filedesc string  //файл описания синапсов в формате syn-[0-9]+x[0-9]+.[0-9]+
 	bytearrayTypicalChe mmap.MMap  //замапленный файл синапсов

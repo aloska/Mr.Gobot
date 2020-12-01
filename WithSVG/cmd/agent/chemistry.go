@@ -226,12 +226,16 @@ func (c *Chemical) MakeMemrane() bool {
 //AASynt - могут вызвать дендриты клеток в ответ на переизбыток активности клетки-передатчика, синтезирует внутри клетки анандамид, и сразу
 //выбрасывается дендритом
 func (c *Chemical) AASynt() bool {
-	if c.OMEGA < 1 || c.NO < 1 || c.CO < 2 || c.WASTE >= 0xfffe {
+	if c.OMEGA < 1 /*|| c.NO < 1 || c.CO < 2*/ || c.WASTE >= 0xfffe {
 		return false
 	}
 	c.OMEGA = c.OMEGA - 1
-	c.NO = c.NO - 1
-	c.CO = c.CO - 2
+	if c.NO>1 {
+		c.NO = c.NO - 1
+	}
+	if c.CO>2 {
+		c.CO = c.CO - 2
+	}
 	c.WASTE = c.WASTE + 1
 	return true
 }
