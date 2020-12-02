@@ -1,6 +1,9 @@
 package agent
 
-import "math/rand"
+import (
+	"math"
+	"math/rand"
+)
 
 //NumberToXY - переводит index в одномерном массиве в двумерные координаты x, y
 func NumberToXY(N uint32, maxX uint32) (uint32, uint32) {
@@ -22,6 +25,89 @@ func NumberToXY(N uint32, maxX uint32) (uint32, uint32) {
 //XYToNumber - переводит двумерные координаты  в index одномерного массива
 func XYToNumber(X uint32, Y uint32, maxX uint32) uint32 {
 	return X + Y*maxX
+}
+
+/*GrowSprout - функция роста отростка
+Ncur - текущий номер отростка
+Nsoma - номер сомы этого отроста (если 0 - положение сомы не учитывается, полезно для нейронов с аксонами в другом поле)
+syn - номер синаптического поля, в котором отросток находится
+TODO - рост в сторону градиента CO и NO исделать нать
+*/
+func GrowSprout(Ncur, Nsoma uint32, syn SynEnum)  uint32 {
+	var Nnew uint32
+	var distance float64
+	mx:=org.synapsesMap[syn].maxX
+	my:=org.synapsesMap[syn].maxY
+	x,y:=NumberToXY(Ncur,mx)
+	xs,ys:=NumberToXY(Nsoma,mx)
+	if Nsoma>0{
+		//условное обратное расстояние от сомы до отростка (чем больше величина - тем ближе отросток к соме)
+		distance=float64(mx+my)/(math.Abs(float64(x)-float64(xs))+math.Abs(float64(y)-float64(ys))+1)
+	}else{
+		distance=-1
+	}
+	if distance > 2 { //при близком расстоянии, делаем рост в сторону от сомы более вероятным
+		var xadd, yadd int
+		if int(x)-int(xs) < 0 { //мы слева от сомы
+			xadd = rand.Intn(4) - 2
+		} else if int(x)-int(xs) == 0 { //мы по x не отличаемся от сомы
+			xadd = rand.Intn(3) - 1
+		} else { //мы справа
+			xadd = rand.Intn(4) - 1
+		}
+
+		if int(x)+xadd < 0 {
+			x = uint32(int(mx) + xadd)
+		} else if int(x)+xadd >= int(mx) {
+			x = uint32(int(x) + xadd - int(mx))
+		} else {
+			x = uint32(int(x) + xadd)
+		}
+
+		//и по y
+		if int(y)-int(ys) < 0 { //мы сверху от сомы
+			yadd = rand.Intn(4) - 2
+		} else if int(y)-int(ys) == 0 { //мы по у не отличаемся от сомы
+			yadd = rand.Intn(3) - 1
+		} else { //мы снизу
+			yadd = rand.Intn(4) - 1
+		}
+
+		if int(y)+yadd < 0 {
+			y = uint32(int(my) + yadd)
+		} else if int(y)+yadd >= int(my) {
+			y = uint32(int(y) + yadd - int(my))
+		} else {
+			y = uint32(int(y) + yadd)
+		}
+
+
+	} else { //просто в разные стороны от текущего местоположения
+		xadd :=  rand.Intn(5) - 2
+		yadd :=  rand.Intn(5) - 2
+		if int(x)+xadd < 0 {
+			x = uint32(int(mx) + xadd)
+		} else if int(x)+xadd >= int(mx) {
+			x = uint32(int(x) + xadd - int(mx))
+		} else {
+			x = uint32(int(x) + xadd)
+		}
+
+		if int(y)+yadd < 0 {
+			y = uint32(int(my) + yadd)
+		} else if int(y)+yadd >= int(my) {
+			y = uint32(int(y) + yadd - int(my))
+		} else {
+			y = uint32(int(y) + yadd)
+		}
+
+	}
+	Nnew = XYToNumber(x, y, mx)
+	if Nnew == Ncur {//мучались-мучались, и вернем то же самое? не, вызовем себя еще раз
+		return GrowSprout(Nnew, Nsoma, syn)
+	} else {
+		return Nnew
+	}
 }
 
 //Dendrite - структура описания дендритов
@@ -74,7 +160,10 @@ type Axon struct {
 	Vesiculs byte   //состояние визикул с нейромедиатором
 	Ca       byte   //количество кальция в этом шипике аксона -
 	State    byte   //состояние - используется ВМ.
-	Power    byte   //сила аксона (напрямую влияет на кол-во вещества), меняется в процессе приспосабливаемости (или не меняется, если в гене AxonPlasticity = 0)
+	Power    byte   /*сила аксона (напрямую влияет на кол-во вещества), меняется в процессе приспосабливаемости (или не меняется, если в гене AxonPlasticity = 0)
+	как сила используются младшие пол-байта,
+	старшие пол-байта используются ВМ вместе с State для переключения режимов обучения
+	*/
 	N        uint32 //номер синапса в файле синапсов. Координаты его вычисляются по номеру:  y = N / maxX   x = N % maxX
 }
 
@@ -230,7 +319,7 @@ func (n *Neuron) DoAxons(gene *GenNeuron) {
 
 				//в любом случае пробуем синтезировать АЦХ
 				n.Axons[i].AChSynt(&org.synapsesMap[n.SynNumber].syn[n.Axons[i].N])
-				for k:=byte(0);k<n.Axons[i].Power;k++{
+				for k:=byte(0);k<n.Axons[i].Power&0xf;k++{
 					if !n.Axons[i].AChSynt(&org.synapsesMap[n.SynNumber].syn[n.Axons[i].N]){//скорость синтеза зависит от силы синапса
 						break
 					}
@@ -254,7 +343,7 @@ func (n *Neuron) DoAxons(gene *GenNeuron) {
 				не получится много
 				*/
 				//(somacharge-MINSOMACHARGE) - всегда положительное, не ссы
-				wanado:=(somacharge-MINSOMACHARGE)*int(n.Axons[i].Power+1)/int(n.Axons[i].Ca+1)/int(AA+1)
+				wanado:=float64(somacharge-MINSOMACHARGE)*math.Log2(float64(n.Axons[i].Power&0xf+2))/float64(n.Axons[i].Ca+1)/float64(AA+1)
 				if wanado>250 {
 					wanado=250
 				}
@@ -279,9 +368,9 @@ func (n *Neuron) DoAxons(gene *GenNeuron) {
 						n.Axons[i].State -= gene.AxonPlasticity/10 + 1
 					}
 				}
-			}else if n.Axons[i].State>45 && n.Axons[i].State<91 {//идет процесс уменьшения силы аксона
+			}else if n.Axons[i].State>45 && n.Axons[i].State<AXPOWERDECWHENSTATE {//идет процесс уменьшения силы аксона
 				if AA>0 {
-					if int(n.Axons[i].State)+int(gene.AxonPlasticity)/10+1>91{
+					if int(n.Axons[i].State)+int(gene.AxonPlasticity)/10+1>int(AXPOWERDECWHENSTATE){
 						n.Axons[i].State=91
 					}else {
 						n.Axons[i].State+=gene.AxonPlasticity/10+1
@@ -299,6 +388,7 @@ func (n *Neuron) DoAxons(gene *GenNeuron) {
 			case 1: //нормальная работа
 				if medi>1 && dimedi==0{//мы плевали, а в ответ тишина
 					if AA>0{ //но там кто-то есть, кто не хочет нашей активности сейчас
+						n.Axons[i].Power=n.Axons[i].Power&0xf//снимаем флаги обучения на усиление
 						n.Axons[i].State=80 //запуск процесса уменьшения силы аксона, который произойдет быстрее, чем при State=50
 					} else{//там никого нет?
 						if gene.AxonPlasticity!=0 {//если пластичность=0, то аксон не ходит никуда (это нужно для нейронов, специально задающих структуру)
@@ -306,19 +396,23 @@ func (n *Neuron) DoAxons(gene *GenNeuron) {
 						}
 					}
 				}else if AA>0{//просто кто-то хочет меньше, запуск процесса уменьшения силы
+					n.Axons[i].Power=n.Axons[i].Power&0xf//снимаем флаги обучения на усиление
 					n.Axons[i].State=50
 				}else if dimedi>MAXAXDIMEDIFORCE{//запуск программы усиления синапса
 					n.Axons[i].State=100
 				}
 			case 41:
 				//todo переходим на новое место, здесь нет никого
+				n.Axons[i].Power=1
 				n.Axons[i].State=1
+				n.Axons[i].N=GrowSprout(n.Axons[i].N,n.N,n.SynNumberAxons)
 			case 45://передумали уменьшать силу
 				n.Axons[i].State=1
-			case 91:
+			case AXPOWERDECWHENSTATE:
 				//уменьшаем силу
-				if n.Axons[i].Power>1{
+				if n.Axons[i].Power&0xf>1{
 					n.Axons[i].Power--
+					n.Axons[i].Power=n.Axons[i].Power&0xf//снимаем флаги обучения на усиление
 				}
 				n.Axons[i].State=1
 			case 100,101,102,103://идет программа усиления синапса
@@ -327,11 +421,16 @@ func (n *Neuron) DoAxons(gene *GenNeuron) {
 				} else{
 					n.Axons[i].State=1
 				}
-			case 104:
-				if n.Axons[i].Power>=250{
-					//todo мы итак максимально сильны, что делать
-				}else{
-					n.Axons[i].Power++
+			case 104://импульс и отработка понравились всем, переходим к следующей фазе усиления
+				if n.Axons[i].Power&0xf0<0x30{
+					n.Axons[i].Power+=0x10 //увеличиваем старшие полбайта
+				}else {
+					if n.Axons[i].Power&0xf == 0xf {
+						//todo мы итак максимально сильны, что делать
+					} else {
+						n.Axons[i].Power++
+					}
+					n.Axons[i].Power=n.Axons[i].Power&0xf//снимаем флаги обучения
 				}
 				n.Axons[i].State=1
 			default:
@@ -452,7 +551,7 @@ func (n *Neuron) DoDendrites(gene *GenNeuron) {
 				//достаточно ли медиатора, чтобы открыть ионные каналы (зависит также от силы дендрита)
 				if medi*(Power/0x10) >= MINMEDIREACT {
 					//количество заряда (относительное).
-					ch := int(float32(int(Power)+int(gene.AddDendrForce)) / 8 * float32(medi) / (float32(n.Dendrites[i].Ca) + 2 + float32(gene.AddDendrCaFluent)))
+					ch := int(float32(int(Power)+int(gene.AddDendrForce)) / 7 * float32(medi) / (float32(n.Dendrites[i].Ca) + 2 + float32(gene.AddDendrCaFluent)))
 					//ограничение заряда
 					if ch > MAXDENDRCHARGE {
 						n.Dendrites[i].Charge = int8(MAXDENDRCHARGE)

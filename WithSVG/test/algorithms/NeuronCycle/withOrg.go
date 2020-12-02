@@ -44,7 +44,7 @@ func main() {
 
 	for i:=0;i<16;i++{
 		n.Dendrites[i].N=uint32(i+1)
-		n.Axons[i].N=uint32(i+15) //сами себе аксонами на вход 2 дендритов, для проверки
+		n.Axons[i].N=uint32(i+2) //сами себе аксонами на вход
 		n.Dendrites[i].Typed=agent.DENDRACHION
 		n.Axons[i].Vesiculs=5
 	}
@@ -52,7 +52,7 @@ func main() {
 	for i:=0;i<40;i++{
 		che[i]=c
 	}
-	s.SetDebugSyn(che)
+	s.SetDebugSyn(che, 8,5)
 	sm[0]=&s
 	o.SetDebugSynMap(sm)
 	a.SetDebugOrganism(&o)
@@ -85,9 +85,7 @@ func basa(w http.ResponseWriter, _ *http.Request) {
 	cellK:=make([]opts.LineData,0)
 
 	for i:=0;i<200;i++{
-		if (i>68&& i<70) ||(i>72&& i<74) || (i>76&& i<78) ||
-			(i>80&& i<82) || (i>84&& i<86) || (i>88 && i<90) || (i>92 && i<94)||
-			(i==95) ||(i==97) || (i==99) ||(i==101) ||(i==103) || (i==105){
+		if i==5 || i==75  || i==150 || i==152 || i==154 || i==156 || i==158 || i==160 || i==162|| i==164|| i==166 {
 			/*
 				(i>68&& i<70) ||(i>72&& i<74) || (i>76&& i<78) ||
 						(i>80&& i<82) || (i>84&& i<86) || (i>88 && i<90) || (i>92 && i<94)||
@@ -99,7 +97,7 @@ func basa(w http.ResponseWriter, _ *http.Request) {
 					i==5 || i==75  || i==150 || i==250 || i==350 {
 			*/
 			for j:=5;j<11;j++ {
-				che[j].ACh = 50
+				che[j].ACh = 40
 			}
 
 			/*} else if(i>150&& i<153) {
@@ -124,7 +122,7 @@ func basa(w http.ResponseWriter, _ *http.Request) {
 			dendACh[k]=append(dendACh[k],opts.LineData{Value:che[k+1].ACh})
 			dendCHOL[k]=append(dendCHOL[k],opts.LineData{Value:che[k+1].CHOL})
 
-			axState[k]=append(axState[k],opts.LineData{Value:n.Axons[k].State})
+			axState[k]=append(axState[k],opts.LineData{Value:n.Axons[k].Power&0xf})
 		}
 	}
 

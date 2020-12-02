@@ -1,7 +1,9 @@
 package agent
 
-func (sy *Synapses)SetDebugSyn(che []Chemical){
+func (sy *Synapses)SetDebugSyn(che []Chemical, mx,my uint32){
 	sy.syn=che
+	sy.maxX=mx
+	sy.maxY=my
 }
 
 //SetDebugOrganism - чтобы тестировать в каком-то левом организме разное всякое
