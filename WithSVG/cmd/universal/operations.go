@@ -32,17 +32,13 @@ const (
 	//чтение и запись - все зациклено по делению с остатком. Внимание. Mnumber = Mnumber % len(M) и AddrMem = AddrMem % len(V)
 	//невозможно адриссовать "вникуда" - если номер памяти или адрес в памяти превышает допустимое - автоматически будет взят остаток
 	LDM		Comm = 21		//считать из памяти в регистр (LoaD from Memory) LDM x1, Mnumber, AddrMem -> x1=M[Mnumber].V[AddrMem]
-	LDS		Comm = 22 		//считать из входа (LoaD from Sense) LDS x1, Snumber, AddrSen -> x1=S[Snumber].V[AddrSen]
+	LDIN	Comm = 22 		//считать из входа (LoaD from In) LDIN x1, Snumber, AddrIn -> x1=In[Inumber].V[AddrIn]
 	//считать значение выхода нельзя!
 	STM		Comm = 23		//записать в память (STore to Memory) STM Mnumber, AddrMem, x1 ->  M[Mnumber].V[AddrMem] = x1
-	STE		Comm = 24       //записать в выход (STore to Effector) STE Enumber, AddrEff, x1 ->  E[Enumber].V[AddrEff] = x1
+	STOUT	Comm = 24       //записать в выход (STore to Out) STOUT Onumber, AddrOut, x1 ->  Out[Onumber].V[AddrOut] = x1
 	//записать значение во вход нельзя!
 
 	//команды перехода - все зациклено, перейти в никуда нельзя.
-	/*
-		Если PC+JumpAddr > len(G) - переход превышает длину гена (программы), то переходим на (PC+JumpAddr)/len(G)
-		Если PC+JumpAddr < 0 - переход меньше 0, то переходим на len(G)-(PC+JumpAddr)
-	*/
 	BEQ		Comm = 25		//перейти на столько то вперед или назад, если значения регистров равны. BEQ x1,x2,JumpAddr -> if x1==x2 jump to PC+JumpAddr
 	BGE		Comm = 26 		//перейти если больше или равно BGE x1,x2,JumpAddr -> if x1>=x2 jump to PC+JumpAddr
 	BLT		Comm = 27 		//перейти если меньше BLT x1,x2,JumpAddr -> if x1<x2 jump to PC+JumpAddr
@@ -59,6 +55,14 @@ const (
 	PUSH 	Comm = 34		//засунуть в стек PUSH x1, any, any - два последних значения в гене этой коммады не имеют смысла, там могут быть любые числа
 	POP		Comm = 35		//достать из стека POP x1, any,any -  два последних значения в гене этой коммады не имеют смысла, там могут быть любые числа
 
+	//резервные комманды, ничего не делающие, но дающие возможность разнообразить геном
+	NOP1	Comm = 36
+	NOP2	Comm = 37
+	NOP3	Comm = 38
+	NOP4	Comm = 39
+	NOP5	Comm = 40
+	NOP6	Comm = 41
+	NOP7	Comm = 42
 
 	/*CISC мб лучше??
 	ADDI	Comm = 		//сложение с входом ADDI x1, x2, addrInput  x1=x2 + (addrInput)
@@ -72,115 +76,267 @@ const (
 
 //ADD - сложение
 //x1, x2, x3 - номера регистров общего назначения (если больше 32 - по кругу)
-func (p *Processor) ADD(x1, x2, x3 int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32]+p.R.X[x3%32]
+func (p *Processor) ADD(x1, x2, x3 uint64){
+	p.PC++
+	p.X[x1%32]=p.X[x2%32]+p.X[x3%32]
 }
 
 //ADDI - сложение
-func (p *Processor) ADDI(x1, x2, c int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32]+c
+func (p *Processor) ADDI(x1, x2 uint64, c int64){
+	p.PC++
+	p.X[x1%32]=p.X[x2%32]+c
 }
 
-func (p *Processor) SUB(x1, x2, x3 int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32]-p.R.X[x3%32]
+func (p *Processor) SUB(x1, x2, x3 uint64){
+	p.PC++
+	p.X[x1%32]=p.X[x2%32]-p.X[x3%32]
 }
 
-func (p *Processor) SUBI(x1, x2, c int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32]-c
+func (p *Processor) SUBI(x1, x2 uint64, c int64){
+	p.PC++
+	p.X[x1%32]=p.X[x2%32]-c
 }
 
-func (p *Processor) MUL(x1, x2, x3 int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32] * p.R.X[x3%32]
+func (p *Processor) MUL(x1, x2, x3 uint64){
+	p.PC++
+	p.X[x1%32]=p.X[x2%32] * p.X[x3%32]
 }
 
-func (p *Processor) MULI(x1, x2, c int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32]*c
+func (p *Processor) MULI(x1, x2 uint64, c int64){
+	p.PC++
+	p.X[x1%32]=p.X[x2%32]*c
 }
 
-func (p *Processor) DIV(x1, x2, x3 int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32] / p.R.X[x3%32]
+func (p *Processor) DIV(x1, x2, x3 uint64){
+	p.PC++
+	if p.X[x3%32]==0{
+		p.X[x1%32]=0
+	}else {
+		p.X[x1%32] = p.X[x2%32] / p.X[x3%32]
+	}
 }
 
-func (p *Processor) DIVI(x1, x2, c int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32] / c
+func (p *Processor) DIVI(x1, x2 uint64, c int64){
+	p.PC++
+	if c==0{
+		p.X[x1%32]=0
+	}else {
+		p.X[x1%32] = p.X[x2%32] / c
+	}
 }
 
-func (p *Processor) REM(x1, x2, x3 int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32] % p.R.X[x3%32]
+func (p *Processor) REM(x1, x2, x3 uint64){
+	p.PC++
+	if  p.X[x3%32]==0{
+		p.X[x1%32]=0
+	}else {
+		p.X[x1%32] = p.X[x2%32] % p.X[x3%32]
+	}
 }
 
-func (p *Processor) REMI(x1, x2, c int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32] / c
+func (p *Processor) REMI(x1, x2 uint64, c int64){
+	p.PC++
+	if c==0{
+		p.X[x1%32]=0
+	}else {
+		p.X[x1%32] = p.X[x2%32] % c
+	}
 }
 
-func (p *Processor) AND(x1, x2, x3 int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32] & p.R.X[x3%32]
+func (p *Processor) AND(x1, x2, x3 uint64){
+	p.PC++
+	p.X[x1%32]=p.X[x2%32] & p.X[x3%32]
 }
 
-func (p *Processor) ANDI(x1, x2, c int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32] & c
+func (p *Processor) ANDI(x1, x2 uint64, c int64){
+	p.PC++
+	p.X[x1%32]=p.X[x2%32] & c
 }
 
-func (p *Processor) OR(x1, x2, x3 int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32] | p.R.X[x3%32]
+func (p *Processor) OR(x1, x2, x3 uint64){
+	p.PC++
+	p.X[x1%32]=p.X[x2%32] | p.X[x3%32]
 }
 
-func (p *Processor) ORI(x1, x2, c int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32] | c
+func (p *Processor) ORI(x1, x2 uint64, c int64){
+	p.PC++
+	p.X[x1%32]=p.X[x2%32] | c
 }
 
-func (p *Processor) XOR(x1, x2, x3 int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32] ^ p.R.X[x3%32]
+func (p *Processor) XOR(x1, x2, x3 uint64){
+	p.PC++
+	p.X[x1%32]=p.X[x2%32] ^ p.X[x3%32]
 }
 
-func (p *Processor) XORI(x1, x2, c int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32] ^ c
+func (p *Processor) XORI(x1, x2 uint64, c int64){
+	p.PC++
+	p.X[x1%32]=p.X[x2%32] ^ c
 }
 
-func (p *Processor) SLL(x1, x2, x3 int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32] << p.R.X[x3%32]
+func (p *Processor) SLL(x1, x2, x3 uint64){
+	p.PC++
+	p.X[x1%32]=p.X[x2%32] << p.X[x3%32]
 }
 
-func (p *Processor) SLLI(x1, x2, c int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32] << c
+func (p *Processor) SLLI(x1, x2 uint64, c int64){
+	p.PC++
+	p.X[x1%32]=p.X[x2%32] << c
 }
 
-func (p *Processor) SRL(x1, x2, x3 int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32] & p.R.X[x3%32]
+func (p *Processor) SRL(x1, x2, x3 uint64){
+	p.PC++
+	p.X[x1%32]=p.X[x2%32] & p.X[x3%32]
 }
 
-func (p *Processor) SRLI(x1, x2, c int64){
-	p.R.PC++
-	p.R.X[x1%32]=p.R.X[x2%32] & c
+func (p *Processor) SRLI(x1, x2 uint64, c int64){
+	p.PC++
+	p.X[x1%32]=p.X[x2%32] & c
+}
+
+func (p *Processor) SEQ(x1, x2, x3 uint64){
+	p.PC++
+	if p.X[x2%32]==p.X[x3%32]{
+		p.X[x1%32]=1
+	}else{
+		p.X[x1%32]=0
+	}
+}
+
+func (p *Processor) SGE(x1, x2, x3 uint64){
+	p.PC++
+	if p.X[x2%32]>=p.X[x3%32]{
+		p.X[x1%32]=1
+	}else{
+		p.X[x1%32]=0
+	}
+}
+
+func (p *Processor) SLT(x1, x2, x3 uint64){
+	p.PC++
+	if p.X[x2%32]<p.X[x3%32]{
+		p.X[x1%32]=1
+	}else{
+		p.X[x1%32]=0
+	}
+}
+
+func (p *Processor) SNE(x1, x2, x3 uint64){
+	p.PC++
+	if p.X[x2%32]!=p.X[x3%32]{
+		p.X[x1%32]=1
+	}else{
+		p.X[x1%32]=0
+	}
 }
 
 //круговой пуш - указатель стека переходит через xff
-func (p *Processor) PUSH(i int64){
-	p.R.SI++
-	p.S[p.R.SI]=i
+func (p *Processor) PUSH(x1 uint64){
+	p.PC++
+	p.SI++
+	p.S[p.SI]=p.X[x1%32]
 }
 
-func (p *Processor) POP() int64 {
-	ret:=p.S[p.R.SI]
-	p.R.SI--
-	return ret
+func (p *Processor) POP(x1 uint64) {
+	p.PC++
+	p.X[x1%32]=p.S[p.SI]
+	p.SI--
 }
+
+//операции чтения/записи выполняет решатель
+func (s *Solution) LDM(x1, mnumber, maddr uint64){
+	s.Proc.PC++
+	mn:=mnumber%uint64(len(s.Mem))
+	ma:=maddr%uint64(len(s.Mem[mn].V))
+	s.Proc.X[x1%32]=s.Mem[mn].V[ma]
+}
+
+func (s *Solution) LDIN(x1, innumber, inaddr uint64){
+	s.Proc.PC++
+	mn:=innumber%uint64(len(s.In))
+	ma:=inaddr%uint64(len(s.In[mn].V))
+	s.Proc.X[x1%32]=s.In[mn].V[ma]
+}
+
+func (s *Solution) STM(mnumber, maddr, x1 uint64){
+	s.Proc.PC++
+	mn:=mnumber%uint64(len(s.Mem))
+	ma:=maddr%uint64(len(s.Mem[mn].V))
+	s.Mem[mn].V[ma]=s.Proc.X[x1%32]
+}
+
+func (s *Solution) STOUT(onumber, oaddr, x1 uint64){
+	s.Proc.PC++
+	mn:=onumber%uint64(len(s.Out))
+	ma:=oaddr%uint64(len(s.Out[mn].V))
+	s.Out[mn].V[ma]=s.Proc.X[x1%32]
+}
+
+/*
+по сути изменения указателя на следующую комманду
+*/
+func (s *Solution) BEQ(x1, x2 uint64, jumpAddr int64){
+	if s.Proc.X[x1%32]==s.Proc.X[x2%32]{
+		//сначала выровняем jumpAddr по длине гена
+		jumpAddr=jumpAddr%int64(len(s.Gen.Codons))
+		if int64(s.Proc.PC)+jumpAddr<0{
+			s.Proc.PC=uint64(int64(len(s.Gen.Codons))+int64(s.Proc.PC)+jumpAddr) //не знаю почему, но работает))
+		}else{
+			s.Proc.PC=uint64(int64(s.Proc.PC)+jumpAddr)%uint64(len(s.Gen.Codons))
+		}
+	}else{
+		s.Proc.PC++
+	}
+}
+
+func (s *Solution) BGE(x1, x2 uint64, jumpAddr int64){
+	if s.Proc.X[x1%32]>=s.Proc.X[x2%32]{
+		//сначала выровняем jumpAddr по длине гена
+		jumpAddr=jumpAddr%int64(len(s.Gen.Codons))
+		if int64(s.Proc.PC)+jumpAddr<0{
+			s.Proc.PC=uint64(int64(len(s.Gen.Codons))+int64(s.Proc.PC)+jumpAddr)
+		}else{
+			s.Proc.PC=uint64(int64(s.Proc.PC)+jumpAddr)%uint64(len(s.Gen.Codons))
+		}
+	}else{
+		s.Proc.PC++
+	}
+}
+
+func (s *Solution) BLT(x1, x2 uint64, jumpAddr int64){
+	if s.Proc.X[x1%32]<s.Proc.X[x2%32]{
+		//сначала выровняем jumpAddr по длине гена
+		jumpAddr=jumpAddr%int64(len(s.Gen.Codons))
+		if int64(s.Proc.PC)+jumpAddr<0{
+			s.Proc.PC=uint64(int64(len(s.Gen.Codons))+int64(s.Proc.PC)+jumpAddr)
+		}else{
+			s.Proc.PC=uint64(int64(s.Proc.PC)+jumpAddr)%uint64(len(s.Gen.Codons))
+		}
+	}else{
+		s.Proc.PC++
+	}
+}
+
+func (s *Solution) BNE(x1, x2 uint64, jumpAddr int64){
+	if s.Proc.X[x1%32]!=s.Proc.X[x2%32]{
+		//сначала выровняем jumpAddr по длине гена
+		jumpAddr=jumpAddr%int64(len(s.Gen.Codons))
+		if int64(s.Proc.PC)+jumpAddr<0{
+			s.Proc.PC=uint64(int64(len(s.Gen.Codons))+int64(s.Proc.PC)+jumpAddr)
+		}else{
+			s.Proc.PC=uint64(int64(s.Proc.PC)+jumpAddr)%uint64(len(s.Gen.Codons))
+		}
+	}else{
+		s.Proc.PC++
+	}
+}
+
+func (s *Solution) JMP(jumpAddr int64){
+	//сначала выровняем jumpAddr по длине гена
+	jumpAddr=jumpAddr%int64(len(s.Gen.Codons))
+	if int64(s.Proc.PC)+jumpAddr<0{
+		s.Proc.PC=uint64(int64(len(s.Gen.Codons))+int64(s.Proc.PC)+jumpAddr)
+	}else{
+		s.Proc.PC=uint64(int64(s.Proc.PC)+jumpAddr)%uint64(len(s.Gen.Codons))
+	}
+}
+
