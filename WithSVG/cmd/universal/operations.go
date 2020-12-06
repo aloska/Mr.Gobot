@@ -175,22 +175,22 @@ func (p *Processor) XORI(x1, x2 uint64, c int64){
 
 func (p *Processor) SLL(x1, x2, x3 uint64){
 	p.PC++
-	p.X[x1%32]=p.X[x2%32] << p.X[x3%32]
+	p.X[x1%32]=p.X[x2%32] << uint64(p.X[x3%32])
 }
 
 func (p *Processor) SLLI(x1, x2 uint64, c int64){
 	p.PC++
-	p.X[x1%32]=p.X[x2%32] << c
+	p.X[x1%32]=p.X[x2%32] << uint64(c)
 }
 
 func (p *Processor) SRL(x1, x2, x3 uint64){
 	p.PC++
-	p.X[x1%32]=p.X[x2%32] & p.X[x3%32]
+	p.X[x1%32]=p.X[x2%32] >> uint64(p.X[x3%32])
 }
 
 func (p *Processor) SRLI(x1, x2 uint64, c int64){
 	p.PC++
-	p.X[x1%32]=p.X[x2%32] & c
+	p.X[x1%32]=p.X[x2%32] >> uint64(c)
 }
 
 func (p *Processor) SEQ(x1, x2, x3 uint64){
@@ -275,6 +275,10 @@ func (s *Solution) STOUT(onumber, oaddr, x1 uint64){
 по сути изменения указателя на следующую комманду
 */
 func (s *Solution) BEQ(x1, x2 uint64, jumpAddr int64){
+	if jumpAddr==0{//а то блокировка))
+		s.Proc.PC++
+		return
+	}
 	if s.Proc.X[x1%32]==s.Proc.X[x2%32]{
 		//сначала выровняем jumpAddr по длине гена
 		jumpAddr=jumpAddr%int64(len(s.Gen.Codons))
@@ -289,6 +293,10 @@ func (s *Solution) BEQ(x1, x2 uint64, jumpAddr int64){
 }
 
 func (s *Solution) BGE(x1, x2 uint64, jumpAddr int64){
+	if jumpAddr==0{//а то блокировка))
+		s.Proc.PC++
+		return
+	}
 	if s.Proc.X[x1%32]>=s.Proc.X[x2%32]{
 		//сначала выровняем jumpAddr по длине гена
 		jumpAddr=jumpAddr%int64(len(s.Gen.Codons))
@@ -303,6 +311,10 @@ func (s *Solution) BGE(x1, x2 uint64, jumpAddr int64){
 }
 
 func (s *Solution) BLT(x1, x2 uint64, jumpAddr int64){
+	if jumpAddr==0{//а то блокировка))
+		s.Proc.PC++
+		return
+	}
 	if s.Proc.X[x1%32]<s.Proc.X[x2%32]{
 		//сначала выровняем jumpAddr по длине гена
 		jumpAddr=jumpAddr%int64(len(s.Gen.Codons))
@@ -317,6 +329,10 @@ func (s *Solution) BLT(x1, x2 uint64, jumpAddr int64){
 }
 
 func (s *Solution) BNE(x1, x2 uint64, jumpAddr int64){
+	if jumpAddr==0{//а то блокировка))
+		s.Proc.PC++
+		return
+	}
 	if s.Proc.X[x1%32]!=s.Proc.X[x2%32]{
 		//сначала выровняем jumpAddr по длине гена
 		jumpAddr=jumpAddr%int64(len(s.Gen.Codons))
@@ -331,6 +347,10 @@ func (s *Solution) BNE(x1, x2 uint64, jumpAddr int64){
 }
 
 func (s *Solution) JMP(jumpAddr int64){
+	if jumpAddr==0{//а то блокировка))
+		s.Proc.PC++
+		return
+	}
 	//сначала выровняем jumpAddr по длине гена
 	jumpAddr=jumpAddr%int64(len(s.Gen.Codons))
 	if int64(s.Proc.PC)+jumpAddr<0{

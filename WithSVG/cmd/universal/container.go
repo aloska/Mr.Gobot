@@ -31,8 +31,8 @@ type Genom struct {
 
 type Codon struct {
 	Code Comm
-	Op1  int64
-	Op2  int64
+	Op1  uint64
+	Op2  uint64
 	Op3  int64
 }
 
@@ -105,14 +105,14 @@ func GetCodonsFromGenomString(gs *string) (*[]Codon, error){
 				if err!=nil{
 					return nil, err
 				}
-				cods[len(cods)-1].Op1=val
+				cods[len(cods)-1].Op1=uint64(val)
 				state++
 			case 2://2 операнд
 				val, err:=strconv.ParseInt(str, 10, 64)
 				if err!=nil{
 					return nil, err
 				}
-				cods[len(cods)-1].Op2=val
+				cods[len(cods)-1].Op2=uint64(val)
 				state++
 			case 3://3 операнд
 				val, err:=strconv.ParseInt(str, 10, 64)
@@ -125,11 +125,10 @@ func GetCodonsFromGenomString(gs *string) (*[]Codon, error){
 			i++
 		}
 
-	}else if fields[0]=="asm:"{
-
-	} else{
-		return nil, errors.New("плохой формат данных генома: должно начинаться с 'codons:' или 'asm:' и далее не менее 4 полей")
+	}else {//может файл на асме?
+		return GetCodonsFromAsmString(gs)
 	}
+
 
 	return &cods,nil
 }
@@ -415,4 +414,30 @@ func (g *Genom) Init(fs string) error {
 
 	g.filename = fs
 	return nil
+}
+
+func (so *Solution)Save(){
+	for i:=0;i<len(so.In);i++{
+		so.In[i].bytearray.Flush()
+	}
+	for i:=0;i<len(so.Mem);i++{
+		so.Mem[i].bytearray.Flush()
+	}
+	for i:=0;i<len(so.Out);i++{
+		so.Out[i].bytearray.Flush()
+	}
+
+	StructsFileOverwrite(so.Path+"/processor", &so.Proc, binary.LittleEndian)
+}
+
+func (so *Solution)Exit(){
+	for i:=0;i<len(so.In);i++{
+		so.In[i].bytearray.Unmap()
+	}
+	for i:=0;i<len(so.Mem);i++{
+		so.Mem[i].bytearray.Unmap()
+	}
+	for i:=0;i<len(so.Out);i++{
+		so.Out[i].bytearray.Unmap()
+	}
 }

@@ -36,6 +36,20 @@ func StructsFileWrite(filename string, fw structsFileReaderWriter, order binary.
 	return nil
 }
 
+//перезаписать файл, если он есть
+func StructsFileOverwrite(filename string, fw structsFileReaderWriter, order binary.ByteOrder) error {
+	f, err := os.Create(filename)
+	if err != nil {
+		return fmt.Errorf("can't create file: %v", filename)
+	}
+	defer f.Close()
+	err = binary.Write(f, order, fw)
+	if err != nil {
+		return fmt.Errorf("can't write to file: %v", filename)
+	}
+	return nil
+}
+
 /*StructsFileRead - читает любые данные из файла пачкой.
 Размер данных должен быть определен!!! Нельзя записать в нерожденный слайс! нужен make([],len,cap) для слайса предварительно
 Протестировано на:
