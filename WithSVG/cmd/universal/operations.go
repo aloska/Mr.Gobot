@@ -55,14 +55,14 @@ const (
 	PUSH 	Comm = 34		//засунуть в стек PUSH x1, any, any - два последних значения в гене этой коммады не имеют смысла, там могут быть любые числа
 	POP		Comm = 35		//достать из стека POP x1, any,any -  два последних значения в гене этой коммады не имеют смысла, там могут быть любые числа
 
+	LI 		Comm = 36		//засунуть в регистр константу
 	//резервные комманды, ничего не делающие, но дающие возможность разнообразить геном
-	NOP1	Comm = 36
-	NOP2	Comm = 37
-	NOP3	Comm = 38
-	NOP4	Comm = 39
-	NOP5	Comm = 40
-	NOP6	Comm = 41
-	NOP7	Comm = 42
+	NOP1	Comm = 37
+	NOP2	Comm = 38
+	NOP3	Comm = 39
+	NOP4	Comm = 40
+	NOP5	Comm = 41
+	NOP6	Comm = 42
 
 	/*CISC мб лучше??
 	ADDI	Comm = 		//сложение с входом ADDI x1, x2, addrInput  x1=x2 + (addrInput)
@@ -191,6 +191,11 @@ func (p *Processor) SRL(x1, x2, x3 uint64){
 func (p *Processor) SRLI(x1, x2 uint64, c int64){
 	p.PC++
 	p.X[x1%32]=p.X[x2%32] >> uint64(c)
+}
+
+func (p *Processor) LI(x1 uint64, c int64){
+	p.PC++
+	p.X[x1%32]= c
 }
 
 func (p *Processor) SEQ(x1, x2, x3 uint64){

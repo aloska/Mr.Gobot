@@ -26,7 +26,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 		if len(sl)==0{ //у нас минимум комманда или метка
 			i++
 			continue
-		}else if strings.HasPrefix(sl[0],"//"){//пропускаем комментарии
+		}else if strings.HasPrefix(sl[0],"//") || strings.HasPrefix(sl[0],"#"){//пропускаем комментарии
 			i++
 			continue
 		}
@@ -213,6 +213,14 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
 			cods=append(cods,Codon{SRLI,op1,op2,op3})
+		case "LI","li":
+			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
+			if len(ms)<3{
+				return nil, errors.New( fmt.Sprintf( "Ошибка: стр. %v LI ", i))
+			}
+			op1,_:=strconv.ParseUint(ms[1],10,64)
+			op3,_:=strconv.ParseInt(ms[2],10,64)//в третьем операнде константы всегда
+			cods=append(cods,Codon{LI,op1,0,op3})
 		case "LDM","ldm":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -249,7 +257,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
 			cods=append(cods,Codon{STOUT,op1,op2,op3})
-		case "BEQ","beq"://у нас ветвление без меток, как в дебаггере, потому что геномика может столько ветвлений наставить - заколупаешься из них метки генерить
+		case "BEQ","beq"://у нас ветвление без меток, как в дизасме, потому что геномика может столько ветвлений наставить - заколупаешься из них метки генерить
 		//так что только отностельные адреса
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -356,7 +364,7 @@ func GetReadableFromCodons(cods []Codon) *[2]string{
 				   "/*This is assembler only for Solution RISC architecture*/\nasm:\n"}
 	for i:=0;i<len(cods);i++{
 		switch cods[i].Code%42{
-		case NOP,NOP1,NOP2,NOP3,NOP4,NOP5,NOP6,NOP7:
+		case NOP,NOP1,NOP2,NOP3,NOP4,NOP5,NOP6:
 			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code,cods[i].Op1,cods[i].Op2,cods[i].Op3)
 			ret[1]+="\tNOP\n"
 		case ADD:
@@ -419,6 +427,9 @@ func GetReadableFromCodons(cods []Codon) *[2]string{
 		case SRLI:
 			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code, cods[i].Op1%32, cods[i].Op2%32,uint64(cods[i].Op3))
 			ret[1]+=fmt.Sprintf("\tSRLI\tx%v, x%v, %v\n", cods[i].Op1%32, cods[i].Op2%32,uint64(cods[i].Op3))
+		case LI:
+			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code, cods[i].Op1%32, 0,cods[i].Op3)
+			ret[1]+=fmt.Sprintf("\tLI\tx%v, %v\n", cods[i].Op1%32, cods[i].Op3)
 		case LDM:
 			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code, cods[i].Op1%32, cods[i].Op2,uint64(cods[i].Op3))
 			ret[1]+=fmt.Sprintf("\tLDM\tx%v, %v, %v\n", cods[i].Op1%32, cods[i].Op2,uint64(cods[i].Op3))

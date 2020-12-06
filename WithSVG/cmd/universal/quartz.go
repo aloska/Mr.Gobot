@@ -10,8 +10,8 @@ func (s *Solution) Step(){
 	//42 - кол-во комманд в нашем RISC-процессоре
 	com:=s.Gen.Codons[s.Proc.PC]
 	switch com.Code%42 {
-	case NOP,NOP1,NOP2,NOP3,NOP4,NOP5,NOP6,NOP7: //а что уж тут поделаешь?
-		break
+	case NOP,NOP1,NOP2,NOP3,NOP4,NOP5,NOP6: //а что уж тут поделаешь?
+		s.Proc.PC++	//хех!
 	case ADD:
 		s.Proc.ADD(com.Op1, com.Op2,uint64(com.Op3))
 	case ADDI:
@@ -52,6 +52,8 @@ func (s *Solution) Step(){
 		s.Proc.SRL(com.Op1, com.Op2,uint64(com.Op3))
 	case SRLI:
 		s.Proc.SRLI(com.Op1, com.Op2,com.Op3)
+	case LI:
+		s.Proc.LI(com.Op1, com.Op3)
 	case LDM:
 		s.LDM(com.Op1, com.Op2,uint64(com.Op3))
 	case LDIN:

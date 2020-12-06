@@ -6,28 +6,28 @@ import (
 )
 
 func main() {
-	/*
-	//sol, err:=universal.NewSolution("c:/ALOSKA/work/solutions/ololo.json")
-	sol:=universal.Solution{}
-	err:=sol.Init("c:/ALOSKA/work/solutions/SOL-ololo")
+
+	sol, err:=universal.NewSolution("c:/ALOSKA/work/solutions/ololo.json")
+	//sol:=universal.Solution{}
+	//err:=sol.Init("c:/ALOSKA/work/solutions/SOL-ololo")
 	if err!=nil{
 		fmt.Println(err)
 	}
 	defer sol.Exit()
 
-	sol.In[0].V[0]=14578
-	sol.In[1].V[0]=-200
+	sol.In[0].V[0]=7
 	sol.Run()
 	sol.Save()
 
 	fmt.Println(sol.Out[0].V[0])
-	*/
-
-	asm:=`
+	fmt.Println(2*3*4*5*6*7)
 /*
+	asm:=`
+
 Траливали какая-то
-*/
+
 asm:
+	
 	nop
 	add x1, x2, x26
 	addi x15, x21, -14587
@@ -72,6 +72,7 @@ asm:
 	sne x1, x2, x3
 	push x31
 	pop	x24
+	li x23, -4578
 	
 
 `
@@ -82,5 +83,5 @@ asm:
 	}else{
 		fmt.Println(err)
 	}
-
+*/
 }
