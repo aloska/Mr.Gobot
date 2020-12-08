@@ -133,9 +133,6 @@ func (c *Chemical) GetGlucFromGABA() bool {
 
 //AChSynt - может вызвать только клетка АЦХ-эргическая, синтезирует внутри ацетилхолин, если цикл Кребса рабочий (там из этого цикла вещества берутся)
 func (c *Chemical) AChSynt() bool {
-	if !c.DoKrebs() {
-		return false
-	}
 	if c.CHOL < 1 || c.ACh > 0xfe {
 		return false
 	}
@@ -250,5 +247,40 @@ func (c *Chemical) GLNSyntASP() bool {
 	c.NO = c.NO - 21
 	c.WASTE = c.WASTE + 1
 	c.GLN = c.GLN + 1
+	return true
+}
+
+//---------------ФУНКЦИИ ОБМЕНА НЕЙРОНОВ СО СРЕДОЙ ВО ВРЕМЯ АКТИВНОСТИ---------------
+
+//обмен у люобого нейрона
+func (c* Chemical) NeuronNaOpened(from *Chemical) bool{
+	//входит питание и нужные вещества для работы
+	if from.O2<10 || from.GLUC<10 || from.OMEGA<10{ //в организме мало веществ todo
+		return false
+	}
+	if c.GLUC <0xfff0{
+		c.GLUC+=GLUCEXCHANGEVAL
+		from.GLUC-=GLUCEXCHANGEVAL
+	}
+	if c.O2 < 0xfff0{
+		c.O2+=O2EXCHANGEVAL
+		from.O2-=O2EXCHANGEVAL
+	}
+	if c.OMEGA < 0xfff0{
+		c.OMEGA+=OMEGAEXCHANGEVAL
+		from.OMEGA-=OMEGAEXCHANGEVAL
+	}
+	return true
+}
+
+//дополнительно у АЦХ есть вход холина в тело клетки при открытом натриевом канале
+func (c* Chemical) NeuronAchNaOpened(from *Chemical) bool{
+	//входит питание и нужные вещества для работы
+	if from.CHOL<10 || c.CHOL>0xf0{ //в организме мало холина или в теле клетки его полно
+		return false
+	}
+	//телом клетка не много холина должна брать, чтобы не мешать какому-то синапсу
+	c.CHOL+=CHOLEXCHANGEVAL
+	from.CHOL-=CHOLEXCHANGEVAL
 	return true
 }

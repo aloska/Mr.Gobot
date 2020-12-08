@@ -56,22 +56,13 @@ const (
 	POP		Comm = 35		//достать из стека POP x1, any,any -  два последних значения в гене этой коммады не имеют смысла, там могут быть любые числа
 
 	LI 		Comm = 36		//засунуть в регистр константу
-	//резервные комманды, ничего не делающие, но дающие возможность разнообразить геном
-	NOP1	Comm = 37
-	NOP2	Comm = 38
-	NOP3	Comm = 39
-	NOP4	Comm = 40
-	NOP5	Comm = 41
-	NOP6	Comm = 42
 
-	/*CISC мб лучше??
-	ADDI	Comm = 		//сложение с входом ADDI x1, x2, addrInput  x1=x2 + (addrInput)
-	ADDIC	Comm = 		//сложение с входом числа ADDI x1, addrInput, c   x1=(addrInput) + c
-	ADDM	Comm = 		//сложение с числом из файла ADDM x1, x2, addrMem
-	ADDMC	Comm = 		//сложение числа из файла с константой ADDMС x1, addrMem, c
-	ADDMI	Comm = 		//сложение числа из файла с входом ADDMI x1, addrMem, addrInput
-	....
-	*/
+	LDMX	Comm = 37
+	LDINX	Comm = 38
+	STMX	Comm = 39
+	STOUTX	Comm = 40
+	BLE		Comm = 41
+	BGT		Comm = 42
 )
 
 //ADD - сложение
@@ -255,10 +246,25 @@ func (s *Solution) LDM(x1, mnumber, maddr uint64){
 	s.Proc.X[x1%32]=s.Mem[mn].V[ma]
 }
 
+//x1 - номер регистра, куда загрузить, x2 - номер регистра, где хранится номер памяти, x3-номер регистра, где хранится адрес из этой памяти
+func (s *Solution) LDMX(x1, x2, x3 uint64){
+	s.Proc.PC++
+	mn:=uint64(s.Proc.X[x2%32]) % uint64(len(s.Mem))
+	ma:=uint64(s.Proc.X[x3%32]) % uint64(len(s.Mem[mn].V))
+	s.Proc.X[x1%32]=s.Mem[mn].V[ma]
+}
+
 func (s *Solution) LDIN(x1, innumber, inaddr uint64){
 	s.Proc.PC++
 	mn:=innumber%uint64(len(s.In))
 	ma:=inaddr%uint64(len(s.In[mn].V))
+	s.Proc.X[x1%32]=s.In[mn].V[ma]
+}
+
+func (s *Solution) LDINX(x1, x2, x3 uint64){
+	s.Proc.PC++
+	mn:=uint64(s.Proc.X[x2%32])%uint64(len(s.In))
+	ma:=uint64(s.Proc.X[x3%32])%uint64(len(s.In[mn].V))
 	s.Proc.X[x1%32]=s.In[mn].V[ma]
 }
 
@@ -269,11 +275,25 @@ func (s *Solution) STM(mnumber, maddr, x1 uint64){
 	s.Mem[mn].V[ma]=s.Proc.X[x1%32]
 }
 
+func (s *Solution) STMX(x1, x2, x3 uint64){
+	s.Proc.PC++
+	mn:=uint64(s.Proc.X[x1%32])%uint64(len(s.Mem))
+	ma:=uint64(s.Proc.X[x2%32])%uint64(len(s.Mem[mn].V))
+	s.Mem[mn].V[ma]=s.Proc.X[x3%32]
+}
+
 func (s *Solution) STOUT(onumber, oaddr, x1 uint64){
 	s.Proc.PC++
 	mn:=onumber%uint64(len(s.Out))
 	ma:=oaddr%uint64(len(s.Out[mn].V))
 	s.Out[mn].V[ma]=s.Proc.X[x1%32]
+}
+
+func (s *Solution) STOUTX(x1, x2, x3 uint64){
+	s.Proc.PC++
+	mn:=uint64(s.Proc.X[x1%32])%uint64(len(s.Out))
+	ma:=uint64(s.Proc.X[x2%32])%uint64(len(s.Out[mn].V))
+	s.Out[mn].V[ma]=s.Proc.X[x3%32]
 }
 
 /*
@@ -315,6 +335,24 @@ func (s *Solution) BGE(x1, x2 uint64, jumpAddr int64){
 	}
 }
 
+func (s *Solution) BGT(x1, x2 uint64, jumpAddr int64){
+	if jumpAddr==0{//а то блокировка))
+		s.Proc.PC++
+		return
+	}
+	if s.Proc.X[x1%32]>s.Proc.X[x2%32]{
+		//сначала выровняем jumpAddr по длине гена
+		jumpAddr=jumpAddr%int64(len(s.Gen.Codons))
+		if int64(s.Proc.PC)+jumpAddr<0{
+			s.Proc.PC=uint64(int64(len(s.Gen.Codons))+int64(s.Proc.PC)+jumpAddr)
+		}else{
+			s.Proc.PC=uint64(int64(s.Proc.PC)+jumpAddr)%uint64(len(s.Gen.Codons))
+		}
+	}else{
+		s.Proc.PC++
+	}
+}
+
 func (s *Solution) BLT(x1, x2 uint64, jumpAddr int64){
 	if jumpAddr==0{//а то блокировка))
 		s.Proc.PC++
@@ -339,6 +377,24 @@ func (s *Solution) BNE(x1, x2 uint64, jumpAddr int64){
 		return
 	}
 	if s.Proc.X[x1%32]!=s.Proc.X[x2%32]{
+		//сначала выровняем jumpAddr по длине гена
+		jumpAddr=jumpAddr%int64(len(s.Gen.Codons))
+		if int64(s.Proc.PC)+jumpAddr<0{
+			s.Proc.PC=uint64(int64(len(s.Gen.Codons))+int64(s.Proc.PC)+jumpAddr)
+		}else{
+			s.Proc.PC=uint64(int64(s.Proc.PC)+jumpAddr)%uint64(len(s.Gen.Codons))
+		}
+	}else{
+		s.Proc.PC++
+	}
+}
+
+func (s *Solution) BLE(x1, x2 uint64, jumpAddr int64){
+	if jumpAddr==0{//а то блокировка))
+		s.Proc.PC++
+		return
+	}
+	if s.Proc.X[x1%32]<=s.Proc.X[x2%32]{
 		//сначала выровняем jumpAddr по длине гена
 		jumpAddr=jumpAddr%int64(len(s.Gen.Codons))
 		if int64(s.Proc.PC)+jumpAddr<0{

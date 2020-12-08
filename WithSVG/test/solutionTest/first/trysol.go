@@ -7,20 +7,29 @@ import (
 
 func main() {
 
-	sol, err:=universal.NewSolution("c:/ALOSKA/work/solutions/ololo.json")
+	sol, err:=universal.NewSolution("c:/ALOSKA/work/solutions/minimum.json")
 	//sol:=universal.Solution{}
-	//err:=sol.Init("c:/ALOSKA/work/solutions/SOL-ololo")
+	//err:=sol.Init("c:/ALOSKA/work/solutions/SOL-minimum")
 	if err!=nil{
 		fmt.Println(err)
 	}
 	defer sol.Exit()
 
-	sol.In[0].V[0]=7
+	sol.In[0].V[0]=5
+	sol.In[0].V[1]=-5
+	sol.In[0].V[2]=56516
+	sol.In[0].V[3]=5545
+	sol.In[0].V[4]=-42
+	sol.In[0].V[5]=2135
+	sol.In[0].V[6]=154
+
+	sol.Proc.PC=0	//иначе не будет ничего делать, если уже выключился - он свое состояние помнит)))
 	sol.Run()
 	sol.Save()
 
 	fmt.Println(sol.Out[0].V[0])
-	fmt.Println(2*3*4*5*6*7)
+
+
 /*
 	asm:=`
 

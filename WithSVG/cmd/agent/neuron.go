@@ -5,6 +5,12 @@ import (
 	"math/rand"
 )
 
+/*TODO -
+1. метаботропность!!! что делать с ней!
+2. стволовые клетки - рост и становление
+3. рост атростков по градиенту CO и NO
+ */
+
 //NumberToXY - переводит index в одномерном массиве в двумерные координаты x, y
 func NumberToXY(N uint32, maxX uint32) (uint32, uint32) {
 	return N % maxX, N / maxX
@@ -326,6 +332,11 @@ func (n *Neuron) DoAxons(gene *GenNeuron) {
 				}
 				//в том числе и из анандамида
 				org.synapsesMap[n.SynNumber].syn[n.Axons[i].N].DoAAtoCHOLEstarasa()
+				//и если в теле нейрона есть ацх - то случайно немножко себе возьмем
+				if n.Chemic.ACh>1 && rand.Intn(20)>16 && n.Axons[i].Vesiculs<0xf0{
+					n.Chemic.ACh--
+					n.Axons[i].Vesiculs++
+				}
 
 			}
 
@@ -402,7 +413,7 @@ func (n *Neuron) DoAxons(gene *GenNeuron) {
 					n.Axons[i].State=100
 				}
 			case 41:
-				//todo переходим на новое место, здесь нет никого
+				//todo переходим на новое место, здесь нет никого - еще CO NO надо
 				n.Axons[i].Power=1
 				n.Axons[i].State=1
 				n.Axons[i].N=GrowSprout(n.Axons[i].N,n.N,n.SynNumberAxons)
@@ -678,6 +689,13 @@ func (n *Neuron) NaOpened() {
 	} else if n.Chemic.Na < 250 {
 		n.Chemic.Na += 3
 	}
+	//вместе с натрием в клетку входят нужные вещества
+	n.Chemic.NeuronNaOpened(&org.synapsesMap[n.SynNumber].syn[n.N])
+	switch n.Typen {
+	case NEURONACETILHOLIN:
+		n.Chemic.NeuronAchNaOpened(&org.synapsesMap[n.SynNumber].syn[n.N])
+	}
+
 }
 func (n *Neuron) KOpened() {
 	if n.Chemic.K > 150 {
@@ -715,6 +733,22 @@ func (n *Neuron) DoLiveCicle(gene *GenNeuron) {
 			charge = n.CalcCharge()
 			if charge >= NACHANCLOSE {
 				n.State = 20
+			}
+		}
+		switch n.Typen {
+		case NEURONACETILHOLIN:
+			//синтезируем холин в теле, если есть из чего
+			n.Chemic.AChSynt()
+		}
+		if !n.Chemic.DoKrebs(){
+			//не можем завершить цикл кребса!!! внимание здесь то, ради чего происходит активность и клетка нуждается в обмене сейчас очень остро
+			//откроем натриевый канал что называется "спонтанно"
+			n.NaOpened()
+		}else{
+			if rand.Intn(100)>90{ //случайно, в 10 процентах случаев чиним мембрану
+				if !n.Chemic.MakeMemrane(){ //и тоге типа "спонтанно" делаем разряд
+					n.NaOpened()
+				}
 			}
 		}
 	case 10: //начало деполяризации

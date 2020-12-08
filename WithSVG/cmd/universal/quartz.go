@@ -10,7 +10,7 @@ func (s *Solution) Step(){
 	//42 - кол-во комманд в нашем RISC-процессоре
 	com:=s.Gen.Codons[s.Proc.PC]
 	switch com.Code%42 {
-	case NOP,NOP1,NOP2,NOP3,NOP4,NOP5,NOP6: //а что уж тут поделаешь?
+	case NOP: //а что уж тут поделаешь?
 		s.Proc.PC++	//хех!
 	case ADD:
 		s.Proc.ADD(com.Op1, com.Op2,uint64(com.Op3))
@@ -62,6 +62,14 @@ func (s *Solution) Step(){
 		s.STM(com.Op1, com.Op2,uint64(com.Op3))
 	case STOUT:
 		s.STOUT(com.Op1, com.Op2,uint64(com.Op3))
+	case LDMX:
+		s.LDMX(com.Op1, com.Op2,uint64(com.Op3))
+	case LDINX:
+		s.LDINX(com.Op1, com.Op2,uint64(com.Op3))
+	case STMX:
+		s.STMX(com.Op1, com.Op2,uint64(com.Op3))
+	case STOUTX:
+		s.STOUTX(com.Op1, com.Op2,uint64(com.Op3))
 	case BEQ:
 		s.BEQ(com.Op1, com.Op2,com.Op3)
 	case BGE:
@@ -70,6 +78,10 @@ func (s *Solution) Step(){
 		s.BLT(com.Op1, com.Op2,com.Op3)
 	case BNE:
 		s.BNE(com.Op1, com.Op2,com.Op3)
+	case BLE:
+		s.BLE(com.Op1, com.Op2,com.Op3)
+	case BGT:
+		s.BGT(com.Op1, com.Op2,com.Op3)
 	case JMP:
 		s.JMP(com.Op3)//Внимание! В JMP адресс в 3 операнде (как впрочем и везде - просто здесь только один операнд, но он в кодоне 3-ий!!)
 	case SEQ:

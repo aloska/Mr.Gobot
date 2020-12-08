@@ -230,6 +230,15 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
 			cods=append(cods,Codon{LDM,op1,op2,op3})
+		case "LDMX","ldmx":
+			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
+			if len(ms)<4{
+				return nil, errors.New( fmt.Sprintf( "Ошибка: стр. %v Должно быть: LDMX x1, x2, x3", i))
+			}
+			op1,_:=strconv.ParseUint(ms[1],10,64)
+			op2,_:=strconv.ParseUint(ms[2],10,64)
+			op3,_:=strconv.ParseInt(ms[3],10,64)
+			cods=append(cods,Codon{LDMX,op1,op2,op3})
 		case "LDIN","ldin":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -239,6 +248,15 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
 			cods=append(cods,Codon{LDIN,op1,op2,op3})
+		case "LDINX","ldinx":
+			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
+			if len(ms)<4{
+				return nil, errors.New( fmt.Sprintf( "Ошибка: стр. %v Должно быть: LDINX x1, x2, x3", i))
+			}
+			op1,_:=strconv.ParseUint(ms[1],10,64)
+			op2,_:=strconv.ParseUint(ms[2],10,64)
+			op3,_:=strconv.ParseInt(ms[3],10,64)
+			cods=append(cods,Codon{LDINX,op1,op2,op3})
 		case "STM","stm":
 			ms := regexp.MustCompile(`([0-9]+)\s*,\s*([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -248,6 +266,15 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
 			cods=append(cods,Codon{STM,op1,op2,op3})
+		case "STMX","stmx":
+			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
+			if len(ms)<4{
+				return nil, errors.New( fmt.Sprintf( "Ошибка: стр. %v Должно быть: STMX x1, x2, x3", i))
+			}
+			op1,_:=strconv.ParseUint(ms[1],10,64)
+			op2,_:=strconv.ParseUint(ms[2],10,64)
+			op3,_:=strconv.ParseInt(ms[3],10,64)
+			cods=append(cods,Codon{STMX,op1,op2,op3})
 		case "STOUT","stout":
 			ms := regexp.MustCompile(`([0-9]+)\s*,\s*([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -257,6 +284,15 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
 			cods=append(cods,Codon{STOUT,op1,op2,op3})
+		case "STOUTX","stoutx":
+			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
+			if len(ms)<4{
+				return nil, errors.New( fmt.Sprintf( "Ошибка: стр. %v Должно быть: STOUTX x1, x2, x3", i))
+			}
+			op1,_:=strconv.ParseUint(ms[1],10,64)
+			op2,_:=strconv.ParseUint(ms[2],10,64)
+			op3,_:=strconv.ParseInt(ms[3],10,64)
+			cods=append(cods,Codon{STOUTX,op1,op2,op3})
 		case "BEQ","beq"://у нас ветвление без меток, как в дизасме, потому что геномика может столько ветвлений наставить - заколупаешься из них метки генерить
 		//так что только отностельные адреса
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
@@ -285,6 +321,24 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
 			cods=append(cods,Codon{BLT,op1,op2,op3})
+		case "BLE","ble":
+			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
+			if len(ms)<4{
+				return nil, errors.New( fmt.Sprintf( "Ошибка: стр. %v BLT ", i))
+			}
+			op1,_:=strconv.ParseUint(ms[1],10,64)
+			op2,_:=strconv.ParseUint(ms[2],10,64)
+			op3,_:=strconv.ParseInt(ms[3],10,64)
+			cods=append(cods,Codon{BLE,op1,op2,op3})
+		case "BGT","bgt":
+			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
+			if len(ms)<4{
+				return nil, errors.New( fmt.Sprintf( "Ошибка: стр. %v BGT ", i))
+			}
+			op1,_:=strconv.ParseUint(ms[1],10,64)
+			op2,_:=strconv.ParseUint(ms[2],10,64)
+			op3,_:=strconv.ParseInt(ms[3],10,64)
+			cods=append(cods,Codon{BGT,op1,op2,op3})
 		case "BNE","bne":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -364,7 +418,7 @@ func GetReadableFromCodons(cods []Codon) *[2]string{
 				   "/*This is assembler only for Solution RISC architecture*/\nasm:\n"}
 	for i:=0;i<len(cods);i++{
 		switch cods[i].Code%42{
-		case NOP,NOP1,NOP2,NOP3,NOP4,NOP5,NOP6:
+		case NOP:
 			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code,cods[i].Op1,cods[i].Op2,cods[i].Op3)
 			ret[1]+="\tNOP\n"
 		case ADD:
@@ -433,15 +487,27 @@ func GetReadableFromCodons(cods []Codon) *[2]string{
 		case LDM:
 			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code, cods[i].Op1%32, cods[i].Op2,uint64(cods[i].Op3))
 			ret[1]+=fmt.Sprintf("\tLDM\tx%v, %v, %v\n", cods[i].Op1%32, cods[i].Op2,uint64(cods[i].Op3))
+		case LDMX:
+			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code, cods[i].Op1%32, cods[i].Op2%32,uint64(cods[i].Op3%32))
+			ret[1]+=fmt.Sprintf("\tLDMX\tx%v, x%v, x%v\n", cods[i].Op1%32, cods[i].Op2%32,uint64(cods[i].Op3%32))
 		case LDIN:
 			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code, cods[i].Op1%32, cods[i].Op2,uint64(cods[i].Op3))
 			ret[1]+=fmt.Sprintf("\tLDIN\tx%v, %v, %v\n", cods[i].Op1%32, cods[i].Op2,uint64(cods[i].Op3))
+		case LDINX:
+			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code, cods[i].Op1%32, cods[i].Op2%32,uint64(cods[i].Op3%32))
+			ret[1]+=fmt.Sprintf("\tLDINX\tx%v, x%v, x%v\n", cods[i].Op1%32, cods[i].Op2%32,uint64(cods[i].Op3%32))
 		case STM:
 			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code, cods[i].Op1, cods[i].Op2,uint64(cods[i].Op3%32))
 			ret[1]+=fmt.Sprintf("\tSTM\t%v, %v, x%v\n", cods[i].Op1, cods[i].Op2,uint64(cods[i].Op3%32))
+		case STMX:
+			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code, cods[i].Op1%32, cods[i].Op2%32,uint64(cods[i].Op3%32))
+			ret[1]+=fmt.Sprintf("\tSTMX\tx%v, x%v, x%v\n", cods[i].Op1%32, cods[i].Op2%32,uint64(cods[i].Op3%32))
 		case STOUT:
 			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code, cods[i].Op1, cods[i].Op2,uint64(cods[i].Op3%32))
 			ret[1]+=fmt.Sprintf("\tSTOUT\t%v, %v, x%v\n", cods[i].Op1, cods[i].Op2,uint64(cods[i].Op3%32))
+		case STOUTX:
+			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code, cods[i].Op1%32, cods[i].Op2%32,uint64(cods[i].Op3%32))
+			ret[1]+=fmt.Sprintf("\tSTOUTX\tx%v, x%v, x%v\n", cods[i].Op1%32, cods[i].Op2%32,uint64(cods[i].Op3%32))
 		case BEQ:
 			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code, cods[i].Op1%32, cods[i].Op2%32,cods[i].Op3)
 			ret[1]+=fmt.Sprintf("\tBEQ\tx%v, x%v, %v\n", cods[i].Op1%32, cods[i].Op2%32,cods[i].Op3)
@@ -451,6 +517,12 @@ func GetReadableFromCodons(cods []Codon) *[2]string{
 		case BLT:
 			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code, cods[i].Op1%32, cods[i].Op2%32,cods[i].Op3)
 			ret[1]+=fmt.Sprintf("\tBLT\tx%v, x%v, %v\n", cods[i].Op1%32, cods[i].Op2%32,cods[i].Op3)
+		case BLE:
+			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code, cods[i].Op1%32, cods[i].Op2%32,cods[i].Op3)
+			ret[1]+=fmt.Sprintf("\tBLE\tx%v, x%v, %v\n", cods[i].Op1%32, cods[i].Op2%32,cods[i].Op3)
+		case BGT:
+			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code, cods[i].Op1%32, cods[i].Op2%32,cods[i].Op3)
+			ret[1]+=fmt.Sprintf("\tBGT\tx%v, x%v, %v\n", cods[i].Op1%32, cods[i].Op2%32,cods[i].Op3)
 		case BNE:
 			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code, cods[i].Op1%32, cods[i].Op2%32,cods[i].Op3)
 			ret[1]+=fmt.Sprintf("\tBNE\tx%v, x%v, %v\n", cods[i].Op1%32, cods[i].Op2%32,cods[i].Op3)
