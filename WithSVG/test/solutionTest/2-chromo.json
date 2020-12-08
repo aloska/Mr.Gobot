@@ -1,0 +1,7 @@
+{
+  "Memories": [16],
+  "Ins": [10,1],
+  "Outs": [2],
+  "Genes": ["factorial.sasm", "minimum.sasm"],
+  "IsAsync": false
+}

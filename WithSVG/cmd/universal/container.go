@@ -23,7 +23,7 @@ type Memory struct {
 	V         []int64   //файл в виде слайса
 }
 
-type Genom struct {
+type Chromosome struct {
 	filename  string    //имя файла, где записан ген
 	bytearray mmap.MMap //мапа на этот файл
 	Codons    []Codon   //файл в виде слайса
@@ -44,11 +44,12 @@ type IO struct {
 
 type Solution struct {
 	Path string
-	Proc Processor
-	Gen  Genom
+	Proc []Processor
+	Chrom  []Chromosome
 	Mem  []Memory
 	In   []IO
 	Out  []IO
+	IsAsync bool
 }
 
 //для создания новых решателей из JSON
@@ -56,9 +57,10 @@ type Serialisator struct {
 	Memories []int64 //слайс размеров памятей
 	Ins      []int64 //слайс размеров входов
 	Outs     []int64 //слайс размеров выходов
-	Genes	 string //файл с описанием генома (должен лежать в той же папке, что и json-файл)
+	Genes	 []string //файл с описанием генома (должен лежать в той же папке, что и json-файл)
+	IsAsync	 bool	//асинхроный старт хромосом или последовательный
 
-	/*файл может быть  с расширением .codons:
+	/*файлы хромосом можут быть  с расширением .codons:
 	codons: 22 0 0 2; 2 1 0 -14; ... (можно в несколько строк и без ';' )
 	в этом случае все числа парсятся до возможности исполнения. Например, если комманды с кодом нет, то комманда генерится
 	из остатка от деления на количество комманд
@@ -80,7 +82,7 @@ type Serialisator struct {
 }
 
 //парсинг кодонов со строки
-func GetCodonsFromGenomString(gs *string) (*[]Codon, error){
+func GetCodonsFromChromosomeString(gs *string) (*[]Codon, error){
 	var cods []Codon
 
 	fields:=strings.Fields(*gs)
@@ -141,7 +143,7 @@ func GetCodonsFromFile(filename string) (*[]Codon, error){
 		return nil, err
 	}
 	str := string(b)
-	return GetCodonsFromGenomString(&str)
+	return GetCodonsFromChromosomeString(&str)
 }
 
 //NewSolution - создать нового решателя
@@ -171,15 +173,15 @@ func NewSolution(filejson string) (*Solution, error){
 	}
 
 	if len(ser.Memories)==0{
-		return nil, errors.New("Память должна быть хотя бы одна!")
+		return nil, errors.New("память должна быть хотя бы одна")
 	}
 
 	if len(ser.Ins)==0{
-		return nil, errors.New("Вход должен быть хотя бы один!")
+		return nil, errors.New("вход должен быть хотя бы один")
 	}
 
 	if len(ser.Outs)==0{
-		return nil, errors.New("Выход должен быть хотя бы один!")
+		return nil, errors.New("выход должен быть хотя бы один")
 	}
 
 	err=os.Mkdir(newfolder, os.ModePerm)
@@ -188,28 +190,32 @@ func NewSolution(filejson string) (*Solution, error){
 	}
 
 	//парсим геном
-	genom, err:=GetCodonsFromFile(filepath.Dir(filejson)+"/"+ser.Genes)
-	if err!=nil{
-		return nil, err
-	}
-	//если удачно отпарсили - создаем файл генома
-	err=StructsFileWrite(newfolder+"/genom",genom,binary.LittleEndian)
-	if err!=nil{
-		return nil, err
+	for i:=0;i<len(ser.Genes);i++ {
+		chrom, err := GetCodonsFromFile(filepath.Dir(filejson) + "/" + ser.Genes[i])
+		if err != nil {
+			return nil, err
+		}
+		//если удачно отпарсили - создаем файл хромосомы
+		err = StructsFileWrite(newfolder+"/"+strconv.Itoa(i)+".chromosome", chrom, binary.LittleEndian)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	//создаем файл процессора
-	proc:=Processor{}
-	err=StructsFileWrite(newfolder+"/processor",&proc,binary.LittleEndian)
-	if err!=nil{
-		return nil, err
+	//создаем файлы процессоров
+	for i:=0;i<len(ser.Genes);i++ {
+		proc := Processor{}
+		err = StructsFileWrite(newfolder+"/"+strconv.Itoa(i)+".processor", &proc, binary.LittleEndian)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	//создаем файлы памяти
 	for i:=0;i<len(ser.Memories);i++{
 		if ser.Memories[i]<=0{
 			log.Println("Неверный размер файла памяти в описании рещшателя: ", ser.Memories[i])
-			return nil, errors.New("Неверный размер файла памяти в описании рещшателя")
+			return nil, errors.New("неверный размер файла памяти в описании рещшателя")
 		}
 		f, err:=os.Create(newfolder+"/"+strconv.Itoa(i)+".memory")
 		if err!=nil{
@@ -225,7 +231,7 @@ func NewSolution(filejson string) (*Solution, error){
 	for i:=0;i<len(ser.Ins);i++{
 		if ser.Ins[i]<=0{
 			log.Println("Неверный размер файла входа в описании рещшателя: ", ser.Ins[i])
-			return nil, errors.New("Неверный размер файла входа в описании рещшателя")
+			return nil, errors.New("неверный размер файла входа в описании рещшателя")
 		}
 		f, err:=os.Create(newfolder+"/"+strconv.Itoa(i)+".in")
 		if err!=nil{
@@ -241,7 +247,7 @@ func NewSolution(filejson string) (*Solution, error){
 	for i:=0;i<len(ser.Outs);i++{
 		if ser.Outs[i]<=0{
 			log.Println("Неверный размер файла вЫхода в описании решателя: ", ser.Outs[i])
-			return nil, errors.New("Неверный размер файла вЫхода в описании рещшателя")
+			return nil, errors.New("неверный размер файла вЫхода в описании рещшателя")
 		}
 		f, err:=os.Create(newfolder+"/"+strconv.Itoa(i)+".out")
 		if err!=nil{
@@ -259,6 +265,9 @@ func NewSolution(filejson string) (*Solution, error){
 	if err=sol.Init(newfolder); err!=nil{
 		return nil, err
 	}
+
+	sol.IsAsync=ser.IsAsync
+
 	return &sol,nil
 }
 
@@ -266,24 +275,24 @@ func NewSolution(filejson string) (*Solution, error){
 
 //инициализировать Solution из директории
 func (so *Solution) Init(path string) error {
-	//в директории должны быть обязательно файлы "genom", "processor", "0.memory","0.in","0.out"
+	//в директории должны быть обязательно файлы "0.chromosome", "0.processor", "0.memory","0.in","0.out"
 
 	mems := []string{}
 	ins := []string{}
 	outs := []string{}
-	procfile := ""
-	genfile := ""
+	procfiles := []string{}
+	genfiles := []string{}
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		return err
 	}
 	for _, file := range files {
-		if match, _ := regexp.MatchString("processor",
+		if match, _ := regexp.MatchString("([0-9]+.processor)",
 			file.Name()); match {
-			procfile = file.Name()
-		} else if match, _ := regexp.MatchString("genom",
+			procfiles = append (procfiles,file.Name())
+		} else if match, _ := regexp.MatchString("([0-9]+.chromosome)",
 			file.Name()); match {
-			genfile = file.Name()
+			genfiles = append(genfiles, file.Name())
 		} else if match, _ := regexp.MatchString("([0-9]+.memory)",
 			file.Name()); match {
 			mems = append(mems, file.Name())
@@ -295,18 +304,28 @@ func (so *Solution) Init(path string) error {
 			outs = append(outs, file.Name())
 		}
 	}
-	if len(ins) == 0 || len(outs) == 0 || len(mems) == 0 || procfile == "" || genfile == "" {
-		return errors.New("Не хватает файла. Обязательно должны быть \"genom\", \"processor\", \"0.memory\",\"0.in\",\"0.out\"")
+	if len(ins) == 0 || len(outs) == 0 || len(mems) == 0 || len(procfiles) == 0 || len(genfiles) == 0 || len(procfiles)!=len(genfiles){
+		return errors.New("не хватает файла или количество процессоров меньше количества хромосом. Обязательно должны быть \"0.chromosome\", \"0.processor\", \"0.memory\",\"0.in\",\"0.out\"")
 	}
 
-	so.Gen = Genom{}
-	if err = so.Gen.Init(path + "/" + genfile); err != nil {
-		return err
+	if !sort.StringsAreSorted(genfiles) {
+		sort.Strings(genfiles)
+	}
+	for i := 0; i < len(genfiles); i++ {
+		so.Chrom = append(so.Chrom, Chromosome{})
+		if err = so.Chrom[len(so.Chrom)-1].Init(path + "/" + genfiles[i]); err != nil {
+			return err
+		}
 	}
 
-	so.Proc = Processor{}
-	if err = StructsFileRead(path+"/"+procfile, &so.Proc, binary.LittleEndian); err != nil {
-		return err
+	if !sort.StringsAreSorted(procfiles) {
+		sort.Strings(procfiles)
+	}
+	for i := 0; i < len(procfiles); i++ {
+		so.Proc = append(so.Proc, Processor{})
+		if err = StructsFileRead(path+"/"+procfiles[i], &so.Proc[i], binary.LittleEndian); err != nil {
+			return err
+		}
 	}
 
 	if !sort.StringsAreSorted(mems) {
@@ -393,7 +412,7 @@ func (m *Memory) Init(fs string) error {
 }
 
 //из файла
-func (g *Genom) Init(fs string) error {
+func (g *Chromosome) Init(fs string) error {
 	var header reflect.SliceHeader
 
 	f, err := openFile(os.O_RDWR, fs)
@@ -427,7 +446,9 @@ func (so *Solution)Save(){
 		so.Out[i].bytearray.Flush()
 	}
 
-	StructsFileOverwrite(so.Path+"/processor", &so.Proc, binary.LittleEndian)
+	for i:=0;i<len(so.Proc);i++ {
+		StructsFileOverwrite(so.Path+"/"+strconv.Itoa(i)+".processor", &so.Proc, binary.LittleEndian)
+	}
 }
 
 func (so *Solution)Exit(){

@@ -3,15 +3,17 @@ package main
 import (
 	"WithSVG/cmd/universal"
 	"fmt"
+	"os"
 )
 
 func main() {
 
-	sol, err:=universal.NewSolution("c:/ALOSKA/work/solutions/minimum.json")
-	//sol:=universal.Solution{}
-	//err:=sol.Init("c:/ALOSKA/work/solutions/SOL-minimum")
+	//sol, err:=universal.NewSolution("c:/ALOSKA/work/solutions/2-chromo.json")
+	sol:=universal.Solution{}
+	err:=sol.Init("c:/ALOSKA/work/solutions/SOL-2-chromo")
 	if err!=nil{
 		fmt.Println(err)
+		os.Exit(2)
 	}
 	defer sol.Exit()
 
@@ -23,11 +25,17 @@ func main() {
 	sol.In[0].V[5]=2135
 	sol.In[0].V[6]=154
 
-	sol.Proc.PC=0	//иначе не будет ничего делать, если уже выключился - он свое состояние помнит)))
+	sol.In[1].V[0]=8
+
+	sol.Proc[0].PC=0	//иначе не будет ничего делать, если уже выключился - он свое состояние помнит)))
+	sol.Proc[1].PC=0
+
+	sol.IsAsync=true
 	sol.Run()
 	sol.Save()
 
 	fmt.Println(sol.Out[0].V[0])
+	fmt.Println(sol.Out[0].V[1])
 
 
 /*
