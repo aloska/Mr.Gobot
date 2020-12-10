@@ -23,13 +23,13 @@ type Memory struct {
 	V         []int64   //файл в виде слайса
 }
 
-type Chromosome struct {
+type Algorithm struct {
 	filename  string    //имя файла, где записан ген
 	bytearray mmap.MMap //мапа на этот файл
-	Codons    []Codon   //файл в виде слайса
+	Commands    []Command   //файл в виде слайса
 }
 
-type Codon struct {
+type Command struct {
 	Code Comm
 	Op1  uint64
 	Op2  uint64
@@ -45,7 +45,7 @@ type IO struct {
 type Solution struct {
 	Path string
 	Proc []Processor
-	Chrom  []Chromosome
+	Algs  []Algorithm
 	Mem  []Memory
 	In   []IO
 	Out  []IO
@@ -57,10 +57,10 @@ type Serialisator struct {
 	Memories []int64 //слайс размеров памятей
 	Ins      []int64 //слайс размеров входов
 	Outs     []int64 //слайс размеров выходов
-	Genes	 []string //файл с описанием генома (должен лежать в той же папке, что и json-файл)
+	Algorithms	 []string //файлы с описанием алгоритмов (должен лежать в той же папке, что и json-файл)
 	IsAsync	 bool	//асинхроный старт хромосом или последовательный
 
-	/*файлы хромосом можут быть  с расширением .codons:
+	/*файлы алгоритмов можут быть  с расширением .codes:
 	codons: 22 0 0 2; 2 1 0 -14; ... (можно в несколько строк и без ';' )
 	в этом случае все числа парсятся до возможности исполнения. Например, если комманды с кодом нет, то комманда генерится
 	из остатка от деления на количество комманд
@@ -82,20 +82,20 @@ type Serialisator struct {
 }
 
 //парсинг кодонов со строки
-func GetCodonsFromChromosomeString(gs *string) (*[]Codon, error){
-	var cods []Codon
+func GetCommandsFromAlgorithmString(gs *string) (*[]Command, error){
+	var cods []Command
 
 	fields:=strings.Fields(*gs)
 	if len(fields)<5{
-		return nil, errors.New("плохой формат данных генома: должно начинаться с 'codons:' или 'asm:' и далее не менее 4 полей")
-	}else if fields[0]=="codons:"{
+		return nil, errors.New("плохой формат данных генома: должно начинаться с 'codes:' или 'asm:' и далее не менее 4 полей")
+	}else if fields[0]=="codes:"{
 		i:=1
 		state:=0
 		for i<len(fields){
 			str:=strings.TrimPrefix(strings.TrimSuffix(fields[i],";"),";")
 			switch state{
 			case 0://ожидаем комманду
-				cods=append(cods,Codon{})
+				cods=append(cods,Command{})
 				val, err:=strconv.ParseInt(str, 10, 64)
 				if err!=nil{
 					return nil, err
@@ -128,7 +128,7 @@ func GetCodonsFromChromosomeString(gs *string) (*[]Codon, error){
 		}
 
 	}else {//может файл на асме?
-		return GetCodonsFromAsmString(gs)
+		return GetCommandsFromAsmString(gs)
 	}
 
 
@@ -136,14 +136,14 @@ func GetCodonsFromChromosomeString(gs *string) (*[]Codon, error){
 }
 
 //парсинг кодонов из файла
-func GetCodonsFromFile(filename string) (*[]Codon, error){
+func GetCommandsFromFile(filename string) (*[]Command, error){
 
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 	str := string(b)
-	return GetCodonsFromChromosomeString(&str)
+	return GetCommandsFromAlgorithmString(&str)
 }
 
 //NewSolution - создать нового решателя
@@ -190,20 +190,20 @@ func NewSolution(filejson string) (*Solution, error){
 	}
 
 	//парсим геном
-	for i:=0;i<len(ser.Genes);i++ {
-		chrom, err := GetCodonsFromFile(filepath.Dir(filejson) + "/" + ser.Genes[i])
+	for i:=0;i<len(ser.Algorithms);i++ {
+		chrom, err := GetCommandsFromFile(filepath.Dir(filejson) + "/" + ser.Algorithms[i])
 		if err != nil {
 			return nil, err
 		}
 		//если удачно отпарсили - создаем файл хромосомы
-		err = StructsFileWrite(newfolder+"/"+strconv.Itoa(i)+".chromosome", chrom, binary.LittleEndian)
+		err = StructsFileWrite(newfolder+"/"+strconv.Itoa(i)+".algorithm", chrom, binary.LittleEndian)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	//создаем файлы процессоров
-	for i:=0;i<len(ser.Genes);i++ {
+	for i:=0;i<len(ser.Algorithms);i++ {
 		proc := Processor{}
 		err = StructsFileWrite(newfolder+"/"+strconv.Itoa(i)+".processor", &proc, binary.LittleEndian)
 		if err != nil {
@@ -275,7 +275,7 @@ func NewSolution(filejson string) (*Solution, error){
 
 //инициализировать Solution из директории
 func (so *Solution) Init(path string) error {
-	//в директории должны быть обязательно файлы "0.chromosome", "0.processor", "0.memory","0.in","0.out"
+	//в директории должны быть обязательно файлы "0.algorithm", "0.processor", "0.memory","0.in","0.out"
 
 	mems := []string{}
 	ins := []string{}
@@ -290,7 +290,7 @@ func (so *Solution) Init(path string) error {
 		if match, _ := regexp.MatchString("([0-9]+.processor)",
 			file.Name()); match {
 			procfiles = append (procfiles,file.Name())
-		} else if match, _ := regexp.MatchString("([0-9]+.chromosome)",
+		} else if match, _ := regexp.MatchString("([0-9]+.algorithm)",
 			file.Name()); match {
 			genfiles = append(genfiles, file.Name())
 		} else if match, _ := regexp.MatchString("([0-9]+.memory)",
@@ -305,15 +305,15 @@ func (so *Solution) Init(path string) error {
 		}
 	}
 	if len(ins) == 0 || len(outs) == 0 || len(mems) == 0 || len(procfiles) == 0 || len(genfiles) == 0 || len(procfiles)!=len(genfiles){
-		return errors.New("не хватает файла или количество процессоров меньше количества хромосом. Обязательно должны быть \"0.chromosome\", \"0.processor\", \"0.memory\",\"0.in\",\"0.out\"")
+		return errors.New("не хватает файла или количество процессоров меньше количества хромосом. Обязательно должны быть \"0.algorithm\", \"0.processor\", \"0.memory\",\"0.in\",\"0.out\"")
 	}
 
 	if !sort.StringsAreSorted(genfiles) {
 		sort.Strings(genfiles)
 	}
 	for i := 0; i < len(genfiles); i++ {
-		so.Chrom = append(so.Chrom, Chromosome{})
-		if err = so.Chrom[len(so.Chrom)-1].Init(path + "/" + genfiles[i]); err != nil {
+		so.Algs = append(so.Algs, Algorithm{})
+		if err = so.Algs[len(so.Algs)-1].Init(path + "/" + genfiles[i]); err != nil {
 			return err
 		}
 	}
@@ -412,7 +412,7 @@ func (m *Memory) Init(fs string) error {
 }
 
 //из файла
-func (g *Chromosome) Init(fs string) error {
+func (g *Algorithm) Init(fs string) error {
 	var header reflect.SliceHeader
 
 	f, err := openFile(os.O_RDWR, fs)
@@ -427,9 +427,9 @@ func (g *Chromosome) Init(fs string) error {
 	g.filename = fs
 
 	header.Data = (uintptr)(unsafe.Pointer(&g.bytearray[0]))
-	header.Len = len(g.bytearray) / int(reflect.TypeOf(g.Codons).Elem().Size())
+	header.Len = len(g.bytearray) / int(reflect.TypeOf(g.Commands).Elem().Size())
 	header.Cap = header.Len
-	g.Codons = *(*[]Codon)(unsafe.Pointer(&header))
+	g.Commands = *(*[]Command)(unsafe.Pointer(&header))
 
 	g.filename = fs
 	return nil

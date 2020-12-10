@@ -306,11 +306,11 @@ func (s *Solution) BEQ(chr int, x1, x2 uint64, jumpAddr int64){
 	}
 	if s.Proc[chr].X[x1%32]==s.Proc[chr].X[x2%32]{
 		//сначала выровняем jumpAddr по длине гена
-		jumpAddr=jumpAddr%int64(len(s.Chrom[chr].Codons))
+		jumpAddr=jumpAddr%int64(len(s.Algs[chr].Commands))
 		if int64(s.Proc[chr].PC)+jumpAddr<0{
-			s.Proc[chr].PC=uint64(int64(len(s.Chrom[chr].Codons))+int64(s.Proc[chr].PC)+jumpAddr) //не знаю почему, но работает))
+			s.Proc[chr].PC=uint64(int64(len(s.Algs[chr].Commands))+int64(s.Proc[chr].PC)+jumpAddr) //не знаю почему, но работает))
 		}else{
-			s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Chrom[chr].Codons))
+			s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Algs[chr].Commands))
 		}
 	}else{
 		s.Proc[chr].PC++
@@ -324,11 +324,11 @@ func (s *Solution) BGE(chr int, x1, x2 uint64, jumpAddr int64){
 	}
 	if s.Proc[chr].X[x1%32]>=s.Proc[chr].X[x2%32]{
 		//сначала выровняем jumpAddr по длине гена
-		jumpAddr=jumpAddr%int64(len(s.Chrom[chr].Codons))
+		jumpAddr=jumpAddr%int64(len(s.Algs[chr].Commands))
 		if int64(s.Proc[chr].PC)+jumpAddr<0{
-			s.Proc[chr].PC=uint64(int64(len(s.Chrom[chr].Codons))+int64(s.Proc[chr].PC)+jumpAddr)
+			s.Proc[chr].PC=uint64(int64(len(s.Algs[chr].Commands))+int64(s.Proc[chr].PC)+jumpAddr)
 		}else{
-			s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Chrom[chr].Codons))
+			s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Algs[chr].Commands))
 		}
 	}else{
 		s.Proc[chr].PC++
@@ -342,11 +342,11 @@ func (s *Solution) BGT(chr int, x1, x2 uint64, jumpAddr int64){
 	}
 	if s.Proc[chr].X[x1%32]>s.Proc[chr].X[x2%32]{
 		//сначала выровняем jumpAddr по длине гена
-		jumpAddr=jumpAddr%int64(len(s.Chrom[chr].Codons))
+		jumpAddr=jumpAddr%int64(len(s.Algs[chr].Commands))
 		if int64(s.Proc[chr].PC)+jumpAddr<0{
-			s.Proc[chr].PC=uint64(int64(len(s.Chrom[chr].Codons))+int64(s.Proc[chr].PC)+jumpAddr)
+			s.Proc[chr].PC=uint64(int64(len(s.Algs[chr].Commands))+int64(s.Proc[chr].PC)+jumpAddr)
 		}else{
-			s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Chrom[chr].Codons))
+			s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Algs[chr].Commands))
 		}
 	}else{
 		s.Proc[chr].PC++
@@ -360,11 +360,11 @@ func (s *Solution) BLT(chr int, x1, x2 uint64, jumpAddr int64){
 	}
 	if s.Proc[chr].X[x1%32]<s.Proc[chr].X[x2%32]{
 		//сначала выровняем jumpAddr по длине гена
-		jumpAddr=jumpAddr%int64(len(s.Chrom[chr].Codons))
+		jumpAddr=jumpAddr%int64(len(s.Algs[chr].Commands))
 		if int64(s.Proc[chr].PC)+jumpAddr<0{
-			s.Proc[chr].PC=uint64(int64(len(s.Chrom[chr].Codons))+int64(s.Proc[chr].PC)+jumpAddr)
+			s.Proc[chr].PC=uint64(int64(len(s.Algs[chr].Commands))+int64(s.Proc[chr].PC)+jumpAddr)
 		}else{
-			s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Chrom[chr].Codons))
+			s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Algs[chr].Commands))
 		}
 	}else{
 		s.Proc[chr].PC++
@@ -378,11 +378,11 @@ func (s *Solution) BNE(chr int, x1, x2 uint64, jumpAddr int64){
 	}
 	if s.Proc[chr].X[x1%32]!=s.Proc[chr].X[x2%32]{
 		//сначала выровняем jumpAddr по длине гена
-		jumpAddr=jumpAddr%int64(len(s.Chrom[chr].Codons))
+		jumpAddr=jumpAddr%int64(len(s.Algs[chr].Commands))
 		if int64(s.Proc[chr].PC)+jumpAddr<0{
-			s.Proc[chr].PC=uint64(int64(len(s.Chrom[chr].Codons))+int64(s.Proc[chr].PC)+jumpAddr)
+			s.Proc[chr].PC=uint64(int64(len(s.Algs[chr].Commands))+int64(s.Proc[chr].PC)+jumpAddr)
 		}else{
-			s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Chrom[chr].Codons))
+			s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Algs[chr].Commands))
 		}
 	}else{
 		s.Proc[chr].PC++
@@ -396,11 +396,11 @@ func (s *Solution) BLE(chr int, x1, x2 uint64, jumpAddr int64){
 	}
 	if s.Proc[chr].X[x1%32]<=s.Proc[chr].X[x2%32]{
 		//сначала выровняем jumpAddr по длине гена
-		jumpAddr=jumpAddr%int64(len(s.Chrom[chr].Codons))
+		jumpAddr=jumpAddr%int64(len(s.Algs[chr].Commands))
 		if int64(s.Proc[chr].PC)+jumpAddr<0{
-			s.Proc[chr].PC=uint64(int64(len(s.Chrom[chr].Codons))+int64(s.Proc[chr].PC)+jumpAddr)
+			s.Proc[chr].PC=uint64(int64(len(s.Algs[chr].Commands))+int64(s.Proc[chr].PC)+jumpAddr)
 		}else{
-			s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Chrom[chr].Codons))
+			s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Algs[chr].Commands))
 		}
 	}else{
 		s.Proc[chr].PC++
@@ -413,11 +413,11 @@ func (s *Solution) JMP(chr int, jumpAddr int64){
 		return
 	}
 	//сначала выровняем jumpAddr по длине гена
-	jumpAddr=jumpAddr%int64(len(s.Chrom[chr].Codons))
+	jumpAddr=jumpAddr%int64(len(s.Algs[chr].Commands))
 	if int64(s.Proc[chr].PC)+jumpAddr<0{
-		s.Proc[chr].PC=uint64(int64(len(s.Chrom[chr].Codons))+int64(s.Proc[chr].PC)+jumpAddr)
+		s.Proc[chr].PC=uint64(int64(len(s.Algs[chr].Commands))+int64(s.Proc[chr].PC)+jumpAddr)
 	}else{
-		s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Chrom[chr].Codons))
+		s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Algs[chr].Commands))
 	}
 }
 

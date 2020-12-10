@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-func GetCodonsFromAsmString(s *string) (*[]Codon, error){
-	var cods []Codon
+func GetCommandsFromAsmString(s *string) (*[]Command, error){
+	var cods []Command
 
 	ss:=strings.Split(*s, "\n")
 	i:=0
@@ -32,7 +32,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 		}
 		switch sl[0] {
 		case  "NOP","nop":
-			cods=append(cods,Codon{NOP,0,0,0})
+			cods=append(cods,Command{NOP,0,0,0})
 		case "ADD","add":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{//потому что x1,x2 , X3 вернет ["x1, x2,X3" "1" "2" "3"]
@@ -41,7 +41,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{ADD,op1,op2,op3})
+			cods=append(cods,Command{ADD,op1,op2,op3})
 		case "ADDI","addi":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -50,7 +50,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{ADDI,op1,op2,op3})
+			cods=append(cods,Command{ADDI,op1,op2,op3})
 		case "SUB","sub":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{//потому что x1,x2 , X3 вернет [x1, x2,X3 1 2 3]
@@ -59,7 +59,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{SUB,op1,op2,op3})
+			cods=append(cods,Command{SUB,op1,op2,op3})
 		case "SUBI","subi":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -68,7 +68,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{SUBI,op1,op2,op3})
+			cods=append(cods,Command{SUBI,op1,op2,op3})
 		case "MUL","mul":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{//потому что x1,x2 , X3 вернет [x1, x2,X3 1 2 3]
@@ -77,7 +77,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{MUL,op1,op2,op3})
+			cods=append(cods,Command{MUL,op1,op2,op3})
 		case "MULI","muli":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -86,7 +86,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{MULI,op1,op2,op3})
+			cods=append(cods,Command{MULI,op1,op2,op3})
 		case "DIV","div":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{//потому что x1,x2 , X3 вернет [x1, x2,X3 1 2 3]
@@ -95,7 +95,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{DIV,op1,op2,op3})
+			cods=append(cods,Command{DIV,op1,op2,op3})
 		case "DIVI","divi":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -104,7 +104,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{DIVI,op1,op2,op3})
+			cods=append(cods,Command{DIVI,op1,op2,op3})
 		case "REM","rem":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{//потому что x1,x2 , X3 вернет [x1, x2,X3 1 2 3]
@@ -113,7 +113,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{REM,op1,op2,op3})
+			cods=append(cods,Command{REM,op1,op2,op3})
 		case "REMI","remi":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -122,7 +122,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{REMI,op1,op2,op3})
+			cods=append(cods,Command{REMI,op1,op2,op3})
 		case "AND","and":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{//потому что x1,x2 , X3 вернет [x1, x2,X3 1 2 3]
@@ -131,7 +131,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{AND,op1,op2,op3})
+			cods=append(cods,Command{AND,op1,op2,op3})
 		case "ANDI","andi":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -140,7 +140,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{ANDI,op1,op2,op3})
+			cods=append(cods,Command{ANDI,op1,op2,op3})
 		case "OR","or":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{//потому что x1,x2 , X3 вернет [x1, x2,X3 1 2 3]
@@ -149,7 +149,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{OR,op1,op2,op3})
+			cods=append(cods,Command{OR,op1,op2,op3})
 		case "ORI","ori":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -158,7 +158,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{ORI,op1,op2,op3})
+			cods=append(cods,Command{ORI,op1,op2,op3})
 		case "XOR","xor":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{//потому что x1,x2 , X3 вернет [x1, x2,X3 1 2 3]
@@ -167,7 +167,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{XOR,op1,op2,op3})
+			cods=append(cods,Command{XOR,op1,op2,op3})
 		case "XORI","xori":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -176,7 +176,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{XORI,op1,op2,op3})
+			cods=append(cods,Command{XORI,op1,op2,op3})
 		case "SLL","sll":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{//потому что x1,x2 , X3 вернет [x1, x2,X3 1 2 3]
@@ -185,7 +185,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{SLL,op1,op2,op3})
+			cods=append(cods,Command{SLL,op1,op2,op3})
 		case "SLLI","slli":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -194,7 +194,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{SLLI,op1,op2,op3})
+			cods=append(cods,Command{SLLI,op1,op2,op3})
 		case "SRL","srl":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{//потому что x1,x2 , X3 вернет [x1, x2,X3 1 2 3]
@@ -203,7 +203,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{SRL,op1,op2,op3})
+			cods=append(cods,Command{SRL,op1,op2,op3})
 		case "SRLI","srli":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -212,7 +212,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{SRLI,op1,op2,op3})
+			cods=append(cods,Command{SRLI,op1,op2,op3})
 		case "LI","li":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<3{
@@ -220,7 +220,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			}
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op3,_:=strconv.ParseInt(ms[2],10,64)//в третьем операнде константы всегда
-			cods=append(cods,Codon{LI,op1,0,op3})
+			cods=append(cods,Command{LI,op1,0,op3})
 		case "LDM","ldm":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -229,7 +229,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{LDM,op1,op2,op3})
+			cods=append(cods,Command{LDM,op1,op2,op3})
 		case "LDMX","ldmx":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -238,7 +238,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{LDMX,op1,op2,op3})
+			cods=append(cods,Command{LDMX,op1,op2,op3})
 		case "LDIN","ldin":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -247,7 +247,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{LDIN,op1,op2,op3})
+			cods=append(cods,Command{LDIN,op1,op2,op3})
 		case "LDINX","ldinx":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -256,7 +256,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{LDINX,op1,op2,op3})
+			cods=append(cods,Command{LDINX,op1,op2,op3})
 		case "STM","stm":
 			ms := regexp.MustCompile(`([0-9]+)\s*,\s*([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -265,7 +265,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{STM,op1,op2,op3})
+			cods=append(cods,Command{STM,op1,op2,op3})
 		case "STMX","stmx":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -274,7 +274,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{STMX,op1,op2,op3})
+			cods=append(cods,Command{STMX,op1,op2,op3})
 		case "STOUT","stout":
 			ms := regexp.MustCompile(`([0-9]+)\s*,\s*([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -283,7 +283,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{STOUT,op1,op2,op3})
+			cods=append(cods,Command{STOUT,op1,op2,op3})
 		case "STOUTX","stoutx":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -292,7 +292,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{STOUTX,op1,op2,op3})
+			cods=append(cods,Command{STOUTX,op1,op2,op3})
 		case "BEQ","beq"://у нас ветвление без меток, как в дизасме, потому что геномика может столько ветвлений наставить - заколупаешься из них метки генерить
 		//так что только отностельные адреса
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
@@ -302,7 +302,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{BEQ,op1,op2,op3})
+			cods=append(cods,Command{BEQ,op1,op2,op3})
 		case "BGE","bge":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -311,7 +311,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{BGE,op1,op2,op3})
+			cods=append(cods,Command{BGE,op1,op2,op3})
 		case "BLT","blt":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -320,7 +320,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{BLT,op1,op2,op3})
+			cods=append(cods,Command{BLT,op1,op2,op3})
 		case "BLE","ble":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -329,7 +329,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{BLE,op1,op2,op3})
+			cods=append(cods,Command{BLE,op1,op2,op3})
 		case "BGT","bgt":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -338,7 +338,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{BGT,op1,op2,op3})
+			cods=append(cods,Command{BGT,op1,op2,op3})
 		case "BNE","bne":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*(-?[0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{
@@ -347,14 +347,14 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{BNE,op1,op2,op3})
+			cods=append(cods,Command{BNE,op1,op2,op3})
 		case "JMP","jmp":
 			ms := regexp.MustCompile(`(-?[0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<2{
 				return nil, errors.New( fmt.Sprintf( "Ошибка: стр. %v JMP ", i))
 			}
 			op3,_:=strconv.ParseInt(ms[1],10,64)
-			cods=append(cods,Codon{JMP,0,0,op3})//Внимание! адресс в третьем операнде в кодоне всегда!
+			cods=append(cods,Command{JMP,0,0,op3})//Внимание! адресс в третьем операнде в кодоне всегда!
 		case "SEQ","seq":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{//потому что x1,x2 , X3 вернет [x1, x2,X3 1 2 3]
@@ -363,7 +363,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{SEQ,op1,op2,op3})
+			cods=append(cods,Command{SEQ,op1,op2,op3})
 		case "SGE","sge":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{//потому что x1,x2 , X3 вернет [x1, x2,X3 1 2 3]
@@ -372,7 +372,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{SGE,op1,op2,op3})
+			cods=append(cods,Command{SGE,op1,op2,op3})
 		case "SLT","slt":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{//потому что x1,x2 , X3 вернет [x1, x2,X3 1 2 3]
@@ -381,7 +381,7 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{SLT,op1,op2,op3})
+			cods=append(cods,Command{SLT,op1,op2,op3})
 		case "SNE","sne":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)\s*,\s*[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<4{//потому что x1,x2 , X3 вернет [x1, x2,X3 1 2 3]
@@ -390,21 +390,21 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 			op1,_:=strconv.ParseUint(ms[1],10,64)
 			op2,_:=strconv.ParseUint(ms[2],10,64)
 			op3,_:=strconv.ParseInt(ms[3],10,64)
-			cods=append(cods,Codon{SNE,op1,op2,op3})
+			cods=append(cods,Command{SNE,op1,op2,op3})
 		case "PUSH","push":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<2{
 				return nil, errors.New( fmt.Sprintf( "Ошибка: стр. %v PUSH ", i))
 			}
 			op1,_:=strconv.ParseUint(ms[1],10,64)
-			cods=append(cods,Codon{PUSH,op1,0,0})
+			cods=append(cods,Command{PUSH,op1,0,0})
 		case "POP","pop":
 			ms := regexp.MustCompile(`[x|X]([0-9]+)`).FindStringSubmatch(ss[i])
 			if len(ms)<2{
 				return nil, errors.New( fmt.Sprintf( "Ошибка: стр. %v POP ", i))
 			}
 			op1,_:=strconv.ParseUint(ms[1],10,64)
-			cods=append(cods,Codon{POP,op1,0,0})
+			cods=append(cods,Command{POP,op1,0,0})
 		default:
 			return nil, errors.New( fmt.Sprintf( "Ошибка: стр. %v неизвестная команда ", i))
 		}
@@ -413,8 +413,8 @@ func GetCodonsFromAsmString(s *string) (*[]Codon, error){
 	return &cods,nil
 }
 
-func GetReadableFromCodons(cods []Codon) *[2]string{
-	ret:=[2]string{"codons: ",
+func GetReadableFromCommands(cods []Command) *[2]string{
+	ret:=[2]string{"codes: ",
 				   "/*This is assembler only for Solution RISC architecture*/\nasm:\n"}
 	for i:=0;i<len(cods);i++{
 		switch cods[i].Code%42{

@@ -4,17 +4,17 @@ import "sync"
 
 func (s *Solution) Run(){
 	var wg sync.WaitGroup
-	for i:=0;i<len(s.Chrom);i++ {
+	for i:=0;i<len(s.Algs);i++ {
 		if s.IsAsync{
 			wg.Add(1)
-			go func(chr int){
+			go func(alg int){
 				defer wg.Done()
-				for int(s.Proc[chr].PC) < len(s.Chrom[chr].Codons) {
-					s.Step(chr)
+				for int(s.Proc[alg].PC) < len(s.Algs[alg].Commands) {
+					s.Step(alg)
 				}
 			}(i)
 		}else {
-			for int(s.Proc[i].PC) < len(s.Chrom[i].Codons) {
+			for int(s.Proc[i].PC) < len(s.Algs[i].Commands) {
 				s.Step(i)
 			}
 		}
@@ -24,95 +24,95 @@ func (s *Solution) Run(){
 	}
 }
 
-func (s *Solution) Step(chr int){
+func (s *Solution) Step(alg int){
 	//42 - кол-во комманд в нашем RISC-процессоре
-	com:=s.Chrom[chr].Codons[s.Proc[chr].PC]
+	com:=s.Algs[alg].Commands[s.Proc[alg].PC]
 	switch com.Code%42 {
 	case NOP: //а что уж тут поделаешь?
-		s.Proc[chr].PC++	//хех!
+		s.Proc[alg].PC++	//хех!
 	case ADD:
-		s.Proc[chr].ADD(com.Op1, com.Op2,uint64(com.Op3))
+		s.Proc[alg].ADD(com.Op1, com.Op2,uint64(com.Op3))
 	case ADDI:
-		s.Proc[chr].ADDI(com.Op1, com.Op2,com.Op3)
+		s.Proc[alg].ADDI(com.Op1, com.Op2,com.Op3)
 	case SUB:
-		s.Proc[chr].SUB(com.Op1, com.Op2,uint64(com.Op3))
+		s.Proc[alg].SUB(com.Op1, com.Op2,uint64(com.Op3))
 	case SUBI:
-		s.Proc[chr].SUBI(com.Op1, com.Op2,com.Op3)
+		s.Proc[alg].SUBI(com.Op1, com.Op2,com.Op3)
 	case MUL:
-		s.Proc[chr].MUL(com.Op1, com.Op2,uint64(com.Op3))
+		s.Proc[alg].MUL(com.Op1, com.Op2,uint64(com.Op3))
 	case MULI:
-		s.Proc[chr].MULI(com.Op1, com.Op2,com.Op3)
+		s.Proc[alg].MULI(com.Op1, com.Op2,com.Op3)
 	case DIV:
-		s.Proc[chr].DIV(com.Op1, com.Op2,uint64(com.Op3))
+		s.Proc[alg].DIV(com.Op1, com.Op2,uint64(com.Op3))
 	case DIVI:
-		s.Proc[chr].DIVI(com.Op1, com.Op2,com.Op3)
+		s.Proc[alg].DIVI(com.Op1, com.Op2,com.Op3)
 	case REM:
-		s.Proc[chr].REM(com.Op1, com.Op2,uint64(com.Op3))
+		s.Proc[alg].REM(com.Op1, com.Op2,uint64(com.Op3))
 	case REMI:
-		s.Proc[chr].REMI(com.Op1, com.Op2,com.Op3)
+		s.Proc[alg].REMI(com.Op1, com.Op2,com.Op3)
 	case AND:
-		s.Proc[chr].AND(com.Op1, com.Op2,uint64(com.Op3))
+		s.Proc[alg].AND(com.Op1, com.Op2,uint64(com.Op3))
 	case ANDI:
-		s.Proc[chr].ANDI(com.Op1, com.Op2,com.Op3)
+		s.Proc[alg].ANDI(com.Op1, com.Op2,com.Op3)
 	case OR:
-		s.Proc[chr].OR(com.Op1, com.Op2,uint64(com.Op3))
+		s.Proc[alg].OR(com.Op1, com.Op2,uint64(com.Op3))
 	case ORI:
-		s.Proc[chr].ORI(com.Op1, com.Op2,com.Op3)
+		s.Proc[alg].ORI(com.Op1, com.Op2,com.Op3)
 	case XOR:
-		s.Proc[chr].XOR(com.Op1, com.Op2,uint64(com.Op3))
+		s.Proc[alg].XOR(com.Op1, com.Op2,uint64(com.Op3))
 	case XORI:
-		s.Proc[chr].XORI(com.Op1, com.Op2,com.Op3)
+		s.Proc[alg].XORI(com.Op1, com.Op2,com.Op3)
 	case SLL:
-		s.Proc[chr].SLL(com.Op1, com.Op2,uint64(com.Op3))
+		s.Proc[alg].SLL(com.Op1, com.Op2,uint64(com.Op3))
 	case SLLI:
-		s.Proc[chr].SLLI(com.Op1, com.Op2,com.Op3)
+		s.Proc[alg].SLLI(com.Op1, com.Op2,com.Op3)
 	case SRL:
-		s.Proc[chr].SRL(com.Op1, com.Op2,uint64(com.Op3))
+		s.Proc[alg].SRL(com.Op1, com.Op2,uint64(com.Op3))
 	case SRLI:
-		s.Proc[chr].SRLI(com.Op1, com.Op2,com.Op3)
+		s.Proc[alg].SRLI(com.Op1, com.Op2,com.Op3)
 	case LI:
-		s.Proc[chr].LI(com.Op1, com.Op3)
+		s.Proc[alg].LI(com.Op1, com.Op3)
 	case LDM:
-		s.LDM(chr, com.Op1, com.Op2,uint64(com.Op3))
+		s.LDM(alg, com.Op1, com.Op2,uint64(com.Op3))
 	case LDIN:
-		s.LDIN(chr, com.Op1, com.Op2,uint64(com.Op3))
+		s.LDIN(alg, com.Op1, com.Op2,uint64(com.Op3))
 	case STM:
-		s.STM(chr, com.Op1, com.Op2,uint64(com.Op3))
+		s.STM(alg, com.Op1, com.Op2,uint64(com.Op3))
 	case STOUT:
-		s.STOUT(chr, com.Op1, com.Op2,uint64(com.Op3))
+		s.STOUT(alg, com.Op1, com.Op2,uint64(com.Op3))
 	case LDMX:
-		s.LDMX(chr, com.Op1, com.Op2,uint64(com.Op3))
+		s.LDMX(alg, com.Op1, com.Op2,uint64(com.Op3))
 	case LDINX:
-		s.LDINX(chr, com.Op1, com.Op2,uint64(com.Op3))
+		s.LDINX(alg, com.Op1, com.Op2,uint64(com.Op3))
 	case STMX:
-		s.STMX(chr, com.Op1, com.Op2,uint64(com.Op3))
+		s.STMX(alg, com.Op1, com.Op2,uint64(com.Op3))
 	case STOUTX:
-		s.STOUTX(chr, com.Op1, com.Op2,uint64(com.Op3))
+		s.STOUTX(alg, com.Op1, com.Op2,uint64(com.Op3))
 	case BEQ:
-		s.BEQ(chr, com.Op1, com.Op2,com.Op3)
+		s.BEQ(alg, com.Op1, com.Op2,com.Op3)
 	case BGE:
-		s.BGE(chr, com.Op1, com.Op2,com.Op3)
+		s.BGE(alg, com.Op1, com.Op2,com.Op3)
 	case BLT:
-		s.BLT(chr, com.Op1, com.Op2,com.Op3)
+		s.BLT(alg, com.Op1, com.Op2,com.Op3)
 	case BNE:
-		s.BNE(chr, com.Op1, com.Op2,com.Op3)
+		s.BNE(alg, com.Op1, com.Op2,com.Op3)
 	case BLE:
-		s.BLE(chr, com.Op1, com.Op2,com.Op3)
+		s.BLE(alg, com.Op1, com.Op2,com.Op3)
 	case BGT:
-		s.BGT(chr, com.Op1, com.Op2,com.Op3)
+		s.BGT(alg, com.Op1, com.Op2,com.Op3)
 	case JMP:
-		s.JMP(chr, com.Op3)//Внимание! В JMP адресс в 3 операнде (как впрочем и везде - просто здесь только один операнд, но он в кодоне 3-ий!!)
+		s.JMP(alg, com.Op3)//Внимание! В JMP адресс в 3 операнде (как впрочем и везде - просто здесь только один операнд, но он в кодоне 3-ий!!)
 	case SEQ:
-		s.Proc[chr].SEQ(com.Op1, com.Op2,uint64(com.Op3))
+		s.Proc[alg].SEQ(com.Op1, com.Op2,uint64(com.Op3))
 	case SGE:
-		s.Proc[chr].SGE(com.Op1, com.Op2,uint64(com.Op3))
+		s.Proc[alg].SGE(com.Op1, com.Op2,uint64(com.Op3))
 	case SLT:
-		s.Proc[chr].SLT(com.Op1, com.Op2,uint64(com.Op3))
+		s.Proc[alg].SLT(com.Op1, com.Op2,uint64(com.Op3))
 	case SNE:
-		s.Proc[chr].SNE(com.Op1, com.Op2,uint64(com.Op3))
+		s.Proc[alg].SNE(com.Op1, com.Op2,uint64(com.Op3))
 	case PUSH:
-		s.Proc[chr].PUSH(com.Op1)
+		s.Proc[alg].PUSH(com.Op1)
 	case POP:
-		s.Proc[chr].POP(com.Op1)
+		s.Proc[alg].POP(com.Op1)
 	}
 }
