@@ -417,7 +417,7 @@ func GetReadableFromCommands(cods []Command) *[2]string{
 	ret:=[2]string{"codes: ",
 				   "/*This is assembler only for Solution RISC architecture*/\nasm:\n"}
 	for i:=0;i<len(cods);i++{
-		switch cods[i].Code%42{
+		switch cods[i].Code%COUNTCOMMAND{
 		case NOP:
 			ret[0]+=fmt.Sprintf("%v %v %v %v; ",cods[i].Code,cods[i].Op1,cods[i].Op2,cods[i].Op3)
 			ret[1]+="\tNOP\n"

@@ -25,9 +25,8 @@ func (s *Solution) Run(){
 }
 
 func (s *Solution) Step(alg int){
-	//42 - кол-во комманд в нашем RISC-процессоре
 	com:=s.Algs[alg].Commands[s.Proc[alg].PC]
-	switch com.Code%42 {
+	switch com.Code%COUNTCOMMAND { //43 - кол-во комманд в нашем RISC-процессоре
 	case NOP: //а что уж тут поделаешь?
 		s.Proc[alg].PC++	//хех!
 	case ADD:
@@ -71,7 +70,7 @@ func (s *Solution) Step(alg int){
 	case SRLI:
 		s.Proc[alg].SRLI(com.Op1, com.Op2,com.Op3)
 	case LI:
-		s.Proc[alg].LI(com.Op1, com.Op3)
+		s.Proc[alg].LI(com.Op1, com.Op3) //внимание второй операнд не используется
 	case LDM:
 		s.LDM(alg, com.Op1, com.Op2,uint64(com.Op3))
 	case LDIN:

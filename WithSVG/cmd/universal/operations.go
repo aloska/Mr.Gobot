@@ -3,6 +3,8 @@ package universal
 
 type Comm uint64
 
+const COUNTCOMMAND Comm = 43 //количество комманд
+
 //команды состоят из 4 чисел 1-операция, 2 - куда положить результат, 2 другие - операнды
 const (
 	NOP 	Comm = 0 		//нет операции
@@ -52,18 +54,20 @@ const (
 	SNE		Comm = 33		//Установить 1 если не ранво. SNE x1,x2,x3 -> x1=(x2!=x3)?1:0
 
 	//операции со стеком
-	PUSH 	Comm = 34		//засунуть в стек PUSH x1, any, any - два последних значения в гене этой коммады не имеют смысла, там могут быть любые числа
-	POP		Comm = 35		//достать из стека POP x1, any,any -  два последних значения в гене этой коммады не имеют смысла, там могут быть любые числа
+	PUSH 	Comm = 34		//засунуть в стек PUSH x1
+	POP		Comm = 35		//достать из стека POP x1
 
 	LI 		Comm = 36		//засунуть в регистр константу
 
-	LDMX	Comm = 37
+	LDMX	Comm = 37		//считать из памяти в регистр (номер памяти и адрес - в регистре также находится)
 	LDINX	Comm = 38
 	STMX	Comm = 39
 	STOUTX	Comm = 40
-	BLE		Comm = 41
-	BGT		Comm = 42
+	BLE		Comm = 41		//перейти если меньше или равно
+	BGT		Comm = 42		//перейти если больше
 )
+
+
 
 //ADD - сложение
 //x1, x2, x3 - номера регистров общего назначения (если больше 32 - по кругу)
@@ -239,185 +243,185 @@ func (p *Processor) POP(x1 uint64) {
 }
 
 //операции чтения/записи выполняет решатель
-func (s *Solution) LDM(chr int, x1, mnumber, maddr uint64){
-	s.Proc[chr].PC++
+func (s *Solution) LDM(alg int, x1, mnumber, maddr uint64){
+	s.Proc[alg].PC++
 	mn:=mnumber%uint64(len(s.Mem))
 	ma:=maddr%uint64(len(s.Mem[mn].V))
-	s.Proc[chr].X[x1%32]=s.Mem[mn].V[ma]
+	s.Proc[alg].X[x1%32]=s.Mem[mn].V[ma]
 }
 
 //x1 - номер регистра, куда загрузить, x2 - номер регистра, где хранится номер памяти, x3-номер регистра, где хранится адрес из этой памяти
-func (s *Solution) LDMX(chr int, x1, x2, x3 uint64){
-	s.Proc[chr].PC++
-	mn:=uint64(s.Proc[chr].X[x2%32]) % uint64(len(s.Mem))
-	ma:=uint64(s.Proc[chr].X[x3%32]) % uint64(len(s.Mem[mn].V))
-	s.Proc[chr].X[x1%32]=s.Mem[mn].V[ma]
+func (s *Solution) LDMX(alg int, x1, x2, x3 uint64){
+	s.Proc[alg].PC++
+	mn:=uint64(s.Proc[alg].X[x2%32]) % uint64(len(s.Mem))
+	ma:=uint64(s.Proc[alg].X[x3%32]) % uint64(len(s.Mem[mn].V))
+	s.Proc[alg].X[x1%32]=s.Mem[mn].V[ma]
 }
 
-func (s *Solution) LDIN(chr int, x1, innumber, inaddr uint64){
-	s.Proc[chr].PC++
+func (s *Solution) LDIN(alg int, x1, innumber, inaddr uint64){
+	s.Proc[alg].PC++
 	mn:=innumber%uint64(len(s.In))
 	ma:=inaddr%uint64(len(s.In[mn].V))
-	s.Proc[chr].X[x1%32]=s.In[mn].V[ma]
+	s.Proc[alg].X[x1%32]=s.In[mn].V[ma]
 }
 
-func (s *Solution) LDINX(chr int, x1, x2, x3 uint64){
-	s.Proc[chr].PC++
-	mn:=uint64(s.Proc[chr].X[x2%32])%uint64(len(s.In))
-	ma:=uint64(s.Proc[chr].X[x3%32])%uint64(len(s.In[mn].V))
-	s.Proc[chr].X[x1%32]=s.In[mn].V[ma]
+func (s *Solution) LDINX(alg int, x1, x2, x3 uint64){
+	s.Proc[alg].PC++
+	mn:=uint64(s.Proc[alg].X[x2%32])%uint64(len(s.In))
+	ma:=uint64(s.Proc[alg].X[x3%32])%uint64(len(s.In[mn].V))
+	s.Proc[alg].X[x1%32]=s.In[mn].V[ma]
 }
 
-func (s *Solution) STM(chr int, mnumber, maddr, x1 uint64){
-	s.Proc[chr].PC++
+func (s *Solution) STM(alg int, mnumber, maddr, x1 uint64){
+	s.Proc[alg].PC++
 	mn:=mnumber%uint64(len(s.Mem))
 	ma:=maddr%uint64(len(s.Mem[mn].V))
-	s.Mem[mn].V[ma]=s.Proc[chr].X[x1%32]
+	s.Mem[mn].V[ma]=s.Proc[alg].X[x1%32]
 }
 
-func (s *Solution) STMX(chr int, x1, x2, x3 uint64){
-	s.Proc[chr].PC++
-	mn:=uint64(s.Proc[chr].X[x1%32])%uint64(len(s.Mem))
-	ma:=uint64(s.Proc[chr].X[x2%32])%uint64(len(s.Mem[mn].V))
-	s.Mem[mn].V[ma]=s.Proc[chr].X[x3%32]
+func (s *Solution) STMX(alg int, x1, x2, x3 uint64){
+	s.Proc[alg].PC++
+	mn:=uint64(s.Proc[alg].X[x1%32])%uint64(len(s.Mem))
+	ma:=uint64(s.Proc[alg].X[x2%32])%uint64(len(s.Mem[mn].V))
+	s.Mem[mn].V[ma]=s.Proc[alg].X[x3%32]
 }
 
-func (s *Solution) STOUT(chr int, onumber, oaddr, x1 uint64){
-	s.Proc[chr].PC++
+func (s *Solution) STOUT(alg int, onumber, oaddr, x1 uint64){
+	s.Proc[alg].PC++
 	mn:=onumber%uint64(len(s.Out))
 	ma:=oaddr%uint64(len(s.Out[mn].V))
-	s.Out[mn].V[ma]=s.Proc[chr].X[x1%32]
+	s.Out[mn].V[ma]=s.Proc[alg].X[x1%32]
 }
 
-func (s *Solution) STOUTX(chr int, x1, x2, x3 uint64){
-	s.Proc[chr].PC++
-	mn:=uint64(s.Proc[chr].X[x1%32])%uint64(len(s.Out))
-	ma:=uint64(s.Proc[chr].X[x2%32])%uint64(len(s.Out[mn].V))
-	s.Out[mn].V[ma]=s.Proc[chr].X[x3%32]
+func (s *Solution) STOUTX(alg int, x1, x2, x3 uint64){
+	s.Proc[alg].PC++
+	mn:=uint64(s.Proc[alg].X[x1%32])%uint64(len(s.Out))
+	ma:=uint64(s.Proc[alg].X[x2%32])%uint64(len(s.Out[mn].V))
+	s.Out[mn].V[ma]=s.Proc[alg].X[x3%32]
 }
 
 /*
 по сути изменения указателя на следующую комманду
 */
-func (s *Solution) BEQ(chr int, x1, x2 uint64, jumpAddr int64){
+func (s *Solution) BEQ(alg int, x1, x2 uint64, jumpAddr int64){
 	if jumpAddr==0{//а то блокировка))
-		s.Proc[chr].PC++
+		s.Proc[alg].PC++
 		return
 	}
-	if s.Proc[chr].X[x1%32]==s.Proc[chr].X[x2%32]{
+	if s.Proc[alg].X[x1%32]==s.Proc[alg].X[x2%32]{
 		//сначала выровняем jumpAddr по длине гена
-		jumpAddr=jumpAddr%int64(len(s.Algs[chr].Commands))
-		if int64(s.Proc[chr].PC)+jumpAddr<0{
-			s.Proc[chr].PC=uint64(int64(len(s.Algs[chr].Commands))+int64(s.Proc[chr].PC)+jumpAddr) //не знаю почему, но работает))
+		jumpAddr=jumpAddr%int64(len(s.Algs[alg].Commands))
+		if int64(s.Proc[alg].PC)+jumpAddr<0{
+			s.Proc[alg].PC=uint64(int64(len(s.Algs[alg].Commands))+int64(s.Proc[alg].PC)+jumpAddr) //не знаю почему, но работает))
 		}else{
-			s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Algs[chr].Commands))
+			s.Proc[alg].PC=uint64(int64(s.Proc[alg].PC)+jumpAddr)%uint64(len(s.Algs[alg].Commands))
 		}
 	}else{
-		s.Proc[chr].PC++
+		s.Proc[alg].PC++
 	}
 }
 
-func (s *Solution) BGE(chr int, x1, x2 uint64, jumpAddr int64){
+func (s *Solution) BGE(alg int, x1, x2 uint64, jumpAddr int64){
 	if jumpAddr==0{//а то блокировка))
-		s.Proc[chr].PC++
+		s.Proc[alg].PC++
 		return
 	}
-	if s.Proc[chr].X[x1%32]>=s.Proc[chr].X[x2%32]{
+	if s.Proc[alg].X[x1%32]>=s.Proc[alg].X[x2%32]{
 		//сначала выровняем jumpAddr по длине гена
-		jumpAddr=jumpAddr%int64(len(s.Algs[chr].Commands))
-		if int64(s.Proc[chr].PC)+jumpAddr<0{
-			s.Proc[chr].PC=uint64(int64(len(s.Algs[chr].Commands))+int64(s.Proc[chr].PC)+jumpAddr)
+		jumpAddr=jumpAddr%int64(len(s.Algs[alg].Commands))
+		if int64(s.Proc[alg].PC)+jumpAddr<0{
+			s.Proc[alg].PC=uint64(int64(len(s.Algs[alg].Commands))+int64(s.Proc[alg].PC)+jumpAddr)
 		}else{
-			s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Algs[chr].Commands))
+			s.Proc[alg].PC=uint64(int64(s.Proc[alg].PC)+jumpAddr)%uint64(len(s.Algs[alg].Commands))
 		}
 	}else{
-		s.Proc[chr].PC++
+		s.Proc[alg].PC++
 	}
 }
 
-func (s *Solution) BGT(chr int, x1, x2 uint64, jumpAddr int64){
+func (s *Solution) BGT(alg int, x1, x2 uint64, jumpAddr int64){
 	if jumpAddr==0{//а то блокировка))
-		s.Proc[chr].PC++
+		s.Proc[alg].PC++
 		return
 	}
-	if s.Proc[chr].X[x1%32]>s.Proc[chr].X[x2%32]{
+	if s.Proc[alg].X[x1%32]>s.Proc[alg].X[x2%32]{
 		//сначала выровняем jumpAddr по длине гена
-		jumpAddr=jumpAddr%int64(len(s.Algs[chr].Commands))
-		if int64(s.Proc[chr].PC)+jumpAddr<0{
-			s.Proc[chr].PC=uint64(int64(len(s.Algs[chr].Commands))+int64(s.Proc[chr].PC)+jumpAddr)
+		jumpAddr=jumpAddr%int64(len(s.Algs[alg].Commands))
+		if int64(s.Proc[alg].PC)+jumpAddr<0{
+			s.Proc[alg].PC=uint64(int64(len(s.Algs[alg].Commands))+int64(s.Proc[alg].PC)+jumpAddr)
 		}else{
-			s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Algs[chr].Commands))
+			s.Proc[alg].PC=uint64(int64(s.Proc[alg].PC)+jumpAddr)%uint64(len(s.Algs[alg].Commands))
 		}
 	}else{
-		s.Proc[chr].PC++
+		s.Proc[alg].PC++
 	}
 }
 
-func (s *Solution) BLT(chr int, x1, x2 uint64, jumpAddr int64){
+func (s *Solution) BLT(alg int, x1, x2 uint64, jumpAddr int64){
 	if jumpAddr==0{//а то блокировка))
-		s.Proc[chr].PC++
+		s.Proc[alg].PC++
 		return
 	}
-	if s.Proc[chr].X[x1%32]<s.Proc[chr].X[x2%32]{
+	if s.Proc[alg].X[x1%32]<s.Proc[alg].X[x2%32]{
 		//сначала выровняем jumpAddr по длине гена
-		jumpAddr=jumpAddr%int64(len(s.Algs[chr].Commands))
-		if int64(s.Proc[chr].PC)+jumpAddr<0{
-			s.Proc[chr].PC=uint64(int64(len(s.Algs[chr].Commands))+int64(s.Proc[chr].PC)+jumpAddr)
+		jumpAddr=jumpAddr%int64(len(s.Algs[alg].Commands))
+		if int64(s.Proc[alg].PC)+jumpAddr<0{
+			s.Proc[alg].PC=uint64(int64(len(s.Algs[alg].Commands))+int64(s.Proc[alg].PC)+jumpAddr)
 		}else{
-			s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Algs[chr].Commands))
+			s.Proc[alg].PC=uint64(int64(s.Proc[alg].PC)+jumpAddr)%uint64(len(s.Algs[alg].Commands))
 		}
 	}else{
-		s.Proc[chr].PC++
+		s.Proc[alg].PC++
 	}
 }
 
-func (s *Solution) BNE(chr int, x1, x2 uint64, jumpAddr int64){
+func (s *Solution) BNE(alg int, x1, x2 uint64, jumpAddr int64){
 	if jumpAddr==0{//а то блокировка))
-		s.Proc[chr].PC++
+		s.Proc[alg].PC++
 		return
 	}
-	if s.Proc[chr].X[x1%32]!=s.Proc[chr].X[x2%32]{
+	if s.Proc[alg].X[x1%32]!=s.Proc[alg].X[x2%32]{
 		//сначала выровняем jumpAddr по длине гена
-		jumpAddr=jumpAddr%int64(len(s.Algs[chr].Commands))
-		if int64(s.Proc[chr].PC)+jumpAddr<0{
-			s.Proc[chr].PC=uint64(int64(len(s.Algs[chr].Commands))+int64(s.Proc[chr].PC)+jumpAddr)
+		jumpAddr=jumpAddr%int64(len(s.Algs[alg].Commands))
+		if int64(s.Proc[alg].PC)+jumpAddr<0{
+			s.Proc[alg].PC=uint64(int64(len(s.Algs[alg].Commands))+int64(s.Proc[alg].PC)+jumpAddr)
 		}else{
-			s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Algs[chr].Commands))
+			s.Proc[alg].PC=uint64(int64(s.Proc[alg].PC)+jumpAddr)%uint64(len(s.Algs[alg].Commands))
 		}
 	}else{
-		s.Proc[chr].PC++
+		s.Proc[alg].PC++
 	}
 }
 
-func (s *Solution) BLE(chr int, x1, x2 uint64, jumpAddr int64){
+func (s *Solution) BLE(alg int, x1, x2 uint64, jumpAddr int64){
 	if jumpAddr==0{//а то блокировка))
-		s.Proc[chr].PC++
+		s.Proc[alg].PC++
 		return
 	}
-	if s.Proc[chr].X[x1%32]<=s.Proc[chr].X[x2%32]{
+	if s.Proc[alg].X[x1%32]<=s.Proc[alg].X[x2%32]{
 		//сначала выровняем jumpAddr по длине гена
-		jumpAddr=jumpAddr%int64(len(s.Algs[chr].Commands))
-		if int64(s.Proc[chr].PC)+jumpAddr<0{
-			s.Proc[chr].PC=uint64(int64(len(s.Algs[chr].Commands))+int64(s.Proc[chr].PC)+jumpAddr)
+		jumpAddr=jumpAddr%int64(len(s.Algs[alg].Commands))
+		if int64(s.Proc[alg].PC)+jumpAddr<0{
+			s.Proc[alg].PC=uint64(int64(len(s.Algs[alg].Commands))+int64(s.Proc[alg].PC)+jumpAddr)
 		}else{
-			s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Algs[chr].Commands))
+			s.Proc[alg].PC=uint64(int64(s.Proc[alg].PC)+jumpAddr)%uint64(len(s.Algs[alg].Commands))
 		}
 	}else{
-		s.Proc[chr].PC++
+		s.Proc[alg].PC++
 	}
 }
 
-func (s *Solution) JMP(chr int, jumpAddr int64){
+func (s *Solution) JMP(alg int, jumpAddr int64){
 	if jumpAddr==0{//а то блокировка))
-		s.Proc[chr].PC++
+		s.Proc[alg].PC++
 		return
 	}
 	//сначала выровняем jumpAddr по длине гена
-	jumpAddr=jumpAddr%int64(len(s.Algs[chr].Commands))
-	if int64(s.Proc[chr].PC)+jumpAddr<0{
-		s.Proc[chr].PC=uint64(int64(len(s.Algs[chr].Commands))+int64(s.Proc[chr].PC)+jumpAddr)
+	jumpAddr=jumpAddr%int64(len(s.Algs[alg].Commands))
+	if int64(s.Proc[alg].PC)+jumpAddr<0{
+		s.Proc[alg].PC=uint64(int64(len(s.Algs[alg].Commands))+int64(s.Proc[alg].PC)+jumpAddr)
 	}else{
-		s.Proc[chr].PC=uint64(int64(s.Proc[chr].PC)+jumpAddr)%uint64(len(s.Algs[chr].Commands))
+		s.Proc[alg].PC=uint64(int64(s.Proc[alg].PC)+jumpAddr)%uint64(len(s.Algs[alg].Commands))
 	}
 }
 
