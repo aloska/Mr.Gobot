@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -22,13 +23,15 @@ type Gaploid struct {
 
 type Genotype []Dyploid
 
+type Gameta []Gaploid
+
 //NewGaploid - создает гаплоид из хромосомы (парсит хромосому и достает из нее гены)
-func NewGaploid(chr string) (*Gaploid, error){
-	g:=Gaploid{Chromosome: Chromosome(chr)}
+func NewGaploid(chr Chromosome) (Gaploid, error){
+	g:=Gaploid{Chromosome: chr}
 	//сначала транскрипция
 	//парсим ДНК от старт до стоп-кодонов
 	reg:=regexp.MustCompile("[\u26a2-\u26a4](.+?)[\u2c00-\u2c5e]")
-	matches:=reg.FindAllString(chr, -1)//matches содержит все сырые гены, вместе со старт и стоп-кодонами
+	matches:=reg.FindAllString(string(chr), -1)//matches содержит все сырые гены, вместе со старт и стоп-кодонами
 	for _,v:=range matches{
 		out := strings.Map(func(r rune) rune {
 			if utf8.RuneLen(r) < 3 { //сплайсинг - вырезаем все интроны (руны, длиной больше 2)
@@ -40,9 +43,9 @@ func NewGaploid(chr string) (*Gaploid, error){
 		g.Genes=append(g.Genes, out)
 	}
 	if len(g.Genes)==0{
-		return &g,errors.New("there is no any gene in string")
+		return g,errors.New("there is no any gene in string")
 	}
-	return &g,nil
+	return g,nil
 }
 
 //смешивает два набора генов в шахматном порядке 
@@ -124,6 +127,7 @@ var COMMFORMAT = map[Comm]string{
 }
 
 //трансляция гена (вызывать только после транскрипции и сплайсинга!)
+//https://play.golang.org/p/FLIZoxSxzSb  - тест здесь
 //во входной строке ожидаются только 1 и 2-байтовые руны
 func GeneTranslation(gene string) (alg []Command, er error){
 	r:=[]rune(gene)
@@ -135,8 +139,8 @@ func GeneTranslation(gene string) (alg []Command, er error){
 		case 0://ожидается код комманды
 			alg=append(alg, Command{0,0,0,0})
 			index++
-			alg[index].Code=Comm(r[i])
-			switch COMMFORMAT[alg[index].Code%COUNTCOMMAND] {//какой формат у команды?
+			alg[index].Code=Comm(r[i])%COUNTCOMMAND
+			switch COMMFORMAT[alg[index].Code] {//какой формат у команды?
 			case "0 0 0":
 				//операндов нет - ничего не делаем, просто переход к следующей комманде
 			case "1 1 1", "1 1 8", "1 8 8", "1 0 0", "1 8 0":
@@ -148,10 +152,15 @@ func GeneTranslation(gene string) (alg []Command, er error){
 			}
 			i++
 		case 1://ожидается 1 операнд byte (регистровый)
-			alg[index].Op1=uint64(r[i])
-			switch COMMFORMAT[alg[index].Code%COUNTCOMMAND] {
+			if unicode.IsDigit(r[i]){ //цифры означают цифры
+				alg[index].Op1=uint64(r[i]-'0')
+			}else{
+				alg[index].Op1=uint64(r[i]%32)
+			}
+			switch COMMFORMAT[alg[index].Code] {
 			case "1 0 0":
 				//на этом все
+				state=0
 			case "1 1 1", "1 1 8":
 				state=2
 			case "1 8 8":
@@ -161,8 +170,12 @@ func GeneTranslation(gene string) (alg []Command, er error){
 			}
 			i++
 		case 2://ожидается 2 операнд byte (регистровый)
-			alg[index].Op2=uint64(r[i])
-			switch COMMFORMAT[alg[index].Code%COUNTCOMMAND] {
+			if unicode.IsDigit(r[i]){ //цифры означают цифры
+				alg[index].Op2=uint64(r[i]-'0')
+			}else{
+				alg[index].Op2=uint64(r[i]%32)
+			}
+			switch COMMFORMAT[alg[index].Code] {
 			case "1 1 1":
 				state=3
 			case "1 1 8":
@@ -170,43 +183,66 @@ func GeneTranslation(gene string) (alg []Command, er error){
 			}
 			i++
 		case 3://ожидается 3 операнд byte (регистровый)
-			alg[index].Op3=int64(r[i])//здесь не будет отрицательных чисел, просто в 3 операнде они бывают, см. case 30
+			if unicode.IsDigit(r[i]){ //цифры означают цифры
+				alg[index].Op3=int64(r[i]-'0')
+			}else {
+				alg[index].Op3=int64(r[i]%32)
+			}
+			//здесь не будет отрицательных чисел, просто в 3 операнде они бывают, см. case 30
 			state=0
 			i++
 		case 10://ожидается 1 операнд uint64, нужно 8 рун для парсинга
-			if i+7>=len(r){//нам надо 8 рун, а осталось меньше 8
-				return nil, errors.New(fmt.Sprintf( "gene broken, state: %v, runen: %v", state,i))
+			if unicode.IsDigit(r[i]){ //цифры означают цифры
+				alg[index].Op1=uint64(r[i]-'0')
+				i++
+			}else{
+				if i+7>=len(r){//нам надо 8 рун, а осталось меньше 8
+					return nil, errors.New(fmt.Sprintf( "gene broken, state: %v, runen: %v", state,i))
+				}
+				//у нас все LittleEndian
+				alg[index].Op1=uint64(r[i]&0xff) | uint64(r[i+1]&0xff)<<8 | uint64(r[i+2]&0xff)<<16 | uint64(r[i+3]&0xff)<<24 |
+					uint64(r[i+4]&0xff)<<32 | uint64(r[i+5]&0xff)<<40 | uint64(r[i+6]&0xff)<<48 | uint64(r[i+7]&0xff)<<56
+				i+=8
 			}
-			//у нас все LittleEndian
-			alg[index].Op1=uint64(r[i]&0xff) | uint64(r[i+1]&0xff)<<8 | uint64(r[i+2]&0xff)<<16 | uint64(r[i+3]&0xff)<<24 |
-				uint64(r[i+4]&0xff)<<32 | uint64(r[i+5]&0xff)<<40 | uint64(r[i+6]&0xff)<<48 | uint64(r[i+7]&0xff)<<56
 			state=20
-			i+=8
+
 		case 20://ожидается 2 операнд uint64
-			if i+7>=len(r){
-				return nil, errors.New(fmt.Sprintf( "gene broken, state: %v, runen: %v", state,i))
+			if unicode.IsDigit(r[i]){ //цифры означают цифры
+				alg[index].Op2=uint64(r[i]-'0')
+				i++
+			}else{
+				if i+7>=len(r){
+					return nil, errors.New(fmt.Sprintf( "gene broken, state: %v, runen: %v", state,i))
+				}
+				alg[index].Op2=uint64(r[i]&0xff) | uint64(r[i+1]&0xff)<<8 | uint64(r[i+2]&0xff)<<16 | uint64(r[i+3]&0xff)<<24 |
+					uint64(r[i+4]&0xff)<<32 | uint64(r[i+5]&0xff)<<40 | uint64(r[i+6]&0xff)<<48 | uint64(r[i+7]&0xff)<<56
+				i+=8
 			}
-			alg[index].Op2=uint64(r[i]&0xff) | uint64(r[i+1]&0xff)<<8 | uint64(r[i+2]&0xff)<<16 | uint64(r[i+3]&0xff)<<24 |
-				uint64(r[i+4]&0xff)<<32 | uint64(r[i+5]&0xff)<<40 | uint64(r[i+6]&0xff)<<48 | uint64(r[i+7]&0xff)<<56
 			switch COMMFORMAT[alg[index].Code%COUNTCOMMAND] {//какой формат у команды?
 			case "8 8 1":
 				state=3
 			case "1 8 8":
 				state=30
 			}
-			i+=8
+
 		case 30://ожидается 3 операнд int64
-			if i+7>=len(r){
-				return nil, errors.New(fmt.Sprintf( "gene broken, state: %v, runen: %v", state,i))
+			if unicode.IsDigit(r[i]){ //цифры означают цифры
+				alg[index].Op3=int64(r[i]-'0')
+				i++
+			}else{
+				if i+7>=len(r){
+					return nil, errors.New(fmt.Sprintf( "gene broken, state: %v, runen: %v [-%v]", state,i,i+8-len(r)))
+				}
+				alg[index].Op3=int64(r[i]&0xff) | int64(r[i+1]&0xff)<<8 | int64(r[i+2]&0xff)<<16 | int64(r[i+3]&0xff)<<24 |
+					int64(r[i+4]&0xff)<<32 | int64(r[i+5]&0xff)<<40 | int64(r[i+6]&0xff)<<48 | int64(r[i+7]&0xff)<<56
+				i+=8
 			}
-			alg[index].Op3=int64(r[i]&0xff) | int64(r[i+1]&0xff)<<8 | int64(r[i+2]&0xff)<<16 | int64(r[i+3]&0xff)<<24 |
-				int64(r[i+4]&0xff)<<32 | int64(r[i+5]&0xff)<<40 | int64(r[i+6]&0xff)<<48 | int64(r[i+7]&0xff)<<56
 			state=0
-			i+=8
+
 		}
 	}
 	if state!=0{ //если мы вышли из цикла не в ожидании кода команды, значит ген поломаный
-		return nil, errors.New(fmt.Sprintf( "gene broken because end unexpectedly, runen: %v, byten: %v", state,i))
+		return nil, errors.New(fmt.Sprintf( "gene broken because end unexpectedly, state: %v, runen: %v", state,i))
 	}
 	return
 }

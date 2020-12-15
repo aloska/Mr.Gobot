@@ -3,6 +3,7 @@ package agent
 import (
 	"math"
 	"math/rand"
+	"time"
 )
 
 /*TODO -
@@ -42,6 +43,7 @@ TODO - рост в сторону градиента CO и NO исделать �
 func GrowSprout(Ncur, Nsoma uint32, syn SynEnum)  uint32 {
 	var Nnew uint32
 	var distance float64
+	rand.Seed(time.Now().UnixNano())
 	mx:=org.synapsesMap[syn].maxX
 	my:=org.synapsesMap[syn].maxY
 	x,y:=NumberToXY(Ncur,mx)
