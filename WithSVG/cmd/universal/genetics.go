@@ -396,13 +396,13 @@ func Pairing(P1, P2 Genotype) (Genotype, error){
 		 */
 		jw:=measure.JaroWinklerSimilarity(string(gP1[i].Chromosome), string(gP2[i].Chromosome))
 		if jw >= SpeciesConst{//хромосомы достаточно похожи, просто выбираем, кто будет M, а кто F в новом генотипе
-			if rand.Intn(100)>50 {
+			if rand.Intn(100)>50 {//todo нужны ли мутации здесь или достаточно мейозных?
 				F=append(F, Pairoid{M:P1[i].M, F:P2[i].F})
 			}else{
 				F=append(F, Pairoid{M:P1[i].F, F:P2[i].M})
 			}
 
-		}else if jw>=GenusConst{//хромосомы не достаточно похожи, но в одном роду, применим специальное скрещивание
+		}else if jw>=GenusConst{//хромосомы не достаточно похожи, но поскольку одного рода, применим специальное скрещивание
 			//делим хромосомы на 3 равные части, и молимся, чтобы гены не порвались (хотя может и нужно, чтоб порвались - хз жеж)
 			runeP1:=[]rune(string(gP1[i].Chromosome))
 			runeP2:=[]rune(string(gP1[i].Chromosome))
@@ -443,36 +443,75 @@ func Pairing(P1, P2 Genotype) (Genotype, error){
 }
 
 //при родовом скрещивании, из двух участков от разных гомологичных хромосом создает 2 более близких участка, взвешивая наибольшие последовательности
+//lcs при этом еще подвергается значительной мутации - ну как значительной?
 //https://play.golang.org/p/pQ7x0otHK9X - песочница для теста
 func LCSCrossing(p1n,p2n string)(string, string, error){
+	rand.Seed(time.Now().UnixNano())
 	//находим наибольшую общую последовательность замечательной функцией из пакета edlib
 	if lcs,err:=measure.LCSBacktrack(p1n,p2n);err==nil{
 		if len(lcs)/2<len(p1n)/3{//если наибольшая последовательность на целую треть меньше данного участка, то схожесть участков слабая
 			//поэтому выберем, что делать - обе заменим на LCS или добавить к каждой LCS
 			if rand.Intn(100)>50 {
-				p1n = lcs
-				p2n = lcs
+				p1n = Mutation(lcs, MUTAFACTORCHROM, MUTACHROMRUNEMAX)
+				p2n = Mutation(lcs, MUTAFACTORCHROM, MUTACHROMRUNEMAX)
 			}else{
-				p1n = p1n+lcs
-				p2n = p2n+lcs
+				p1n = p1n+Mutation(lcs, MUTAFACTORCHROM, MUTACHROMRUNEMAX)
+				p2n = p2n+Mutation(lcs, MUTAFACTORCHROM, MUTACHROMRUNEMAX)
 			}
 		}else{//схожесть годная, взвешиваем чей участок более близок к LCS
 			le1:=measure.LCSEditDistance(p1n,lcs)
 			le2:=measure.LCSEditDistance(p2n,lcs)
 			if le1<le2{//p1n ближе к общей последовательности, оставляем ее, а p2n меняем на LCS
-				p2n=lcs
+				p2n=Mutation(lcs, MUTAFACTORCHROM, MUTACHROMRUNEMAX)
 			}else if le1==le2{//если одинаково близки - выбираем случайно, кто поменяется
 				if rand.Intn(100)>50{
-					p1n=lcs
+					p1n=Mutation(lcs, MUTAFACTORCHROM, MUTACHROMRUNEMAX)
 				}else{
-					p2n=lcs
+					p2n=Mutation(lcs, MUTAFACTORCHROM, MUTACHROMRUNEMAX)
 				}
 			}else{
-				p1n=lcs
+				p1n=Mutation(lcs, MUTAFACTORCHROM, MUTACHROMRUNEMAX)
 			}
 		}
 	}else{
 		return "", "", err
 	}
 	return p1n,p2n,nil
+}
+
+//функция мутации - возвращает мутированную строку или ту же самую (случайно)
+//Внимание - у мейоза своя функция мутации!
+//mutafactor - сколько раз на миллион случается мутация
+//maxrune - максимално возможное кол-во рун, затронутых мутацией
+func Mutation(chr string, mutafactor int, maxrune int) string{
+	rand.Seed(time.Now().UnixNano())
+	ar:=[]rune(chr)
+	lena:=len(ar)
+	if rand.Intn(1000001)>1000001-mutafactor{ //случается ли мутация?
+		//количество рун, подверженых мутации
+		m:=rand.Intn(maxrune)+1 //сколько рун затрагивается мутацией?
+		if m>lena/2{
+			m=lena/2	//но не больше половины длины исходной строки
+		}
+		ind:=rand.Intn(lena-m)//случайно выбираем индекс начала
+		mutype:=rand.Intn(20)//выбираем способ мутации
+		switch mutype{
+		case 0,1,2://делеция (редкое событие)
+			ar=append(ar[:ind], ar[ind+m:]...)//вырезали из слайса руны от ind до ind+m
+		case 3,4,5,6,7,8,9,10://создание тандемного повтора
+			ar=append(ar[:ind+m], append(ar[ind: ind+m], ar[ind+m:]...)...)
+		case 11,12://инверсия
+			inv:=make([]rune,0)
+			m++//поскольку 1 символ сам с собой не поменяется, 1 означает поменять местами 2 символа...
+			for i := ind+m-1; i >= ind; i-- {
+				inv=append(inv, ar[i])
+			}
+			ar=append(ar[:ind], append(inv, ar[ind+m:]...)...)
+		default://случайная замена руны-нуклеотида (довольно часто: 13,14,15,16,17,18,19)
+			for i := ind; i < ind+m; i++ {
+				ar[i]=rune(rand.Intn(0xffff))
+			}
+		}
+	}
+	return string(ar)
 }
