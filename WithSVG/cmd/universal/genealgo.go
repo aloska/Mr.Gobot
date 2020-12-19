@@ -3,6 +3,7 @@ package universal
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"unicode"
 )
 
@@ -125,8 +126,8 @@ func GeneTranslation(gene string) (alg []Command, er error){
 			//здесь не будет отрицательных чисел, просто в 3 операнде они бывают, см. case 30
 			state=0
 			i++
-		case 10://ожидается 1 операнд uint64, нужно 8 рун для парсинга
-			if unicode.IsDigit(r[i]){ //цифры означают цифры
+		case 10://ожидается 1 операнд uint64, нужно 8 рун для парсинга, из каждой возьмутся только младшие байты
+			if unicode.IsDigit(r[i]){ //цифры означают цифры, их только 1 руна нужна
 				alg[index].Op1=uint64(r[i]-'0')
 				i++
 			}else{
@@ -199,34 +200,151 @@ func MakePairoidFromAlgs(algs [][]Command, introns [][]string, Mscribes, Fscribe
 	if lena<1 || lena!=len(introns) || lena!=len(Mscribes) || lena!=len(Fscribes){
 		return P, errors.New("MakePairoidFromAlgs: bad lenght parameter(s)")
 	}
+	var m,f string
 	for i:=0;i<lena;i++{
-		for _, cods:=range algs[i]{
-			
+		//создаем ген в хромосоме с интронами
+		var s string
+		for j, cods:=range algs[i]{
+			comanda:=cods.Code%COUNTCOMMAND
+			s+=string(comanda+43)
+			switch comanda{
+			case NOP:
+				//команду добавили, а больше нечего
+			case ADD,SUB,MUL,DIV,REM,AND,OR,XOR,SLL,SRL,SEQ,SGE,SLT,SNE,LDMX,LDINX,STMX,STOUTX:
+				if cods.Op1<10{//если операнд можно изобразить только одной цифрой
+					s+=strconv.Itoa(int(cods.Op1))
+				}else{
+					s+=string(cods.Op1+32*2)
+				}
+
+				if cods.Op2<10{
+					s+=strconv.Itoa(int(cods.Op2))
+				}else{
+					s+=string(cods.Op2+32*2)
+				}
+
+				if cods.Op3<10{
+					s+=strconv.Itoa(int(cods.Op3))
+				}else{
+					s+=string(cods.Op3+32*2)
+				}
+			case ADDI,SUBI,MULI,DIVI,REMI,ANDI,ORI,XORI,SLLI,SRLI,BEQ,BGE,BLT,BNE,BLE,BGT:
+				if cods.Op1<10{
+					s+=strconv.Itoa(int(cods.Op1))
+				}else{
+					s+=string(cods.Op1+32*2)
+				}
+
+				if cods.Op2<10{
+					s+=strconv.Itoa(int(cods.Op2))
+				}else{
+					s+=string(cods.Op2+32*2)
+				}
+
+				if cods.Op3<10 && cods.Op3>=0{
+					s+=strconv.Itoa(int(cods.Op3))
+				}else{//придется использовать 8 рун из кирилицы
+					s+=string(0x400+(cods.Op3&0xff))+string(0x400+(cods.Op3>>8 & 0xff))+string(0x400+(cods.Op3>>16 & 0xff))+
+						string(0x400+(cods.Op3>>24 & 0xff))+string(0x400+(cods.Op3>>32 & 0xff))+string(0x400+(cods.Op3>>40 & 0xff))+
+						string(0x400+(cods.Op3>>48 & 0xff))+string(0x400+(cods.Op3>>56 & 0xff))
+				}
+			case LDM,LDIN:
+				if cods.Op1<10{
+					s+=strconv.Itoa(int(cods.Op1))
+				}else{
+					s+=string(cods.Op1+32*2)
+				}
+
+				if cods.Op2<10{//uint всегда больше 0
+					s+=strconv.Itoa(int(cods.Op2))
+				}else{
+					s+=string(0x400+(cods.Op2&0xff))+string(0x400+(cods.Op2>>8 & 0xff))+string(0x400+(cods.Op2>>16 & 0xff))+
+						string(0x400+(cods.Op2>>24 & 0xff))+string(0x400+(cods.Op2>>32 & 0xff))+string(0x400+(cods.Op2>>40 & 0xff))+
+						string(0x400+(cods.Op2>>48 & 0xff))+string(0x400+(cods.Op2>>56 & 0xff))
+				}
+
+				if cods.Op3<10 && cods.Op3>=0{
+					s+=strconv.Itoa(int(cods.Op3))
+				}else{
+					s+=string(0x400+(cods.Op3&0xff))+string(0x400+(cods.Op3>>8 & 0xff))+string(0x400+(cods.Op3>>16 & 0xff))+
+						string(0x400+(cods.Op3>>24 & 0xff))+string(0x400+(cods.Op3>>32 & 0xff))+string(0x400+(cods.Op3>>40 & 0xff))+
+						string(0x400+(cods.Op3>>48 & 0xff))+string(0x400+(cods.Op3>>56 & 0xff))
+				}
+			case STM,STOUT:
+				if cods.Op1<10{
+					s+=strconv.Itoa(int(cods.Op1))
+				}else{
+					s+=string(0x400+(cods.Op1&0xff))+string(0x400+(cods.Op1>>8 & 0xff))+string(0x400+(cods.Op1>>16 & 0xff))+
+						string(0x400+(cods.Op1>>24 & 0xff))+string(0x400+(cods.Op1>>32 & 0xff))+string(0x400+(cods.Op1>>40 & 0xff))+
+						string(0x400+(cods.Op1>>48 & 0xff))+string(0x400+(cods.Op1>>56 & 0xff))
+				}
+
+				if cods.Op2<10{
+					s+=strconv.Itoa(int(cods.Op2))
+				}else{
+					s+=string(0x400+(cods.Op2&0xff))+string(0x400+(cods.Op2>>8 & 0xff))+string(0x400+(cods.Op2>>16 & 0xff))+
+						string(0x400+(cods.Op2>>24 & 0xff))+string(0x400+(cods.Op2>>32 & 0xff))+string(0x400+(cods.Op2>>40 & 0xff))+
+						string(0x400+(cods.Op2>>48 & 0xff))+string(0x400+(cods.Op2>>56 & 0xff))
+				}
+
+				if cods.Op3<10 && cods.Op3>=0{
+					s+=strconv.Itoa(int(cods.Op3))
+				}else{
+					s+=string(cods.Op3+32*2)
+				}
+			case JMP:
+				if cods.Op3<10 && cods.Op3>=0{
+					s+=strconv.Itoa(int(cods.Op3))
+				}else{
+					s+=string(0x400+(cods.Op3&0xff))+string(0x400+(cods.Op3>>8 & 0xff))+string(0x400+(cods.Op3>>16 & 0xff))+
+						string(0x400+(cods.Op3>>24 & 0xff))+string(0x400+(cods.Op3>>32 & 0xff))+string(0x400+(cods.Op3>>40 & 0xff))+
+						string(0x400+(cods.Op3>>48 & 0xff))+string(0x400+(cods.Op3>>56 & 0xff))
+				}
+			case PUSH,POP:
+				if cods.Op1<10{
+					s+=strconv.Itoa(int(cods.Op1))
+				}else{
+					s+=string(cods.Op1+32*2)
+				}
+			case LI:
+				if cods.Op1<10{
+					s+=strconv.Itoa(int(cods.Op1))
+				}else{
+					s+=string(cods.Op1+32*2)
+				}
+
+				if cods.Op3<10 && cods.Op3>=0{
+					s+=strconv.Itoa(int(cods.Op3))
+				}else{
+					s+=string(0x400+(cods.Op3&0xff))+string(0x400+(cods.Op3>>8 & 0xff))+string(0x400+(cods.Op3>>16 & 0xff))+
+						string(0x400+(cods.Op3>>24 & 0xff))+string(0x400+(cods.Op3>>32 & 0xff))+string(0x400+(cods.Op3>>40 & 0xff))+
+						string(0x400+(cods.Op3>>48 & 0xff))+string(0x400+(cods.Op3>>56 & 0xff))
+				}
+			}
+			s+=introns[i][j]
 		}
+		m+="⚤"+s+"Ⱑ"+Mscribes[i]
+		f+="⚤"+s+"Ⱑ"+Fscribes[i]
 	}
+	P.M,_=NewMonoid(Chromosome(m))//ошибок не может быть - ведь мы из алгоритмов сделали гены
+	P.F,_=NewMonoid(Chromosome(f))
 
 	return P,nil
 }
 
 //вспомагательная функция для MakePairoidFromAlgs (если желается пустых интронов)
-//возвращает матрицу пустых строк mXn
-func MakeEmptyIntrons(m,n int)([][]string, error){
-	if m<1 || n<1{
-		return nil, errors.New("MakeEmptyIntrons: m or n ==0 cannot be")
-	}
-	a := make([][]string, m)
+//возвращает матрицу пустых строк в соответствии со слайсом слайсов Command
+func MakeEmptyIntrons(algs [][]Command) [][]string{
+	a := make([][]string, len(algs))
 	for i := range a {
-		a[i] = make([]string, n)
+		a[i] = make([]string, len(algs[i]))
 	}
-	return a,nil
+	return a
 }
 
 //вспомагательная функция для MakePairoidFromAlgs (если желается пустых подписей)
 //возвращает слай пустых m строк
-func MakeEmptyScribes(m int)([]string, error){
-	if m<1{
-		return nil, errors.New("MakeEmptyScribes: m==0 cannot be")
-	}
-	return make([]string,m),nil
+func MakeEmptyScribes(algs [][]Command) []string{
+	return make([]string,len(algs))
 }
 
