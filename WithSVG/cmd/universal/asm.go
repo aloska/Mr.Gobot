@@ -415,7 +415,7 @@ func GetCommandsFromAsmString(s *string) (*[]Command, error){
 
 func GetReadableFromCommands(cods []Command) *[2]string{
 	ret:=[2]string{"codes: ",
-				   "/*This is assembler only for Solution RISC architecture*/\nasm:\n"}
+				   "/*This assembler is only for Solution RISC architecture*/\nasm:\n"}
 	for i:=0;i<len(cods);i++{
 		switch cods[i].Code%COUNTCOMMAND{
 		case NOP:
