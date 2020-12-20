@@ -3,10 +3,11 @@ package main
 import (
 	"WithSVG/cmd/universal"
 	"fmt"
+	measure "github.com/hbollon/go-edlib"
 )
 
 func main() {
-
+/*
 	var (
 		algs [][]universal.Command
 		G universal.Genotype
@@ -103,6 +104,65 @@ asm:
 		readable:=universal.GetReadableFromCommands(v)
 		fmt.Println(readable)
 	}
+	*/
 
+	g1,_:=universal.MakeGenotypeFromStrings(";sdkfjbmalenks;klkdfgn⚤фыолывроцукекkjjkdfнгнзщсшмаитбдтывсиммячбапрдгозщⰡdfkjgrkjjkdfjsdk⚤сшмаитмуывсиммячбаⰡ",
+		";sdkfjbnksfemalealkdfgn⚤фыолывроцукекkjjkdfнгнзщсшмаитбдтывсиммячбапрдгозщⰡdfkjgvhkkjkdfjsdk⚤сшмаитженабдтывсиммячбаⰡ")
+	g2,_:=universal.MakeGenotypeFromStrings(";sdk;djflfdklkdfgn⚤фыолыврfнгнзщтымячбапрдгозщⰡdfkjgvhkkjejjkdfjsdk⚤сшмамужбдтывсиммячбаⰡ",
+		";sdkfjbdfgn⚤фыолывроцукнгнзщсшмаитбывсиммячбапрдгозщⰡdfkjgvhkkkjjkdfjsdk⚤сшмаитженабдтыммячбаⰡ"	)
+	g3,_:=universal.MakeGenotypeFromStrings("паспаспаmalenks;klkdfgn⚤фыолывргфыыоенгоцукекkjjkdfнгнзщсшмаитбдтывсиммячбапрдгозщⰡdfkjgrkjjkdfjsdk⚤сшмаитмуывсиммячбаⰡ",
+		"прпрапрроksfemalealkdfgn⚤фыолывроцукекkjjkdfнгнзщсшмтбдтывсиммячбапрдгозщⰡdfkjgvhkkjkdfjsdk⚤сшоывагценывмаитженабдтывсиммячбаⰡ")
+	g4,_:=universal.MakeGenotypeFromStrings("рпорроjflfddfgn⚤фыолыврfнгнзщтымячбапрдгозщⰡdfkjgvhkkjejjkdfjsdk⚤сшмамужбдтывсиммячбаⰡ",
+		"апрпрпрпраgn⚤фыолывроцукнгнзщсшмаитбывсиммячбапрдгозщⰡdfkjgvhkkkdfjsdk⚤сшмаитженабдгвенутслтыммячбаⰡ"	)
+
+	var strtOrg []universal.Genotype
+
+	strtOrg=append(strtOrg,g1)
+	strtOrg=append(strtOrg,g2)
+	strtOrg=append(strtOrg,g3)
+	strtOrg=append(strtOrg,g4)
+	evo:=universal.Evolution{Populations: strtOrg}
+	evo.Functional=tional
+
+	i:=0
+	for !evo.Step(0.95, 147) && i<1000{
+		i++
+		if universal.Catastrofe{
+			fmt.Println("катастрофа: ", len(evo.Populations[0]), " maxpoly: ",maxpoly)
+		}
+		fmt.Println(i, ":\t",evo.BestFit(),"\t",len(evo.Populations)," sc:",universal.SpeciesConst," gc:",universal.GenusConst)
+		fmt.Println(evo.Populations[0][0].M.Genes, evo.Populations[0][0].F.Genes)
+		fmt.Println(evo.Populations[1][0].M.Genes, evo.Populations[1][0].F.Genes)
+		maxpoly=0
+	}
+
+
+}
+var maxpoly=0
+
+func tional (g universal.Genotype) float32{
+	var jw float32=0
+	for _,p:=range g {
+		for _,gene:= range p.M.Genes {
+			jwn := measure.JaroWinklerSimilarity(gene, "геном")
+			if jwn>jw{
+				jw=jwn
+			}
+
+		}
+		for _,gene:= range p.F.Genes {
+			jwn := measure.JaroWinklerSimilarity(gene, "геном")
+			if jwn>jw{
+				jw=jwn
+			}
+
+		}
+	}
+	la:=len(g)
+	if la>maxpoly{
+		maxpoly=la
+	}
+
+	return jw
 }
 

@@ -21,7 +21,7 @@ func (g Genotype) MakeAlgorithms() ([][]Command, []error){
 		genes:=g[i].concatMF() //набор генов, определяющий алгоритм, но это не все)) может какой ген поломанный - выяснится на этапе трансляции
 		for _, gen:= range genes{
 			//трансляция
-			if com,err:=GeneTranslation(gen); err==nil{
+			if com,err:=GeneTranslationAlg(gen); err==nil{
 				a=append(a, com ...)//если ошибок трансляции нет - добавим к будущему алгоритму
 			}else{
 				ers=append(ers, err)
@@ -64,7 +64,7 @@ var COMMFORMAT = map[Comm]string{
 //трансляция гена (вызывать только после транскрипции и сплайсинга!)
 //https://play.golang.org/p/FLIZoxSxzSb  - тест здесь
 //во входной строке ожидаются только 1 и 2-байтовые руны
-func GeneTranslation(gene string) (alg []Command, er error){
+func GeneTranslationAlg(gene string) (alg []Command, er error){
 	r:=[]rune(gene)
 	i:=0//индекс слайса рун из гена
 	state:=0

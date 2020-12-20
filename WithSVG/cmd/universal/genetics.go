@@ -120,7 +120,7 @@ func Crossingover(a Chromosome, b Chromosome) Chromosome{
 	}
 	rand.Seed(time.Now().UnixNano())//ну еще больше случайности, ну!
 	//ну и мутация при кроссинговере случается
-	if rand.Intn(1000001)>1000001-MUTAFACTORCROSS{ //случается ли?
+	if rand.Intn(1000001)>1000000-MUTAFACTORCROSS{ //случается ли?
 		//количество рун, подверженых мутации
 		m:=rand.Intn(MUTAPOINTRUNEMAX)+1 //при кроссинговере у нас только точечная мутация
 		ind:=rand.Intn(lena-m)//случайно выбираем индекс начала
@@ -297,7 +297,7 @@ func Mutation(chr string, mutafactor int, maxrune int) string{
 	rand.Seed(time.Now().UnixNano())
 	ar:=[]rune(chr)
 	lena:=len(ar)
-	if rand.Intn(1000001)>1000001-mutafactor{ //случается ли мутация?
+	if rand.Intn(1000001)>1000000-mutafactor{ //случается ли мутация?
 		//количество рун, подверженых мутации
 		m:=rand.Intn(maxrune)+1 //сколько рун затрагивается мутацией?
 		if m>lena/2{

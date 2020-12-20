@@ -22,13 +22,13 @@ func (g Genotype) PolyMeyosis() Gameta{
 	//теоритически может получится гамета со всеми 4 внутри (сразу смешанный квадраплоид)
 
 	for i:=0;i<4;i++ {
-		if rand.Intn(100)>=POLYADDGAMETPERCENT {//есть ли добавление этой гаметы в набор полиплоидный
+		if rand.Intn(100)<=POLYADDGAMETPERCENT {//есть ли добавление этой гаметы в набор полиплоидный
 			gat := g.Meyosis()//получим стандартную случайную гамету
 			lena := len(gat)
-			if rand.Intn(100) > POLYDELCHROMGAMETPERCENT { //есть ли удаление некоторых хромосом?
+			if rand.Intn(100) <= POLYDELCHROMGAMETPERCENT { //есть ли удаление некоторых хромосом?
 				m:=rand.Intn(lena)+1//количество удаляемых хромосом
 				if m>=lena{
-					break//полностью пустая
+					continue//полностью пустая
 				}
 				ind:=rand.Intn(lena-m)
 				gat=append(gat[:ind], gat[ind+m:]...)
@@ -97,11 +97,11 @@ func PolyPairing(P ...Genotype) (Genotype, error){
 		jw:=JWSorter{}
 		for _, g := range ga {
 			if len(g) <= i {
-				break
+				continue
 			} //в этой гамете нет лишних хромосом
 			jw=append(jw, g[i].Chromosome)
 		}
-		if len(jw)<2 {break}//с одной хромосомой каши не сваришь
+		if len(jw)<2 {continue}//с одной хромосомой каши не сваришь
 		sort.Sort(jw)
 		di.M,_=NewMonoid(jw[0])
 		di.F,_=NewMonoid(Chromosome(PolyAggregation(jw[1:],0,2)))
@@ -121,7 +121,7 @@ func (jws JWSorter) Less(i, j int) bool {
 	lcs,_:=measure.LCSBacktrack(string(jws[i]), string(jws[j]))
 	jwi:=measure.JaroWinklerSimilarity(string(jws[i]), lcs)
 	jwj:=measure.JaroWinklerSimilarity(string(jws[j]), lcs)
-	if jwi<jwj{
+	if jwi>jwj{ //Внимание! здесь должно быть больше, чтобы отсортировало по убыванию
 		return true
 	}
 	return false
