@@ -2,6 +2,7 @@ package universal
 
 import (
 	"errors"
+	"fmt"
 	measure "github.com/hbollon/go-edlib"
 	"math"
 	"math/rand"
@@ -124,22 +125,27 @@ func Crossingover(a Chromosome, b Chromosome) Chromosome{
 		//количество рун, подверженых мутации
 		m:=rand.Intn(MUTAPOINTRUNEMAX)+1 //при кроссинговере у нас только точечная мутация
 		ind:=rand.Intn(lena-m)//случайно выбираем индекс начала
-		mutype:=rand.Intn(10)//выбираем способ мутации
+		mutype:=rand.Intn(20)//выбираем способ мутации
 		switch mutype{
-		case 0://делеция (крайне редкое событие)
+		case 2,3,4://делеция
 			ar=append(ar[:ind], ar[ind+m:]...)//вырезали из слайса руны от ind до ind+m
-		case 1,2,3,4://создание тандемного повтора
+		case 5,6,7,8://создание тандемного повтора
 			ar=append(ar[:ind+m], append(ar[ind: ind+m], ar[ind+m:]...)...)
-		case 5,6,7,8://инверсия
+		case 9,10,11,12://инверсия
 			inv:=make([]rune,0)
 			m++//поскольку 1 символ сам с собой не поменяется, 1 означает поменять местами 2 символа...
 			for i := ind+m-1; i >= ind; i-- {
 				inv=append(inv, ar[i])
 			}
 			ar=append(ar[:ind], append(inv, ar[ind+m:]...)...)
-		default://случайная замена руны-нуклеотида (тоже редко, как и делеция))
+		case 13,14,15://случайное добавление случайных символов
+			for i := 0; i < m; i++ {
+				ar=append(ar[:ind+1], ar[ind:]...)
+				ar[ind]=rune(rand.Intn(0x050a))
+			}
+		default://случайная замена руны-нуклеотида
 			for i := ind; i < ind+m; i++ {
-				ar[i]=rune(rand.Intn(0xffff))
+				ar[i]=rune(rand.Intn(0x050a))
 			}
 		}
 	}
@@ -185,6 +191,10 @@ func (g Genotype) Meyosis() Gameta{
 			}
 		}
 
+	}
+	if len(gameta)==0 { //а так может быть - вернем чушь
+		mn,_:=NewMonoid(Chromosome(Mutation("+++++++++⚤+++++++++++++++++Ⱑ++++++++++++++", POLYMUTAMEYOSRUNEMAX,POLYMUTAFACTORMEYOS)))
+		gameta=append(gameta,mn)
 	}
 	return gameta
 }
@@ -259,11 +269,11 @@ func LCSCrossing(p1n,p2n string)(string, string, error){
 	rand.Seed(time.Now().UnixNano())
 	//находим наибольшую общую последовательность замечательной функцией из пакета edlib
 	if lcs,err:=measure.LCSBacktrack(p1n,p2n);err==nil{
-		if len(lcs)/2<len(p1n)/3{//если наибольшая последовательность на целую треть меньше данного участка, то схожесть участков слабая
+		if len(lcs)<len(p1n)/3{//если наибольшая последовательность на целую треть меньше данного участка, то схожесть участков слабая
 			//поэтому выберем, что делать - обе заменим на LCS или добавить к каждой LCS
 			if rand.Intn(100)>50 {
-				p1n = Mutation(lcs, MUTAFACTORCHROM, MUTACHROMRUNEMAX)
-				p2n = Mutation(lcs, MUTAFACTORCHROM, MUTACHROMRUNEMAX)
+				p1n = Mutation(lcs+lcs, MUTAFACTORCHROM, MUTACHROMRUNEMAX)
+				p2n = Mutation(lcs+lcs, MUTAFACTORCHROM, MUTACHROMRUNEMAX)
 			}else{
 				p1n = p1n+Mutation(lcs, MUTAFACTORCHROM, MUTACHROMRUNEMAX)
 				p2n = p2n+Mutation(lcs, MUTAFACTORCHROM, MUTACHROMRUNEMAX)
@@ -272,7 +282,7 @@ func LCSCrossing(p1n,p2n string)(string, string, error){
 			le1:=measure.LCSEditDistance(p1n,lcs)
 			le2:=measure.LCSEditDistance(p2n,lcs)
 			if le1<le2{//p1n ближе к общей последовательности, оставляем ее, а p2n меняем на LCS
-				p2n=Mutation(lcs, MUTAFACTORCHROM, MUTACHROMRUNEMAX)
+				p2n=Mutation(lcs+lcs, MUTAFACTORCHROM, MUTACHROMRUNEMAX)
 			}else if le1==le2{//если одинаково близки - выбираем случайно, кто поменяется
 				if rand.Intn(100)>50{
 					p1n=Mutation(lcs, MUTAFACTORCHROM, MUTACHROMRUNEMAX)
@@ -304,22 +314,27 @@ func Mutation(chr string, mutafactor int, maxrune int) string{
 			m=lena/2	//но не больше половины длины исходной строки
 		}
 		ind:=rand.Intn(lena-m)//случайно выбираем индекс начала
-		mutype:=rand.Intn(20)//выбираем способ мутации
+		mutype:=rand.Intn(25)//выбираем способ мутации
 		switch mutype{
-		case 0,1,2://делеция (редкое событие)
+		case 3,4,5://делеция (редкое событие)
 			ar=append(ar[:ind], ar[ind+m:]...)//вырезали из слайса руны от ind до ind+m
-		case 3,4,5,6,7,8,9,10://создание тандемного повтора
+		case 6,7,8,9,10,11,12://создание тандемного повтора
 			ar=append(ar[:ind+m], append(ar[ind: ind+m], ar[ind+m:]...)...)
-		case 11,12://инверсия
+		case 13,14,15,16,17://инверсия
 			inv:=make([]rune,0)
 			m++//поскольку 1 символ сам с собой не поменяется, 1 означает поменять местами 2 символа...
 			for i := ind+m-1; i >= ind; i-- {
 				inv=append(inv, ar[i])
 			}
 			ar=append(ar[:ind], append(inv, ar[ind+m:]...)...)
-		default://случайная замена руны-нуклеотида (довольно часто: 13,14,15,16,17,18,19)
+		case 18,19,20://случайное добавление случайных символов
+			for i := 0; i < m; i++ {
+				ar=append(ar[:ind+1], ar[ind:]...)
+				ar[ind]=rune(rand.Intn(0x050a))
+			}
+		default://случайная замена руны-нуклеотида (довольно часто)
 			for i := ind; i < ind+m; i++ {
-				ar[i]=rune(rand.Intn(0xffff))
+				ar[i]=rune(rand.Intn(0x050a))
 			}
 		}
 	}
@@ -350,4 +365,13 @@ func MakeGenotypeFromStrings(strs ...string) (Genotype, []error){
 		G=append(G,Pairoid{M:monM,F:monF})
 	}
 	return G,errs
+}
+
+func (G Genotype) String() string{
+	ret:=""
+	for i,v:=range G{
+		ret+= fmt.Sprintf("%v Genes in M: %v\n",i,v.M.Genes)
+		ret+= fmt.Sprintf("%v Genes in F: %v\n",i,v.F.Genes)
+	}
+	return ret
 }

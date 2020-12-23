@@ -50,6 +50,7 @@ type Solution struct {
 	In   []IO
 	Out  []IO
 	IsAsync bool
+	StopNow bool
 }
 
 //для создания новых решателей из JSON

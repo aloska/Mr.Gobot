@@ -9,7 +9,7 @@ import (
 
 //создание всех алгоритмов из генотипа
 //каждый алгоритм состоит из всех генов Пароида сразу
-func (g Genotype) MakeAlgorithms() ([][]Command, []error){
+func (g Genotype) MakeAlgorithms(tryResolveErrors bool) ([][]Command, []error){
 	var res [][]Command //здесь будет len(g.Genom) алгоритмов
 	var ers []error
 	for i:=0; i<len(g);i++{
@@ -21,7 +21,7 @@ func (g Genotype) MakeAlgorithms() ([][]Command, []error){
 		genes:=g[i].concatMF() //набор генов, определяющий алгоритм, но это не все)) может какой ген поломанный - выяснится на этапе трансляции
 		for _, gen:= range genes{
 			//трансляция
-			if com,err:=GeneTranslationAlg(gen); err==nil{
+			if com,err:=GeneTranslationAlg(gen, tryResolveErrors); err==nil{
 				a=append(a, com ...)//если ошибок трансляции нет - добавим к будущему алгоритму
 			}else{
 				ers=append(ers, err)
@@ -64,7 +64,7 @@ var COMMFORMAT = map[Comm]string{
 //трансляция гена (вызывать только после транскрипции и сплайсинга!)
 //https://play.golang.org/p/FLIZoxSxzSb  - тест здесь
 //во входной строке ожидаются только 1 и 2-байтовые руны
-func GeneTranslationAlg(gene string) (alg []Command, er error){
+func GeneTranslationAlg(gene string, tryResolveErrors bool) (alg []Command, er error){
 	r:=[]rune(gene)
 	i:=0//индекс слайса рун из гена
 	state:=0
@@ -132,6 +132,11 @@ func GeneTranslationAlg(gene string) (alg []Command, er error){
 				i++
 			}else{
 				if i+7>=len(r){//нам надо 8 рун, а осталось меньше 8
+					if tryResolveErrors{
+						if len(alg)>1 {
+							return alg[:index-1],nil
+						}
+					}
 					return nil, errors.New(fmt.Sprintf( "gene broken, state: %v, runen: %v", state,i))
 				}
 				//у нас все LittleEndian
@@ -147,6 +152,11 @@ func GeneTranslationAlg(gene string) (alg []Command, er error){
 				i++
 			}else{
 				if i+7>=len(r){
+					if tryResolveErrors{
+						if len(alg)>1 {
+							return alg[:index-1],nil
+						}
+					}
 					return nil, errors.New(fmt.Sprintf( "gene broken, state: %v, runen: %v", state,i))
 				}
 				alg[index].Op2=uint64(r[i]&0xff) | uint64(r[i+1]&0xff)<<8 | uint64(r[i+2]&0xff)<<16 | uint64(r[i+3]&0xff)<<24 |
@@ -166,6 +176,11 @@ func GeneTranslationAlg(gene string) (alg []Command, er error){
 				i++
 			}else{
 				if i+7>=len(r){
+					if tryResolveErrors{
+						if len(alg)>1 {
+							return alg[:index-1],nil
+						}
+					}
 					return nil, errors.New(fmt.Sprintf( "gene broken, state: %v, runen: %v [-%v]", state,i,i+8-len(r)))
 				}
 				alg[index].Op3=int64(r[i]&0xff) | int64(r[i+1]&0xff)<<8 | int64(r[i+2]&0xff)<<16 | int64(r[i+3]&0xff)<<24 |
@@ -177,6 +192,11 @@ func GeneTranslationAlg(gene string) (alg []Command, er error){
 		}
 	}
 	if state!=0{ //если мы вышли из цикла не в ожидании кода команды, значит ген поломаный
+		if tryResolveErrors{
+			if len(alg)>1 {
+				return alg[:index-1],nil
+			}
+		}
 		return nil, errors.New(fmt.Sprintf( "gene broken because end unexpectedly, state: %v, runen: %v", state,i))
 	}
 	return

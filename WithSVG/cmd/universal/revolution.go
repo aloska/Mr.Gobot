@@ -121,7 +121,8 @@ func (jws JWSorter) Less(i, j int) bool {
 	lcs,_:=measure.LCSBacktrack(string(jws[i]), string(jws[j]))
 	jwi:=measure.JaroWinklerSimilarity(string(jws[i]), lcs)
 	jwj:=measure.JaroWinklerSimilarity(string(jws[j]), lcs)
-	if jwi>jwj{ //Внимание! здесь должно быть больше, чтобы отсортировало по убыванию
+	if jwi<jwj{ //Внимание!
+		//может нам и нужны именно непохожести?
 		return true
 	}
 	return false
