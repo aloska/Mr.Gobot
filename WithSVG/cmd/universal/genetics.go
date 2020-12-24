@@ -4,11 +4,15 @@ import (
 	"errors"
 	"fmt"
 	measure "github.com/hbollon/go-edlib"
+	"io/ioutil"
 	"math"
 	"math/rand"
+	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -141,11 +145,15 @@ func Crossingover(a Chromosome, b Chromosome) Chromosome{
 		case 13,14,15://случайное добавление случайных символов
 			for i := 0; i < m; i++ {
 				ar=append(ar[:ind+1], ar[ind:]...)
-				ar[ind]=rune(rand.Intn(0x050a))
+				ru:=rune(rand.Intn(0x050a))
+				for ; !unicode.IsPrint(ru) || unicode.IsSpace(ru);ru=rune(rand.Intn(0x050a)){}
+				ar[ind]=ru
 			}
 		default://случайная замена руны-нуклеотида
 			for i := ind; i < ind+m; i++ {
-				ar[i]=rune(rand.Intn(0x050a))
+				ru:=rune(rand.Intn(0x050a))
+				for ; !unicode.IsPrint(ru) || unicode.IsSpace(ru); ru=rune(rand.Intn(0x050a)){}
+				ar[i]=ru
 			}
 		}
 	}
@@ -330,11 +338,15 @@ func Mutation(chr string, mutafactor int, maxrune int) string{
 		case 18,19,20://случайное добавление случайных символов
 			for i := 0; i < m; i++ {
 				ar=append(ar[:ind+1], ar[ind:]...)
-				ar[ind]=rune(rand.Intn(0x050a))
+				ru:=rune(rand.Intn(0x050a))
+				for ; !unicode.IsPrint(ru) || unicode.IsSpace(ru);ru=rune(rand.Intn(0x050a)){}
+				ar[ind]=ru
 			}
 		default://случайная замена руны-нуклеотида (довольно часто)
 			for i := ind; i < ind+m; i++ {
-				ar[i]=rune(rand.Intn(0x050a))
+				ru:=rune(rand.Intn(0x050a))
+				for ; !unicode.IsPrint(ru) || unicode.IsSpace(ru);ru=rune(rand.Intn(0x050a)){}
+				ar[i]=ru
 			}
 		}
 	}
@@ -365,6 +377,54 @@ func MakeGenotypeFromStrings(strs ...string) (Genotype, []error){
 		G=append(G,Pairoid{M:monM,F:monF})
 	}
 	return G,errs
+}
+
+const strSign="Aloha: Не используйте строку в точности равную той, которую читаете прямо в данный момент для создания хромосомы, и не удаляйте этот комментарий! Don't use the string strictly equal this. And don't delete this! ("
+
+func ReadGenotypesFromFile(filep string)(Ge []Genotype, er []error){
+	fileBytes, err := ioutil.ReadFile(filep)
+	if err != nil {
+		return nil, append(er,errors.New("can't read file"))
+	}
+
+	sliceData := strings.Split(string(fileBytes), "\n")
+
+	for i:=0;i<len(sliceData);{
+		if len(sliceData[i])>330{
+			if sliceData[i][:330]==strSign+"end"{
+				return
+			}else if sliceData[i][:327]==strSign{
+				Ge=append(Ge,Genotype{})
+				i++
+				continue
+			}
+		}
+		if len(sliceData)<i+1{
+			return Ge,append(er,errors.New("number of chromosome should be odd"))
+		}
+		p1,_:=NewMonoid(Chromosome(sliceData[i]))
+		p2,_:=NewMonoid(Chromosome(sliceData[i+1]))
+		Ge[len(Ge)-1]=append(Ge[len(Ge)-1],	Pairoid{M:p1,F:p2})
+		i+=2
+	}
+	return
+}
+
+func WriteGenotypesToFile(filep string, Ge []Genotype) (er error){
+	f, err := os.Create(filep)
+	if err!=nil{
+		return err
+	}
+	defer f.Close()
+
+	for i:=0;i<len(Ge);i++{
+		_,er=f.WriteString(strSign+strconv.Itoa(i)+"]\n")
+		for _,chr:=range Ge[i]{
+			_,er=f.WriteString(string(chr.M.Chromosome)+"\n")
+			_,er=f.WriteString(string(chr.F.Chromosome)+"\n")
+		}
+	}
+	return
 }
 
 func (G Genotype) String() string{

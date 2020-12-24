@@ -32,7 +32,7 @@ func main() {
    " ⚤.001Ⱑ ⚤.010Ⱑ ⚤.101Ⱑ ⚤.110Ⱑ ⚤/001Ⱑ ⚤/011Ⱑ ⚤/101Ⱑ ⚤0001Ⱑ",
    " ⚤.010Ⱑ ⚤.101Ⱑ ⚤.110Ⱑ ⚤/001Ⱑ ⚤/011Ⱑ ⚤/101Ⱑ")
 */
-
+//*
 	g1,_:=u.MakeGenotypeFromStrings("fjhglkdafhgadfg⚤+++Ⱑkj2i937yr78fuhndskmc,nfw2y4fn98wuopj⚤,000Ⱑfpmoi34uf98wynirfoipsef4rngfofi1ou3mpfv",
 		"ofi1ou3mpfvpos⚤,000Ⱑ2wep4fno2w9iu4nf92fmd2i3unrf7t4yugfokr⚤,001Ⱑ5342iq1o39umf8wvyn7nowmpea.",
 		"mof2i4fnyu98ywbgoiwfe⚤,111Ⱑ2wlenfio2iufnow23fnoqw8ne3yf92893f⚤-001Ⱑ nowien98wvmwpoirgo834⚤-011Ⱑc",
@@ -53,14 +53,23 @@ func main() {
 		"апрп⚤A100Ⱑx xghn xdgfhn⚤A001Ⱑxgh ghdgh s⚤A101Ⱑfgh sh⚤C000Ⱑsgh sfghsq34⚤C001Ⱑxfgsfgнзщсшмафцжущшкр зушйгкштп щйшеуо мэЖгргнве иФ лвоартм шдвгар мфвккам эщуфкзщлк09п304дмитбывсиммячбапрдгозщⰡdfkjgvhkkkdfjsdk⚤с шмаитженабдгвенулыврташгооырал тслтыммячбаⰡ",
 		"прфукифкнгшщгшнгкфуеркпщпюош⚤.001Ⱑфукпуфкпфук⚤.010Ⱑ⚤.101Ⱑфваифвпифеит⚤.110Ⱑфвптфвтпфптьпогьвраимв⚤/001Ⱑdsfygjufg⚤/011Ⱑjmk,gjoiugyftd⚤/101Ⱑadbnmhiu245⚤0001Ⱑ6567876543",
 		"⚤0010Ⱑgrytumnb567⚤0110Ⱑ456765432⚤0011Ⱑfghjmnfbd234⚤0111Ⱑgdfhnbv3456⚤0000Ⱑfhgmffd3456⚤1002Ⱑbnfghnfgb6543⚤1012Ⱑvfbcnhjnh6523123⚤1102Ⱑ123hngfgd⚤1112Ⱑ12345⚤A000Ⱑncgh cgh абдгвенулыврташгооырал тслтыммячбаⰡ")
-
+//*/
 	var strtOrg []u.Genotype
 
 	//strtOrg=append(strtOrg,g0)
+	//*
 	strtOrg=append(strtOrg,g1)
 	strtOrg=append(strtOrg,g2)
 	strtOrg=append(strtOrg,g3)
 	strtOrg=append(strtOrg,g4)
+//*/
+/*
+	strtOrg,err:=u.ReadGenotypesFromFile("uni.txt")
+	if err!=nil{
+		fmt.Println(err)
+		os.Exit(5)
+	}
+*/
 	evo:=u.Evolution{Populations: strtOrg}
 	evo.Functional=tionalAlg
 
@@ -72,13 +81,13 @@ func main() {
 	//evo.ForcePolyCross(40)
 	//evo.ForcePolyCross(50)
 	i:=0
-	for !evo.Step(0.985, 200,true) && i<2000{
+	for !evo.Step(1, 200,true) && i<2000{
 		i++
 		if evo.Catastrofe==u.ITERBETWEENCATASTROFE{
-			fmt.Println("катастрофа: ", len(*evo.BestGenom), " maxpoly: ",maxpol)
+			fmt.Println("катастрофа: ", len(evo.Populations[0]), " maxpoly: ",maxpol)
 		}
 		fmt.Println(i, ":\t",evo.BestFit(),"\t",len(evo.Populations)," sc:",u.SpeciesConst," gc:",u.GenusConst)
-		fmt.Println(evo.BestGenom)
+		fmt.Println(evo.Populations[0])
 		//удалим пустые хромосомы, без генов?
 		for a:=0;a<len(evo.Populations);a++{
 			for b:=0;b<len(evo.Populations[a]);b++{
@@ -92,13 +101,13 @@ func main() {
 			evo.ForcePolyCross(200)
 		}
 
-		evo2.Step(0.98, 50,false)
-		if i%27==0{
-			evo.Populations=append(evo2.Populations[:15], evo.Populations...)
+		evo2.Step(1, 50,false)
+		if i%13==0{
+			evo.Populations=append(evo.Populations,evo2.Populations[:3]...)
 
 		}
-		if i%23==0{
-			evo2.Populations=append(evo.Populations[:5],evo2.Populations...)
+		if i%17==0{
+			evo2.Populations=append(evo2.Populations,evo.Populations[:5]...)
 
 		}
 
@@ -114,37 +123,41 @@ func main() {
 		maxpol=0
 	}
 
+	fmt.Println("\nbest index: ",evo.BestIndex())
+
 	f, _ := os.Create("try.txt")
-	defer f.Close()
+
 
 	w := bufio.NewWriter(f)
-	fmt.Fprintf(w, "%v\n", i)
 
-	for i:=0;i<len(*evo.BestGenom);i++{
-		fmt.Println((*evo.BestGenom)[i].M)
-		fmt.Println((*evo.BestGenom)[i].F)
-		fmt.Fprintln(w,(*evo.BestGenom)[i].M)
-		fmt.Fprintln(w,(*evo.BestGenom)[i].F)
+	for ii:=0;ii<len(evo.Populations[0]);ii++{
+		fmt.Println(evo.Populations[0][ii].M)
+		fmt.Println(evo.Populations[0][ii].F)
+		fmt.Fprintln(w,evo.Populations[0][ii].M)
+		fmt.Fprintln(w,evo.Populations[0][ii].F)
 	}
-	fmt.Println(evo.BestGenom)
-	fmt.Fprintln(w,evo.BestGenom)
-	comm,_:=(*evo.BestGenom).MakeAlgorithms(true)
-	for i:=0;i<len(comm);i++{
-		str:=u.GetReadableFromCommands(comm[i])
+	fmt.Println(evo.Populations[0])
+	fmt.Fprintln(w,evo.Populations[0])
+	comm,_:=evo.Populations[0].MakeAlgorithms(true,false)
+	for ii:=0;ii<len(comm);ii++{
+		str:=u.GetReadableFromCommands(comm[ii])
 		fmt.Println(str)
 		fmt.Fprintln(w,str)
 	}
-
-
+	w.Flush()
+	f.Close()
 }
-var maxpol=0
+var (
+	maxpol=0
+	prime=[]int{2,3,5,7,11,13,17,19,23,29,31,37,43,49,53,59,61,67,71,79,89}
+)
 
 func tionalAlg (g u.Genotype) float32{
 	var jw float32=0
 
 
 
-	comm,_:=g.MakeAlgorithms(true)
+	comm,_:=g.MakeAlgorithms(true, false)
 	if len(comm)==0{
 		return 0
 	}
@@ -160,9 +173,9 @@ func tionalAlg (g u.Genotype) float32{
 		end := make(chan int)
 		quit := make(chan int,2)
 
-		a := rand.Intn(9) + 3
+		a := prime[rand.Intn(5) + 1]
 		rand.Seed(time.Now().UnixNano())
-		b := rand.Intn(9) + 3
+		b := prime[rand.Intn(9) + 6]
 		c := a * b
 		solu.In[0].V[0] = int64(a)
 		solu.In[0].V[1] = int64(b)
@@ -173,7 +186,7 @@ func tionalAlg (g u.Genotype) float32{
 		старт := time.Now()
 		//не больше 100 миллисекунд
 		normalEnd := false
-		for time.Since(старт).Milliseconds() < 100 {
+		for time.Since(старт).Milliseconds() < 20 {
 			select {
 			default:
 			case <-end:
@@ -191,21 +204,16 @@ func tionalAlg (g u.Genotype) float32{
 		close(end)
 		close(quit)
 
-		res:=math.Abs(float64(sol.Out[0].V[0]-int64(c)))
+		res:=math.Abs(float64(solu.Out[0].V[0]-int64(c)))
 		if res==0{
 			jw+=1
 		}else{
-			jw+=float32(1/res)
+			jw+=float32(1.0/res)
 		}
 	}
-
-	return jw/5
+	la:=len(g)
+	if la>maxpol{
+		maxpol=la
+	}
+	return jw/5.0
 }
-
-/*
-kdfjhglkdafhgadfg⚤+++Ⱑkj2i937yr78fuhndskmc,nfw2y4fn98wuopj⚤,000Ⱑfpmoi34uf98wynirfoipsef4rngfofi1ou3mpfvpos⚤,000Ⱑ2wep4fno2w9iu4nf92fmd2i3unrf7t4yugfokr⚤,001Ⱑ5342iq1o39umf8wvyn7nowmpea.
-mof2i4fnyu98ywbgoiwfe⚤,111Ⱑ2wlenfio2iufnow23fnoqw8ne3yf92893f⚤-001Ⱑ nowien98wvmwpoirgo834⚤-011Ⱑcnowi4uno234vmwepir3om49u⚤-101Ⱑ24f24gvsуеифуеревклн⚤-110Ⱑфупкфуки
-фукифкнгшщгшнг⚤-00ӿӿӿӿӿӿӿӿⰡывмвкфуеркпщпюош⚤.001Ⱑфукпуфкпфук⚤.010Ⱑ⚤.101Ⱑфваифвпифеит⚤.110Ⱑфвптфвтпфптьпогьвраимв⚤/001Ⱑdsfygjufg⚤/011Ⱑjmk,gjoiugyftd⚤/101Ⱑadbnmhiu245⚤0001Ⱑ6567876543
-⚤0010Ⱑgrytumnb567⚤0110Ⱑ456765432⚤0011Ⱑfghjmnfbd234⚤0111Ⱑgdfhnbv3456⚤0000Ⱑfhgmffd3456⚤1002Ⱑbnfghnfgb6543⚤1012Ⱑvfbcnhjnh6523123⚤1102Ⱑ123hngfgd⚤1112Ⱑ12345⚤A000Ⱑncgh cgh
-⚤A100Ⱑx xghn xdgfhn⚤A001Ⱑxgh ghdgh s⚤A101Ⱑfgh sh⚤C000Ⱑsgh sfghsq34⚤C001Ⱑxfgsfg
-*/

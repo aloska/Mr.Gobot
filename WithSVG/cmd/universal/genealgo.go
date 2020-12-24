@@ -4,12 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"unicode"
 )
 
 //создание всех алгоритмов из генотипа
 //каждый алгоритм состоит из всех генов Пароида сразу
-func (g Genotype) MakeAlgorithms(tryResolveErrors bool) ([][]Command, []error){
+//tryResolveErrors=true - пробуем не замечать ошибки в генах, false - строгие мы
+//joinBeforeTranslation=true - сшить все гены в одну мРНК перед трансляцией, false - не сшивать
+func (g Genotype) MakeAlgorithms(tryResolveErrors bool, joinBeforeTranslation bool) ([][]Command, []error){
 	var res [][]Command //здесь будет len(g.Genom) алгоритмов
 	var ers []error
 	for i:=0; i<len(g);i++{
@@ -19,14 +22,22 @@ func (g Genotype) MakeAlgorithms(tryResolveErrors bool) ([][]Command, []error){
 		//смешиваем отцовские и материнские гены в одном алгоритме
 		//но может оказаться, что количество генов не одинаковое, а в какой-то хромосоме совсем отсутствуют, поэтому спец-функция
 		genes:=g[i].concatMF() //набор генов, определяющий алгоритм, но это не все)) может какой ген поломанный - выяснится на этапе трансляции
-		for _, gen:= range genes{
-			//трансляция
-			if com,err:=GeneTranslationAlg(gen, tryResolveErrors); err==nil{
-				a=append(a, com ...)//если ошибок трансляции нет - добавим к будущему алгоритму
-			}else{
-				ers=append(ers, err)
+		if joinBeforeTranslation{
+			if com, err := GeneTranslationAlg(strings.Join(genes,""), tryResolveErrors); err == nil {
+				a = append(a, com...) //если ошибок трансляции нет - добавим к будущему алгоритму
+			} else {
+				ers = append(ers, err)
 			}
+		}else {
+			for _, gen := range genes {
+				//трансляция
+				if com, err := GeneTranslationAlg(gen, tryResolveErrors); err == nil {
+					a = append(a, com...) //если ошибок трансляции нет - добавим к будущему алгоритму
+				} else {
+					ers = append(ers, err)
+				}
 
+			}
 		}
 		//добавим в общую корзину
 		if len(a)>0{

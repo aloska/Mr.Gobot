@@ -7,8 +7,8 @@ import (
 )
 
 const(
-	SPECIESCONSTINIT float32=0.60
-	GENUSCONSTINIT float32=0.47
+	SPECIESCONSTINIT float32=0.92
+	GENUSCONSTINIT float32=0.66
 )
 var(
 	SpeciesConst float32=SPECIESCONSTINIT	/*видовая константа
@@ -46,20 +46,28 @@ type Evolution struct{
 	*/
 
 	bestFit float32
-	BestGenom *Genotype
+	bestIndex int
+
 	Catastrofe int
 	fluent int			//текущая итерация
 
 	functionalValues map[int]float32	//результаты вычисления функционалов для каждого из генотипа
 }
 func (e *Evolution) BestFit() float32 {return e.bestFit}
+func (e *Evolution) BestIndex() int {return e.bestIndex}
 
 func (e *Evolution) Len() int{
 	return len(e.Populations)
 }
 
 func (e *Evolution) Swap(i, j int){
+	if e.bestIndex==i {
+		e.bestIndex=j
+	}else if e.bestIndex==j{
+		e.bestIndex=i
+	}
 	e.Populations[i],e.Populations[j]=e.Populations[j],e.Populations[i]
+	e.functionalValues[i],e.functionalValues[j]=e.functionalValues[j],e.functionalValues[i]
 }
 
 func (e *Evolution) Less(i, j int) bool{
@@ -79,13 +87,15 @@ func (e *Evolution) Less(i, j int) bool{
 	if fitI>fitJ { //Внимание! здесь должно быть больше, чтобы отсортировало по убыванию
 		if fitI>e.bestFit{
 			e.bestFit=fitI
-			e.BestGenom=&e.Populations[j]
+
+			e.bestIndex=i
 		}
 		return true
 	}
 	if fitJ>e.bestFit{
 		e.bestFit=fitJ
-		e.BestGenom=&e.Populations[i]
+
+		e.bestIndex=j
 	}
 	return false
 }
@@ -135,9 +145,9 @@ func (e *Evolution) Step(toFit float32, max int, withGlobalChanging bool) bool{
 			e.Catastrofe--
 		}else {
 			e.Populations = append(e.Populations,e.initial...)//добавим лучших из истории
-			e.Populations = append(e.Populations,*e.BestGenom)
+			e.Populations = append(e.Populations,e.Populations[0])
 			for i := 0; i < lena-1; i++ {
-				for j := i; j < lena; j++ {
+				for j := i+1; j < lena-i; j++ {
 					if rand.Intn(150)<50 {
 						G, err := PolyPairing(e.Populations[i], e.Populations[j]) //полиплоидизация
 						if err == nil {

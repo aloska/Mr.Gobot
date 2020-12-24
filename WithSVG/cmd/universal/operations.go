@@ -309,12 +309,18 @@ func (s *Solution) BEQ(alg int, x1, x2 uint64, jumpAddr int64){
 		return
 	}
 	if s.Proc[alg].X[x1%32]==s.Proc[alg].X[x2%32]{
+		//запомним указатель комманд
+		curPC:=s.Proc[alg].PC
 		//сначала выровняем jumpAddr по длине гена
 		jumpAddr=jumpAddr%int64(len(s.Algs[alg].Commands))
 		if int64(s.Proc[alg].PC)+jumpAddr<0{
 			s.Proc[alg].PC=uint64(int64(len(s.Algs[alg].Commands))+int64(s.Proc[alg].PC)+jumpAddr) //не знаю почему, но работает))
 		}else{
 			s.Proc[alg].PC=uint64(int64(s.Proc[alg].PC)+jumpAddr)%uint64(len(s.Algs[alg].Commands))
+		}
+		//если в результате вычислений указываем на себя - это тоже зацикливание, на оно на?
+		if curPC==s.Proc[alg].PC{
+			s.Proc[alg].PC++
 		}
 	}else{
 		s.Proc[alg].PC++
@@ -327,12 +333,18 @@ func (s *Solution) BGE(alg int, x1, x2 uint64, jumpAddr int64){
 		return
 	}
 	if s.Proc[alg].X[x1%32]>=s.Proc[alg].X[x2%32]{
+		//запомним указатель комманд
+		curPC:=s.Proc[alg].PC
 		//сначала выровняем jumpAddr по длине гена
 		jumpAddr=jumpAddr%int64(len(s.Algs[alg].Commands))
 		if int64(s.Proc[alg].PC)+jumpAddr<0{
 			s.Proc[alg].PC=uint64(int64(len(s.Algs[alg].Commands))+int64(s.Proc[alg].PC)+jumpAddr)
 		}else{
 			s.Proc[alg].PC=uint64(int64(s.Proc[alg].PC)+jumpAddr)%uint64(len(s.Algs[alg].Commands))
+		}
+		//если в результате вычислений указываем на себя - это тоже зацикливание, на оно на?
+		if curPC==s.Proc[alg].PC{
+			s.Proc[alg].PC++
 		}
 	}else{
 		s.Proc[alg].PC++
@@ -345,12 +357,18 @@ func (s *Solution) BGT(alg int, x1, x2 uint64, jumpAddr int64){
 		return
 	}
 	if s.Proc[alg].X[x1%32]>s.Proc[alg].X[x2%32]{
+		//запомним указатель комманд
+		curPC:=s.Proc[alg].PC
 		//сначала выровняем jumpAddr по длине гена
 		jumpAddr=jumpAddr%int64(len(s.Algs[alg].Commands))
 		if int64(s.Proc[alg].PC)+jumpAddr<0{
 			s.Proc[alg].PC=uint64(int64(len(s.Algs[alg].Commands))+int64(s.Proc[alg].PC)+jumpAddr)
 		}else{
 			s.Proc[alg].PC=uint64(int64(s.Proc[alg].PC)+jumpAddr)%uint64(len(s.Algs[alg].Commands))
+		}
+		//если в результате вычислений указываем на себя - это тоже зацикливание, на оно на?
+		if curPC==s.Proc[alg].PC{
+			s.Proc[alg].PC++
 		}
 	}else{
 		s.Proc[alg].PC++
@@ -363,12 +381,18 @@ func (s *Solution) BLT(alg int, x1, x2 uint64, jumpAddr int64){
 		return
 	}
 	if s.Proc[alg].X[x1%32]<s.Proc[alg].X[x2%32]{
+		//запомним указатель комманд
+		curPC:=s.Proc[alg].PC
 		//сначала выровняем jumpAddr по длине гена
 		jumpAddr=jumpAddr%int64(len(s.Algs[alg].Commands))
 		if int64(s.Proc[alg].PC)+jumpAddr<0{
 			s.Proc[alg].PC=uint64(int64(len(s.Algs[alg].Commands))+int64(s.Proc[alg].PC)+jumpAddr)
 		}else{
 			s.Proc[alg].PC=uint64(int64(s.Proc[alg].PC)+jumpAddr)%uint64(len(s.Algs[alg].Commands))
+		}
+		//если в результате вычислений указываем на себя - это тоже зацикливание, на оно на?
+		if curPC==s.Proc[alg].PC{
+			s.Proc[alg].PC++
 		}
 	}else{
 		s.Proc[alg].PC++
@@ -381,12 +405,18 @@ func (s *Solution) BNE(alg int, x1, x2 uint64, jumpAddr int64){
 		return
 	}
 	if s.Proc[alg].X[x1%32]!=s.Proc[alg].X[x2%32]{
+		//запомним указатель комманд
+		curPC:=s.Proc[alg].PC
 		//сначала выровняем jumpAddr по длине гена
 		jumpAddr=jumpAddr%int64(len(s.Algs[alg].Commands))
 		if int64(s.Proc[alg].PC)+jumpAddr<0{
 			s.Proc[alg].PC=uint64(int64(len(s.Algs[alg].Commands))+int64(s.Proc[alg].PC)+jumpAddr)
 		}else{
 			s.Proc[alg].PC=uint64(int64(s.Proc[alg].PC)+jumpAddr)%uint64(len(s.Algs[alg].Commands))
+		}
+		//если в результате вычислений указываем на себя - это тоже зацикливание, на оно на?
+		if curPC==s.Proc[alg].PC{
+			s.Proc[alg].PC++
 		}
 	}else{
 		s.Proc[alg].PC++
@@ -399,12 +429,18 @@ func (s *Solution) BLE(alg int, x1, x2 uint64, jumpAddr int64){
 		return
 	}
 	if s.Proc[alg].X[x1%32]<=s.Proc[alg].X[x2%32]{
+		//запомним указатель комманд
+		curPC:=s.Proc[alg].PC
 		//сначала выровняем jumpAddr по длине гена
 		jumpAddr=jumpAddr%int64(len(s.Algs[alg].Commands))
 		if int64(s.Proc[alg].PC)+jumpAddr<0{
 			s.Proc[alg].PC=uint64(int64(len(s.Algs[alg].Commands))+int64(s.Proc[alg].PC)+jumpAddr)
 		}else{
 			s.Proc[alg].PC=uint64(int64(s.Proc[alg].PC)+jumpAddr)%uint64(len(s.Algs[alg].Commands))
+		}
+		//если в результате вычислений указываем на себя - это тоже зацикливание, на оно на?
+		if curPC==s.Proc[alg].PC{
+			s.Proc[alg].PC++
 		}
 	}else{
 		s.Proc[alg].PC++
@@ -416,12 +452,19 @@ func (s *Solution) JMP(alg int, jumpAddr int64){
 		s.Proc[alg].PC++
 		return
 	}
+	//запомним указатель комманд
+	curPC:=s.Proc[alg].PC
 	//сначала выровняем jumpAddr по длине гена
 	jumpAddr=jumpAddr%int64(len(s.Algs[alg].Commands))
 	if int64(s.Proc[alg].PC)+jumpAddr<0{
 		s.Proc[alg].PC=uint64(int64(len(s.Algs[alg].Commands))+int64(s.Proc[alg].PC)+jumpAddr)
 	}else{
 		s.Proc[alg].PC=uint64(int64(s.Proc[alg].PC)+jumpAddr)%uint64(len(s.Algs[alg].Commands))
+	}
+
+	//если в результате вычислений указываем на себя - это тоже зацикливание, на оно на?
+	if curPC==s.Proc[alg].PC{
+		s.Proc[alg].PC++
 	}
 }
 
